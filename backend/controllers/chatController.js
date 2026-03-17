@@ -1,9 +1,47 @@
-import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
+
 dotenv.config();
 
-// The user provided a Gemini API key instead of OpenAI, so we use Google Gen AI
-const ai = new GoogleGenAI({ apiKey: process.env.OPENAI_API_KEY }); // Reusing the same env var they set
+const openAiKey = process.env.OPENAI_API_KEY;
+const isOpenAIKey = typeof openAiKey === 'string' && openAiKey.trim().startsWith('sk-');
+
+const openAiClient = isOpenAIKey ? new OpenAI({ apiKey: openAiKey }) : null;
+const genAiClient = !isOpenAIKey && openAiKey ? new GoogleGenAI({ apiKey: openAiKey }) : null;
+
+const getBuiltinReply = (incoming) => {
+    const text = (incoming || '').toLowerCase();
+
+    if (!text.trim()) return "Hi! What would you like to know about RGUKT Ongole?";
+
+    if (/(event|fest|workshop|seminar|meet)/i.test(text)) {
+        return "You can check the Events section for upcoming campus fests, workshops, and seminars. If you want, ask me for specific event types (e.g., cultural fest, tech workshop).";
+    }
+
+    if (/(club|clubs|coding|music|dance|art|sports club)/i.test(text)) {
+        return "The Clubs section has details about student clubs like Coding Club, Cultural Club, Sports Club, and more. Ask me about a specific club if you want!";
+    }
+
+    if (/(placement|internship|job|drive|company)/i.test(text)) {
+        return "The Placements section lists recent drives, companies, and internship opportunities. You can also ask me what kinds of companies visit campus.";
+    }
+
+    if (/(exam|schedule|timetable|e1|e2|e3|e4)/i.test(text)) {
+        return "The Exam Schedule section has timetable details for E1–E4. Let me know which semester you are looking for and I can guide you.";
+    }
+
+    if (/(sports|cricket|basketball|volleyball|badminton|kabaddi|running|throwball|kho)/i.test(text)) {
+        return "Check out the Sports section for updates on tournaments, teams, and achievements across different games.";
+    }
+
+    if (/(achievement|award|hackathon|olympiad|project)/i.test(text)) {
+        return "The Achievements section highlights student accomplishments in hackathons, competitions, and research. Feel free to ask about recent wins!";
+    }
+
+    // Generic fallback
+    return "I’m not sure about that, but I can help you explore the site: try asking about Events, Clubs, Placements, or Exam Schedule.";
+};
 
 export const handleChat = async (req, res) => {
     try {
@@ -12,6 +50,7 @@ export const handleChat = async (req, res) => {
         if (!message) {
             return res.status(400).json({ error: 'Message is required' });
         }
+
         const systemPrompt = `You are NewsBot, a friendly and energetic chatbot for RGUKT Ongole's official college news website, tailored to Gen-Z students. You are an expert on everything about the college and this website.
 
 ABOUT THE WEBSITE:
@@ -47,19 +86,50 @@ YOUR ROLE:
 
 Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `${systemPrompt}\n\nUser: ${message}`,
-            config: {
-                temperature: 0.7,
-            }
-        });
+        let botReply;
 
-        const botReply = response.text;
+        if (openAiClient) {
+            const response = await openAiClient.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: message }
+                ],
+                temperature: 0.7,
+            });
+
+            botReply = response.choices?.[0]?.message?.content?.trim();
+        } else if (genAiClient) {
+            const response = await genAiClient.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: `${systemPrompt}\n\nUser: ${message}`,
+                config: {
+                    temperature: 0.7,
+                }
+            });
+
+            botReply = response.text;
+        } else {
+            botReply = getBuiltinReply(message);
+        }
+
+        if (!botReply) {
+            botReply = getBuiltinReply(message);
+        }
 
         res.json({ reply: botReply });
     } catch (error) {
-        console.error("Gemini API Error:", error.message);
-        res.status(500).json({ error: "Failed to generate a response from the AI.", details: error.message });
+        console.error("Chat API Error:", error);
+
+        const errorMessage = error?.message || (error?.response?.data && JSON.stringify(error.response.data)) || String(error);
+        const quotaExceeded = /quota|resource_exhausted|429/i.test(errorMessage);
+
+        if (quotaExceeded) {
+            return res.json({
+                reply: "The AI service is temporarily unavailable (quota limits reached). Please try again in a few minutes, or ask me about the website sections and I'll help based on built-in info."
+            });
+        }
+
+        res.status(500).json({ error: "Failed to generate a response from the AI.", details: errorMessage });
     }
 };
