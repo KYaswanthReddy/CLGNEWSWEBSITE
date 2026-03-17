@@ -6,7 +6,11 @@ import helmet from 'helmet';
 import connectDB from './config/db.js';
 import path from 'path';
 import authRoutes from './routes/authRoutes.js';
+<<<<<<< HEAD
 import eventRoutes from './routes/eventRoutes.js';
+=======
+import chatRoutes from './routes/chatRoutes.js';
+>>>>>>> chatbot
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
@@ -26,6 +30,9 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
+
+// Register the chat functionality
+app.use('/chat', chatRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'UP', message: 'Backend server is running' });
@@ -55,3 +62,4 @@ const startServer = async () => {
 };
 
 startServer();
+
