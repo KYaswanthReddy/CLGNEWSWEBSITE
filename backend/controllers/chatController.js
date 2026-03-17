@@ -1,9 +1,9 @@
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// The user provided a Gemini API key instead of OpenAI, so we use Google Gen AI
-const ai = new GoogleGenAI({ apiKey: process.env.OPENAI_API_KEY }); // Reusing the same env var they set
+// Using OpenAI API
+const ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const handleChat = async (req, res) => {
     try {
@@ -47,19 +47,20 @@ YOUR ROLE:
 
 Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `${systemPrompt}\n\nUser: ${message}`,
-            config: {
-                temperature: 0.7,
-            }
+        const response = await ai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: message }
+            ],
+            temperature: 0.7,
         });
 
-        const botReply = response.text;
+        const botReply = response.choices[0].message.content;
 
         res.json({ reply: botReply });
     } catch (error) {
-        console.error("Gemini API Error:", error.message);
+        console.error("OpenAI API Error:", error.message);
         res.status(500).json({ error: "Failed to generate a response from the AI.", details: error.message });
     }
 };
