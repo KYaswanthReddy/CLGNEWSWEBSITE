@@ -24,7 +24,7 @@ const UpcomingEvents = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const { data } = await getEvents();
+                const { data } = await getEvents({ type: 'event' });
                 // Map API data to include a Date object for the calendar logic
                 const monthMap = {
                     'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,

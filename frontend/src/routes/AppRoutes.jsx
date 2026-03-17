@@ -58,6 +58,8 @@ const UploadExam = lazy(() => import('../pages/Admin/UploadExam'));
 const AddSports = lazy(() => import('../pages/Admin/AddSports'));
 const AddPlacement = lazy(() => import('../pages/Admin/AddPlacement'));
 const AddAchievement = lazy(() => import('../pages/Admin/AddAchievement'));
+const CreateEvent = lazy(() => import('../pages/Admin/CreateEvent'));
+const EditEvent = lazy(() => import('../pages/Admin/EditEvent'));
 
 // Global page-loading spinner
 const PageLoader = () => (
@@ -132,6 +134,8 @@ const AppRoutes = () => {
                     <Route path="admin/add-sports" element={<AdminRoute><AddSports /></AdminRoute>} />
                     <Route path="admin/add-placement" element={<AdminRoute><AddPlacement /></AdminRoute>} />
                     <Route path="admin/add-achievements" element={<AdminRoute><AddAchievement /></AdminRoute>} />
+                    <Route path="admin/create-event" element={<AdminRoute><CreateEvent /></AdminRoute>} />
+                    <Route path="admin/edit-event/:id" element={<AdminRoute><EditEvent /></AdminRoute>} />
 
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/" replace />} />
