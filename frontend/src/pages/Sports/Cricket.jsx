@@ -1,8 +1,26 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Trophy, History, Users, Target, Calendar, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, History, Users, Target, Calendar, ChevronRight, Clock, Star } from 'lucide-react';
+import { getEvents } from '../../services/api';
 
 const Cricket = () => {
+    const [upcomingEvents, setUpcomingEvents] = useState([]);
+    const [loadingEvents, setLoadingEvents] = useState(true);
+
+    useEffect(() => {
+        const fetchCricketEvents = async () => {
+            try {
+                const { data } = await getEvents({ type: 'sports', subcategory: 'Cricket' });
+                setUpcomingEvents(data);
+            } catch (err) {
+                console.error('Error fetching cricket events:', err);
+            } finally {
+                setLoadingEvents(false);
+            }
+        };
+        fetchCricketEvents();
+    }, []);
+
     const achievements = [
         { year: '2024', title: 'Champions - Interuniversity Gold', description: 'Defeated NIT Trichy in a thrilling final to lift the trophy for the 3rd year run.' },
         { year: '2023', title: 'Runner up - State Athletics Meet', description: 'Gave a tough fight to State University but lost in the final over by only 5 runs.' },
@@ -107,6 +125,36 @@ const Cricket = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Dynamic Upcoming Events for Cricket */}
+                        <div className="mt-10 pt-10 border-t border-white/10 flex flex-col gap-8">
+                            <h3 className="text-xl font-black text-blue-400 uppercase tracking-tighter flex items-center gap-3">
+                                <Clock size={20} /> Match Schedule
+                            </h3>
+                            
+                            <div className="flex flex-col gap-6">
+                                {loadingEvents ? (
+                                    <div className="flex justify-center p-4">
+                                        <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                ) : upcomingEvents.length > 0 ? (
+                                    upcomingEvents.map((event, i) => (
+                                        <div key={event._id} className="bg-white/5 p-6 rounded-3xl border border-white/5 flex flex-col gap-4 group cursor-pointer hover:bg-white/10 transition-all">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{event.date} {event.month}</span>
+                                                    <h4 className="text-sm font-black text-white group-hover:text-blue-400 transition-colors">{event.eventName}</h4>
+                                                </div>
+                                                <Star size={14} className="text-amber-400" />
+                                            </div>
+                                            <p className="text-[10px] text-blue-100/40 leading-relaxed line-clamp-2 italic">"{event.description}"</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-xs text-blue-100/40 font-bold uppercase tracking-widest text-center py-4 border-2 border-dashed border-white/5 rounded-3xl">No upcoming matches</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="mt-4 pt-10 border-t border-white/10 flex flex-col gap-6">
