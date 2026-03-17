@@ -6,11 +6,8 @@ import helmet from 'helmet';
 import connectDB from './config/db.js';
 import path from 'path';
 import authRoutes from './routes/authRoutes.js';
-<<<<<<< HEAD
 import eventRoutes from './routes/eventRoutes.js';
-=======
 import chatRoutes from './routes/chatRoutes.js';
->>>>>>> chatbot
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
