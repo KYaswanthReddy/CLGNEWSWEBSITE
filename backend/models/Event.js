@@ -8,30 +8,62 @@ const eventSchema = mongoose.Schema({
   },
   subcategory: {
     type: String,
-    default: null
+    lowercase: true,
+    trim: true
   },
-  eventName: {
+  eventTitle: {
     type: String,
     required: true
   },
-  date: {
-    type: Number,
-    required: true
-  },
-  month: {
-    type: String,
-    required: true
-  },
-  year: {
-    type: Number,
+  eventDate: {
+    type: Date,
     required: true
   },
   image: {
-    type: String
+    type: String // Main banner
   },
+  images: [{
+    type: String // Gallery/Carousel
+  }],
   description: {
     type: String,
     required: true
+  },
+  // Sports Specific Fields
+  matches: [{
+    teamA: String,
+    teamB: String,
+    matchDate: Date,
+    result: String,
+    score: String
+  }],
+  teams: [{
+    name: String,
+    image: String,
+    description: String
+  }],
+  // Clubs Specific Fields
+  activities: [{
+    name: String,
+    description: String,
+    time: String,
+    participants: String
+  }],
+  achievements: [{
+    year: String,
+    title: String,
+    recipient: String,
+    description: String
+  }],
+  socialLinks: {
+    instagram: String,
+    twitter: String,
+    website: String
+  },
+  status: {
+    type: String,
+    enum: ["upcoming", "past", "tba"],
+    default: "upcoming"
   },
   createdAt: {
     type: Date,

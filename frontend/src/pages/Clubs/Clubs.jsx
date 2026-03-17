@@ -1,272 +1,185 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Palette, Mic, Cpu, Pen, Lightbulb, Code2, Trophy, Brush, Star,
-    Users, ChevronRight, Rocket
+    Users, ChevronRight, Search, Layout, Filter, AlertCircle, Rocket
 } from 'lucide-react';
-
-// ── All 9 clubs with unique branding ─────────────────────────────────────────
-const ALL_CLUBS = [
-    {
-        id: 'pixel',
-        name: 'Pixel Club',
-        tagline: 'Digital & Traditional Arts',
-        description: 'Where imagination meets canvas. The creative heartbeat of our university, fostering talent in digital illustration, photography, fine arts and campus design.',
-        icon: Palette,
-        color: 'from-indigo-500 to-purple-600',
-        bg: 'bg-indigo-600',
-        light: 'bg-indigo-50',
-        accent: 'text-indigo-600',
-        border: 'border-indigo-100',
-        members: '120+',
-        events: '15',
-        meet: 'Every Friday',
-        link: '/clubs/pixel',
-        image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2671&auto=format&fit=crop',
-    },
-    {
-        id: 'cultural',
-        name: 'Cultural Club',
-        tagline: 'Dance, Music & Theatre',
-        description: 'Celebrating the rich tapestry of culture through classical dance, folk music, street plays, and annual cultural festivals that unite the entire campus.',
-        icon: Mic,
-        color: 'from-rose-500 to-pink-600',
-        bg: 'bg-rose-600',
-        light: 'bg-rose-50',
-        accent: 'text-rose-600',
-        border: 'border-rose-100',
-        members: '200+',
-        events: '20',
-        meet: 'Every Saturday',
-        link: '/clubs/cultural',
-        image: 'https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=2574&auto=format&fit=crop',
-    },
-    {
-        id: 'technical',
-        name: 'Technical Club',
-        tagline: 'Engineering & Innovation',
-        description: 'A hub for hardware enthusiasts, IoT builders and robotics fanatics. We build, break and innovate with real-world engineering projects and national competition entries.',
-        icon: Cpu,
-        color: 'from-blue-500 to-cyan-600',
-        bg: 'bg-blue-600',
-        light: 'bg-blue-50',
-        accent: 'text-blue-600',
-        border: 'border-blue-100',
-        members: '180+',
-        events: '12',
-        meet: 'Every Thursday',
-        link: '/clubs/technical',
-        image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2670&auto=format&fit=crop',
-    },
-    {
-        id: 'graphic-design',
-        name: 'Graphic Design Club',
-        tagline: 'Branding & Visual Identity',
-        description: 'Crafting the visual voice of our university — from event posters and social media creatives to full brand identities. Master Figma, Illustrator and brand strategy.',
-        icon: Pen,
-        color: 'from-amber-500 to-orange-600',
-        bg: 'bg-amber-500',
-        light: 'bg-amber-50',
-        accent: 'text-amber-600',
-        border: 'border-amber-100',
-        members: '90+',
-        events: '10',
-        meet: 'Every Wednesday',
-        link: '/clubs/graphic-design',
-        image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?q=80&w=2564&auto=format&fit=crop',
-    },
-    {
-        id: 'innovation',
-        name: 'Innovation Club',
-        tagline: 'Startups & Problem Solving',
-        description: 'From idea to MVP — the Innovation Club incubates student startups, organises ideathons and connects founders with mentors, investors and resources.',
-        icon: Lightbulb,
-        color: 'from-emerald-500 to-teal-600',
-        bg: 'bg-emerald-600',
-        light: 'bg-emerald-50',
-        accent: 'text-emerald-600',
-        border: 'border-emerald-100',
-        members: '150+',
-        events: '18',
-        meet: 'Every Tuesday',
-        link: '/clubs/innovation',
-        image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=2670&auto=format&fit=crop',
-    },
-    {
-        id: 'coding',
-        name: 'Coding Club',
-        tagline: 'Competitive Programming',
-        description: 'Train for ICPC, crack coding interviews, build open-source projects and level up your DSA. Weekly contests, practice sessions and placement prep in one place.',
-        icon: Code2,
-        color: 'from-slate-700 to-slate-900',
-        bg: 'bg-slate-800',
-        light: 'bg-slate-50',
-        accent: 'text-slate-700',
-        border: 'border-slate-200',
-        members: '250+',
-        events: '25',
-        meet: 'Every Mon & Wed',
-        link: '/clubs/coding',
-        image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2670&auto=format&fit=crop',
-    },
-    {
-        id: 'sports',
-        name: 'Sports Club',
-        tagline: 'Athletics & Team Sports',
-        description: 'Training, tournaments and team spirit — the Sports Club oversees cricket, basketball, volleyball, kabaddi and more, with dedicated coaches and inter-college representation.',
-        icon: Trophy,
-        color: 'from-orange-500 to-red-600',
-        bg: 'bg-orange-500',
-        light: 'bg-orange-50',
-        accent: 'text-orange-600',
-        border: 'border-orange-100',
-        members: '300+',
-        events: '30',
-        meet: 'Daily Training',
-        link: '/clubs/sports',
-        image: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=2670&auto=format&fit=crop',
-    },
-    {
-        id: 'artix',
-        name: 'Artix Club',
-        tagline: 'Mixed Media & Street Art',
-        description: 'Street murals, spray art, zine-making, and installation art — Artix is where unconventional creativity thrives. Come express, experiment and exhibit without boundaries.',
-        icon: Brush,
-        color: 'from-violet-500 to-fuchsia-600',
-        bg: 'bg-violet-600',
-        light: 'bg-violet-50',
-        accent: 'text-violet-600',
-        border: 'border-violet-100',
-        members: '80+',
-        events: '8',
-        meet: 'Every Sunday',
-        link: '/clubs/artix',
-        image: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=2644&auto=format&fit=crop',
-    },
-    {
-        id: 'inauguration',
-        name: 'Inauguration Club',
-        tagline: 'Events & Ceremonies',
-        description: 'The official campus events committee — coordinating college fests, convocations, guest lecture series, and every major ceremony with precision and flair.',
-        icon: Star,
-        color: 'from-yellow-500 to-amber-600',
-        bg: 'bg-yellow-500',
-        light: 'bg-yellow-50',
-        accent: 'text-yellow-600',
-        border: 'border-yellow-100',
-        members: '60+',
-        events: '35',
-        meet: 'Event-based',
-        link: '/clubs/inauguration',
-        image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2670&auto=format&fit=crop',
-    },
-];
+import { getClubTypes } from '../../services/api';
 
 const Clubs = () => {
+    const [clubs, setClubs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const fetchClubs = async () => {
+            try {
+                setLoading(true);
+                const { data } = await getClubTypes();
+                setClubs(data);
+            } catch (err) {
+                console.error('Error fetching clubs:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchClubs();
+    }, []);
+
+    const filteredClubs = clubs.filter(club => 
+        club.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (club.description && club.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
     return (
-        <div className="flex flex-col gap-20 pb-32">
+        <div className="flex flex-col min-h-screen bg-slate-950">
             {/* ── Hero Banner ── */}
-            <section className="bg-slate-900 pt-24 pb-40 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none" />
-                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] -ml-64 -mt-64 pointer-events-none" />
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] -mr-64 -mb-64 pointer-events-none" />
+            <section className="relative pt-32 pb-60 overflow-hidden bg-slate-900">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
+                <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[160px] -ml-96 -mt-96 pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[140px] -mr-96 -mb-96 pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="max-w-4xl flex flex-col gap-6">
-                        <div className="flex items-center gap-3 text-blue-300 font-black uppercase text-[10px] tracking-[0.4em]">
-                            <Users size={14} /> Campus Communities · {ALL_CLUBS.length} Active Clubs
+                    <motion.div 
+                        initial={{ opacity: 0, y: 30 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        transition={{ duration: 0.8 }} 
+                        className="max-w-4xl flex flex-col gap-8"
+                    >
+                        <div className="flex items-center gap-4 text-blue-400 font-black uppercase text-xs tracking-[0.4em]">
+                            <Users size={18} /> THE CAMPUS DIRECTORY
                         </div>
-                        <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.92] tracking-tighter">
-                            FIND YOUR <span className="text-blue-400 italic">PASSION</span>.
+                        <h1 className="text-7xl md:text-9xl font-black text-white leading-[0.85] tracking-tighter">
+                            FIND YOUR <span className="text-primary italic">PRIDE</span>.
                         </h1>
-                        <p className="text-slate-400 text-lg font-medium max-w-xl leading-relaxed">
-                            Join one of our {ALL_CLUBS.length} vibrant student clubs — from competitive coding to street art, sports to startups.
+                        <p className="text-slate-400 text-xl font-medium max-w-2xl leading-relaxed">
+                            Connect with {clubs.length} official student-led communities. Lead projects, master skills, and build your legacy beyond the classroom.
                         </p>
+
+                        {/* Search Bar Interface */}
+                        <div className="relative max-w-2xl mt-8">
+                            <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-500" size={24} />
+                            <input 
+                                type="text"
+                                placeholder="Search by name or field (e.g. Coding)..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-white/5 backdrop-blur-2xl border-2 border-white/10 rounded-[32px] py-8 pl-20 pr-10 text-white font-black text-lg outline-none focus:border-primary/50 transition-all placeholder:text-slate-600"
+                            />
+                        </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* ── Club Cards Grid ── */}
-            <section className="max-w-7xl mx-auto px-6 w-full -mt-32 relative z-20 flex flex-col gap-20">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {ALL_CLUBS.map((club, i) => {
-                        const Icon = club.icon;
-                        return (
-                            <motion.div
-                                key={club.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.07 }}
-                                viewport={{ once: true }}
-                            >
-                                <Link
-                                    to={club.link}
-                                    className="flex flex-col bg-white rounded-[36px] border border-slate-100 shadow-lg hover:shadow-2xl hover:-translate-y-3 transition-all duration-400 overflow-hidden h-full group"
+            {/* ── Grid Section ── */}
+            <section className="max-w-7xl mx-auto px-6 w-full -mt-40 relative z-20 pb-32">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-40 gap-8 bg-slate-900/50 backdrop-blur-md rounded-[64px] border border-white/5">
+                        <div className="w-20 h-20 border-8 border-primary border-t-transparent rounded-full animate-spin shadow-2xl shadow-primary/20"></div>
+                        <p className="text-slate-500 font-black uppercase text-xs tracking-[0.6em]">Synchronizing Network...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <AnimatePresence>
+                            {filteredClubs.map((club, i) => (
+                                <motion.div
+                                    key={club._id}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: i * 0.05 }}
+                                    className="group"
                                 >
-                                    {/* Cover image */}
-                                    <div className="relative h-44 overflow-hidden">
-                                        <img
-                                            src={club.image}
-                                            alt={club.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                                        {/* Category tag */}
-                                        <span className={`absolute top-4 left-4 ${club.bg} text-white text-[9px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-lg`}>
-                                            {club.tagline}
-                                        </span>
-                                    </div>
+                                    <Link
+                                        to={`/clubs/${club.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                        className="relative aspect-square rounded-[48px] overflow-hidden flex flex-col shadow-2xl transition-all duration-700 hover:shadow-primary/30 bg-slate-900 border border-white/5"
+                                    >
+                                        {/* Background Image with Kinetic Hover */}
+                                        <div className="absolute inset-0 z-0">
+                                            {club.image ? (
+                                                <img 
+                                                    src={`http://localhost:5000${club.image}`} 
+                                                    alt={club.name} 
+                                                    className="w-full h-full object-cover brightness-[0.6] group-hover:scale-110 group-hover:brightness-50 transition-all duration-1000"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                                                    <Users size={64} className="text-white/10" />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                                        </div>
 
-                                    {/* Body */}
-                                    <div className="flex flex-col gap-5 p-7 flex-1">
-                                        {/* Icon + Name */}
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 bg-gradient-to-br ${club.color} rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:rotate-6 transition-transform shrink-0`}>
-                                                <Icon size={22} />
+                                        {/* Card content */}
+                                        <div className="relative z-10 p-10 h-full flex flex-col justify-between">
+                                            <div className="flex justify-between items-start">
+                                                <div className="w-16 h-16 backdrop-blur-2xl bg-white/10 border border-white/20 rounded-3xl flex items-center justify-center text-white font-black text-2xl group-hover:bg-primary transition-all duration-500 shadow-2xl uppercase">
+                                                    {club.name[0]}
+                                                </div>
+                                                <div className="backdrop-blur-md bg-black/40 border border-white/5 px-4 py-2 rounded-full flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                    <span className="text-[8px] font-black text-white uppercase tracking-widest">Active Org</span>
+                                                </div>
                                             </div>
-                                            <h3 className={`text-xl font-black text-slate-800 tracking-tight group-hover:${club.accent} transition-colors`}>
-                                                {club.name}
-                                            </h3>
+
+                                            <div className="flex flex-col gap-2 transform group-hover:-translate-y-4 transition-transform duration-700">
+                                                <div className="flex flex-col">
+                                                    <h3 className="text-4xl font-black text-white tracking-tighter uppercase leading-[0.9]">
+                                                        {club.name}
+                                                    </h3>
+                                                </div>
+
+                                                <p className="text-slate-400 text-sm font-bold leading-relaxed opacity-0 group-hover:opacity-100 transition-all duration-500 line-clamp-2 max-w-[90%]">
+                                                    {club.description || 'Shaping the future of the university through collaboration and leadership.'}
+                                                </p>
+
+                                                <div className="mt-6 flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-[0.3em] group-hover:gap-6 transition-all duration-500">
+                                                    Explore Space <ChevronRight size={16} className="text-primary" />
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        {/* Description */}
-                                        <p className="text-slate-500 text-sm font-medium leading-relaxed line-clamp-2 flex-1">
-                                            {club.description}
-                                        </p>
+                                        {/* Interactive Glow */}
+                                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-primary/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
 
-                                        {/* Stats row */}
-                                        <div className={`flex items-center gap-4 pt-4 border-t ${club.border} text-[10px] font-black uppercase tracking-widest`}>
-                                            <span className="flex items-center gap-1.5 text-slate-400">
-                                                <Users size={11} /> {club.members} Members
-                                            </span>
-                                            <span className="flex items-center gap-1.5 text-slate-400">
-                                                <Rocket size={11} /> {club.events} Events
-                                            </span>
-                                            <span className={`ml-auto flex items-center gap-1 ${club.accent} group-hover:translate-x-1 transition-transform`}>
-                                                View <ChevronRight size={13} />
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+                        {filteredClubs.length === 0 && (
+                            <div className="col-span-full bg-slate-900 p-32 rounded-[64px] border-2 border-dashed border-white/5 flex flex-col items-center gap-8 text-center">
+                                <AlertCircle size={80} className="text-slate-800" />
+                                <div>
+                                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter">No Organizations Found</h3>
+                                    <p className="text-slate-500 font-bold uppercase text-xs tracking-widest mt-4">Try widening your search horizons</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                {/* ── Bottom CTA ── */}
-                <div className="bg-slate-900 rounded-[48px] p-12 md:p-20 flex flex-col items-center text-center gap-10 relative overflow-hidden shadow-2xl border border-white/5">
+                {/* Bottom CTA */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    className="mt-32 bg-slate-900 rounded-[64px] p-16 md:p-32 flex flex-col items-center text-center gap-12 relative overflow-hidden border border-white/5 shadow-2xl shadow-black"
+                >
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
-                    <h2 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tighter uppercase relative z-10">
-                        THE <span className="text-blue-400 italic">CREATIVE</span><br />COLLECTIVE
+                    <div className="absolute -top-32 -left-32 w-64 h-64 bg-primary/20 rounded-full blur-[80px]" />
+                    
+                    <Rocket size={64} className="text-primary animate-bounce relative z-10" />
+                    
+                    <h2 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter uppercase relative z-10">
+                        THE <span className="text-primary italic">FUTURE</span> IS LEAD BY <br />THOSE WHO JOIN.
                     </h2>
-                    <p className="text-slate-400 text-sm font-medium max-w-lg uppercase tracking-widest relative z-10">
-                        Every Talent. Every Ambition. Every Story.
+                    
+                    <p className="text-slate-400 text-sm font-black uppercase tracking-[0.5em] max-w-xl relative z-10">
+                        Become a founding member of something great today.
                     </p>
-                    <button className="relative z-10 bg-white text-primary px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-primary hover:text-white hover:scale-105 transition-all shadow-2xl shadow-blue-500/10">
-                        Start Your Legacy
+                    
+                    <button className="relative z-10 bg-white text-slate-900 px-16 py-6 rounded-2xl font-black uppercase text-sm tracking-[0.3em] hover:bg-primary hover:text-white hover:-translate-y-2 transition-all shadow-2xl">
+                        Register Your Interest
                     </button>
-                </div>
+                </motion.div>
             </section>
         </div>
     );

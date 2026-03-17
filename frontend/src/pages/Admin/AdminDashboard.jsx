@@ -29,8 +29,8 @@ const AdminDashboard = () => {
         { title: 'Add Events', description: 'Schedule new workshops or fests', link: '/admin/manage-events', icon: Plus },
         { title: 'Upload Exam Schedules', description: 'Update mid-term and final dates', link: '/admin/upload-exam', icon: FileText },
         { title: 'Manage Clubs', description: 'Review club activities and memberships', link: '/admin/manage-clubs', icon: Users },
-        { title: 'Add Sports News', description: 'Update match results and highlights', link: '/admin/add-sports', icon: Trophy },
-        { title: 'Add Placement Updates', description: 'New recruitment drives and hires', link: '/admin/add-placement', icon: TrendingUp },
+        { title: 'Manage Sports', description: 'Update match results, teams and achievements', link: '/admin/manage-sports', icon: Trophy },
+        { title: 'Manage Placements', description: 'New recruitment drives and hires', link: '/admin/manage-placements', icon: TrendingUp },
         { title: 'Add Achievements', description: 'Highlight student & faculty success', link: '/admin/add-achievements', icon: Award },
     ];
 

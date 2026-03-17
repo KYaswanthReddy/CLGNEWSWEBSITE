@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, ChevronRight, ChevronLeft, FileText, Layers, Zap, BookOpen } from 'lucide-react';
+import { Calendar, ChevronRight, ChevronLeft, FileText, Layers, Zap, BookOpen, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { getExamSchedules } from '../../services/api';
+import { getExams } from '../../services/api';
 
 // ── Year selector cards shown at /exams (no year prop passed)
 const YEARS = [
@@ -92,8 +92,14 @@ const ScheduleTemplate = ({ year }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { data } = await getExamSchedules();
-                setSchedules(data.filter(s => s.year === year));
+                // Pass year as a param to utilize backend filtering
+                const { data } = await getExams({ year });
+                // Filter locally just in case, using the correct field name 'academicYear'
+                // and case-insensitive comparison
+                setSchedules(data.filter(s => 
+                    s.academicYear?.toLowerCase() === year?.toLowerCase() ||
+                    s.year?.toLowerCase() === year?.toLowerCase()
+                ));
             } catch (err) {
                 console.error(err);
             } finally {
@@ -111,10 +117,14 @@ const ScheduleTemplate = ({ year }) => {
     const reset = () => { setStep(1); setSel({ branch: '', semester: '', exam: '' }); };
 
     const filtered = schedules.find(s =>
-        s.branch === sel.branch &&
-        s.semester === sel.semester &&
-        s.examType === sel.exam
-    )?.subjects || [];
+        s.branch?.toLowerCase() === sel.branch?.toLowerCase() &&
+        s.semester?.toLowerCase() === sel.semester?.toLowerCase() &&
+        s.examType?.toLowerCase() === sel.exam?.toLowerCase()
+    );
+
+    const subjects = filtered?.subjects || [];
+    const scheduleMode = filtered?.mode || 'manual';
+    const scheduleImageUrl = filtered?.imageUrl ? `http://localhost:5000${filtered.imageUrl}` : null;
 
     // Breadcrumb label
     const crumb = [
@@ -143,7 +153,7 @@ const ScheduleTemplate = ({ year }) => {
 
                     {step > 1 && (
                         <div className="flex items-center gap-3 text-white/60 text-xs font-black uppercase tracking-widest">
-                            <button onClick={reset} className="hover:text-white transition-colors flex items-center gap-1">
+                            <button onClick={reset} className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-sm">
                                 <ChevronLeft size={14} /> Restart
                             </button>
                         </div>
@@ -153,8 +163,9 @@ const ScheduleTemplate = ({ year }) => {
 
             <section className="max-w-5xl mx-auto px-6 w-full">
                 {loading ? (
-                    <div className="flex justify-center p-24">
-                        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <div className="flex flex-col items-center justify-center p-24 gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Fetching Timetables...</p>
                     </div>
                 ) : (
                     <AnimatePresence mode="wait">
@@ -168,14 +179,14 @@ const ScheduleTemplate = ({ year }) => {
                                         <button
                                             key={b.title}
                                             onClick={() => pick('branch', b.title)}
-                                            className="bg-white p-6 rounded-[28px] shadow-xl border border-slate-100 flex flex-col items-center justify-center gap-4 group hover:bg-primary-dark transition-all duration-500 min-h-[180px]"
+                                            className="bg-white p-6 rounded-[28px] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-4 group hover:bg-primary hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 min-h-[180px]"
                                         >
                                             <div className={`w-12 h-12 ${b.color} rounded-xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform`}>
                                                 <b.icon size={24} />
                                             </div>
                                             <div className="text-center">
                                                 <div className="text-xl font-black text-gray-800 group-hover:text-white transition-colors">{b.title}</div>
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest group-hover:text-blue-200 transition-colors mt-1">{b.description}</p>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest group-hover:text-blue-100 transition-colors mt-1">{b.description}</p>
                                             </div>
                                         </button>
                                     ))}
@@ -197,7 +208,7 @@ const ScheduleTemplate = ({ year }) => {
                                         <button
                                             key={s}
                                             onClick={() => pick('semester', s)}
-                                            className="bg-white p-10 rounded-[32px] shadow-xl border border-slate-100 flex items-center justify-between group hover:bg-primary transition-all duration-500"
+                                            className="bg-white p-10 rounded-[32px] shadow-sm border border-slate-100 flex items-center justify-between group hover:bg-primary hover:shadow-2xl hover:-translate-y-1 transition-all duration-500"
                                         >
                                             <div className="flex items-center gap-6">
                                                 <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-white transition-colors">
@@ -221,19 +232,19 @@ const ScheduleTemplate = ({ year }) => {
                                         <ChevronLeft size={14} /> Back
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                                     {EXAMS.map((e) => (
                                         <button
                                             key={e}
                                             onClick={() => pick('exam', e)}
-                                            className="bg-white p-8 rounded-[28px] shadow-xl border border-slate-100 flex flex-col items-center justify-center gap-5 group hover:scale-105 transition-all duration-300 min-h-[180px] relative overflow-hidden"
+                                            className="bg-white p-8 rounded-[28px] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-5 group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 min-h-[180px] relative overflow-hidden"
                                         >
                                             <div className="w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                                 <FileText size={28} />
                                             </div>
-                                            <h4 className="text-xl font-black text-gray-800 uppercase tracking-tight">{e}</h4>
-                                            <div className="bg-primary text-white w-full py-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity font-bold uppercase text-[10px] tracking-widest text-center">
-                                                View
+                                            <h4 className="text-xl font-black text-gray-800 uppercase tracking-tight group-hover:text-primary transition-colors">{e}</h4>
+                                            <div className="bg-primary text-white w-full py-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity font-black uppercase text-[10px] tracking-widest text-center">
+                                                View Schedule
                                             </div>
                                         </button>
                                     ))}
@@ -246,44 +257,89 @@ const ScheduleTemplate = ({ year }) => {
                             <motion.div key="s4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-8">
                                 <div className="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[32px] shadow-xl border border-slate-100 gap-6">
                                     <div className="flex flex-col gap-2">
-                                        <span className="text-[10px] font-black tracking-widest text-primary uppercase bg-primary/5 px-3 py-1.5 rounded-full w-fit">Official Schedule</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black tracking-widest text-primary uppercase bg-primary/5 px-3 py-1.5 rounded-full w-fit">Official Schedule</span>
+                                            {scheduleMode === 'manual' && subjects.some(s => s.isUpdated) && (
+                                                <span className="text-[10px] font-black tracking-widest text-rose-500 uppercase bg-rose-50 px-3 py-1.5 rounded-full w-fit animate-pulse">Updates Available</span>
+                                            )}
+                                        </div>
                                         <h2 className="text-2xl font-black text-gray-800 tracking-tight uppercase">
                                             {sel.branch} · {sel.semester} · {sel.exam}
                                         </h2>
                                     </div>
-                                    <button onClick={reset} className="text-gray-400 hover:text-primary font-bold text-xs uppercase tracking-widest transition-colors">← New Search</button>
+                                    <button onClick={reset} className="bg-slate-50 text-slate-500 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">← New Search</button>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-4">
-                                    {filtered.length > 0 ? filtered.map((row, i) => (
-                                        <div key={i} className="bg-white p-7 rounded-[24px] border-2 border-slate-50 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 hover:border-primary/20 transition-all group">
-                                            <div className="flex items-center gap-6 w-full md:w-1/3">
-                                                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors border-2 border-slate-100">
-                                                    <FileText size={20} />
+                                {scheduleMode === 'image' ? (
+                                    <div className="bg-white p-4 rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden">
+                                        {scheduleImageUrl ? (
+                                            <img 
+                                                src={scheduleImageUrl} 
+                                                alt="Exam Timetable" 
+                                                className="w-full h-auto rounded-[32px] mix-blend-multiply"
+                                                onContextMenu={(e) => e.preventDefault()}
+                                            />
+                                        ) : (
+                                            <div className="p-20 text-center flex flex-col items-center gap-4">
+                                                <Layers size={48} className="text-slate-200" />
+                                                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Image not found.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {subjects.length > 0 ? subjects.map((row, i) => (
+                                            <div key={i} className={`bg-white p-7 rounded-[32px] border-2 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 hover:shadow-xl transition-all group relative overflow-hidden ${row.isUpdated ? 'border-emerald-100' : 'border-slate-50'}`}>
+                                                {row.isUpdated && (
+                                                    <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black uppercase tracking-widest px-4 py-1 rounded-bl-2xl">Rescheduled</div>
+                                                )}
+                                                
+                                                <div className="flex items-center gap-6 w-full md:w-2/5">
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors border-2 ${row.isUpdated ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-slate-50 text-primary border-slate-100'} group-hover:scale-110 transition-transform duration-500`}>
+                                                        <BookOpen size={24} />
+                                                    </div>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subject</span>
+                                                        <h4 className={`text-lg font-black tracking-tight uppercase ${row.isUpdated ? 'text-emerald-700' : 'text-gray-800'}`}>{row.subjectName}</h4>
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-col gap-0.5">
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subject</span>
-                                                    <h4 className="text-lg font-bold text-gray-800 group-hover:text-primary transition-colors uppercase tracking-tight">{row.subjectName}</h4>
+
+                                                <div className="flex flex-col w-full md:w-1/4 gap-0.5">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className={row.isUpdated ? 'text-emerald-500' : 'text-primary'} /> Date</span>
+                                                    <div className="flex flex-col">
+                                                        <span className={`text-base font-black uppercase ${row.isUpdated ? 'text-emerald-600' : 'text-gray-800'}`}>
+                                                            {row.date} {row.month} {row.year}
+                                                        </span>
+                                                        {row.isUpdated && row.oldDate && (
+                                                            <span className="text-[10px] font-bold text-rose-400 line-through">Was: {row.oldDate}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col w-full md:w-1/4 gap-0.5">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Clock size={12} className={row.isUpdated ? 'text-emerald-500' : 'text-primary'} /> Time</span>
+                                                    <div className="flex flex-col">
+                                                        <span className={`text-base font-black uppercase ${row.isUpdated ? 'text-emerald-600' : 'text-gray-800'}`}>
+                                                            {row.time}
+                                                        </span>
+                                                        {row.isUpdated && row.oldTime && (
+                                                            <span className="text-[10px] font-bold text-rose-400 line-through">Was: {row.oldTime}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col w-full md:w-1/4 gap-0.5">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={10} className="text-primary" /> Date</span>
-                                                <span className="text-base font-black text-gray-800 uppercase">
-                                                    {new Date(row.examDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                                </span>
+                                        )) : (
+                                            <div className="bg-white p-20 rounded-[48px] text-center border-2 border-dashed border-slate-200">
+                                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                    <Layers size={32} className="text-slate-200" />
+                                                </div>
+                                                <h3 className="text-xl font-black text-slate-400 uppercase tracking-tight">No Schedule Found</h3>
+                                                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">The examination cell hasn't published this timetable yet.</p>
+                                                <button onClick={reset} className="mt-8 bg-slate-800 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-xl">← Try Another Search</button>
                                             </div>
-                                            <div className="flex flex-col w-full md:w-1/4 gap-0.5">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Layers size={10} className="text-primary" /> Time</span>
-                                                <span className="text-sm font-bold text-gray-500 uppercase">{row.examTime}</span>
-                                            </div>
-                                        </div>
-                                    )) : (
-                                        <div className="bg-white p-16 rounded-[32px] text-center border-2 border-dashed border-slate-200">
-                                            <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No schedule found for this selection.</p>
-                                            <button onClick={reset} className="mt-6 text-primary font-black text-xs uppercase tracking-widest hover:underline">← Try Again</button>
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                    </div>
+                                )}
                             </motion.div>
                         )}
                     </AnimatePresence>

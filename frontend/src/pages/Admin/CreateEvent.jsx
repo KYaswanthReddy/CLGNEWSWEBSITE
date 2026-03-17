@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createEvent, updateEvent, getEvents } from '../../services/api';
-import { Layout, Calendar, Type, FileText, Upload, ChevronLeft, Save } from 'lucide-react';
+import api, { createEvent, updateEvent, getEvents } from '../../services/api';
+import { Layout, Calendar, Type, FileText, Upload, ChevronLeft, Save, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const CreateEvent = () => {
@@ -12,7 +12,7 @@ const CreateEvent = () => {
     const [formData, setFormData] = useState({
         eventType: 'event',
         subcategory: '',
-        eventName: '',
+        eventTitle: '',
         date: '',
         month: 'January',
         year: new Date().getFullYear(),
@@ -22,30 +22,45 @@ const CreateEvent = () => {
 
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
+    const [sportsTypes, setSportsTypes] = useState([]);
+    const [clubTypes, setClubTypes] = useState([]);
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    const sportsSubcategories = [
-        'Cricket', 'Basketball', 'Kabaddi', 'Badminton', 'Throwball', 'Kho-Kho', 'Running', 'Volleyball'
-    ];
-
-    const clubsSubcategories = [
-        'Pixel Club', 'Cultural Club', 'Technical Club', 'Graphic Design Club', 'Innovation Club', 'Coding Club', 'Sports Club', 'Artix Club', 'Inauguration Club'
-    ];
-
     useEffect(() => {
+        const fetchTypes = async () => {
+            try {
+                const [sRes, cRes] = await Promise.all([
+                    api.get('/sport-types'),
+                    api.get('/club-types')
+                ]);
+                setSportsTypes(sRes.data || []);
+                setClubTypes(cRes.data || []);
+            } catch (err) {
+                console.error('Error fetching types:', err);
+            }
+        };
+        fetchTypes();
+
         if (isEdit) {
             const fetchEvent = async () => {
                 try {
-                    const { data } = await getEvents();
-                    const event = data.find(e => e._id === id);
+                    const { data } = await getEvents({ type: 'ALL' });
+                    // Handle paginated or direct array response
+                    const eventList = Array.isArray(data) ? data : (data.events || []);
+                    const event = eventList.find(e => e._id === id);
                     if (event) {
+                        const ed = new Date(event.eventDate);
                         setFormData({
                             ...event,
-                            image: null // Don't try to set binary image from existing data
+                            eventTitle: event.eventTitle || event.eventName,
+                            date: ed.getDate(),
+                            month: months[ed.getMonth()],
+                            year: ed.getFullYear(),
+                            image: null
                         });
                     }
                 } catch (err) {
@@ -62,14 +77,29 @@ const CreateEvent = () => {
         e.preventDefault();
         setLoading(true);
 
+        const monthIndex = months.indexOf(formData.month);
+        const eventDate = new Date(formData.year, monthIndex, formData.date);
+        
+        const jsonFields = ['matches', 'teams', 'activities', 'achievements', 'socialLinks', 'images'];
         const data = new FormData();
         Object.keys(formData).forEach(key => {
+            // Skip metadata and explicitly handled fields
+            if (['_id', '__v', 'createdAt', 'updatedAt', 'eventDate', 'image', 'date', 'month', 'year'].includes(key)) return;
+
             if (key === 'subcategory' && formData.eventType === 'event') {
-                data.append(key, '');
-            } else if (formData[key] !== null) {
+                data.append(key, 'general');
+            } else if (jsonFields.includes(key)) {
+                data.append(key, JSON.stringify(formData[key] || (key === 'socialLinks' ? {} : [])));
+            } else if (formData[key] !== null && formData[key] !== undefined) {
                 data.append(key, formData[key]);
             }
         });
+        
+        if (formData.image instanceof File) {
+            data.append('image', formData.image);
+        }
+        
+        data.append('eventDate', eventDate.toISOString());
 
         try {
             if (isEdit) {
@@ -127,32 +157,38 @@ const CreateEvent = () => {
                                 <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center gap-2">
                                     <Layout size={14} className="text-primary" /> Subcategory
                                 </label>
-                                <select
-                                    required
-                                    className="bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/20 transition-all appearance-none"
-                                    value={formData.subcategory}
-                                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                                >
-                                    <option value="" disabled>Select {formData.eventType === 'sports' ? 'Sport' : 'Club'}</option>
-                                    {(formData.eventType === 'sports' ? sportsSubcategories : clubsSubcategories).map(sub => (
-                                        <option key={sub} value={sub}>{sub}</option>
-                                    ))}
-                                </select>
+                                {(formData.eventType === 'sports' ? sportsTypes : clubTypes).length > 0 ? (
+                                    <select
+                                        required
+                                        className="bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/20 transition-all appearance-none"
+                                        value={formData.subcategory}
+                                        onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                                    >
+                                        <option value="" disabled>Select {formData.eventType === 'sports' ? 'Sport' : 'Club'}</option>
+                                        {(formData.eventType === 'sports' ? sportsTypes : clubTypes).map(sub => (
+                                            <option key={sub._id} value={sub.name}>{sub.name}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <div className="flex items-center gap-3 p-5 bg-amber-50 border border-amber-100 rounded-2xl text-amber-600 font-bold text-sm">
+                                        <AlertCircle size={18} />
+                                        ⚠ No data available. Please create first.
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
-                        {/* Event Name */}
                         <div className="flex flex-col gap-3 md:col-span-2">
                             <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center gap-2">
-                                <FileText size={14} className="text-primary" /> Event Name
+                                <FileText size={14} className="text-primary" /> Event Title
                             </label>
                             <input
                                 type="text"
                                 required
                                 placeholder="e.g., Annual Tech Fest 2024"
                                 className="bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/20 transition-all"
-                                value={formData.eventName}
-                                onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
+                                value={formData.eventTitle}
+                                onChange={(e) => setFormData({ ...formData, eventTitle: e.target.value })}
                             />
                         </div>
 
@@ -238,8 +274,8 @@ const CreateEvent = () => {
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="flex-[2] bg-primary text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                            disabled={loading || (formData.eventType !== 'event' && (formData.eventType === 'sports' ? sportsTypes : clubTypes).length === 0)}
+                            className="flex-[2] bg-primary text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:hover:scale-100"
                         >
                             {loading ? (
                                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

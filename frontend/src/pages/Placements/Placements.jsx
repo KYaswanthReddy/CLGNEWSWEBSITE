@@ -1,183 +1,162 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Briefcase, Building, TrendingUp, Download, PieChart, Users, CheckCircle, ChevronRight, ArrowLeft, ArrowRight, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { Briefcase, GraduationCap, ChevronRight, Building, MapPin, Users, Target, Rocket, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getAchievements } from '../../services/api';
+import { useState, useEffect } from 'react';
 
 const Placements = () => {
-    const stats = [
-        { label: 'Highest Package', value: '45 LPA', icon: TrendingUp },
-        { label: 'Average Package', value: '8.5 LPA', icon: Briefcase },
-        { label: 'Campus Drives', value: '150+', icon: Building },
-        { label: 'Placement Rate', value: '96%', icon: PieChart },
-    ];
+    const [achievements, setAchievements] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const recentPlacements = [
-        { name: 'Aditya Singh', company: 'Google', role: 'SWE Intern', package: '1.2L PM' },
-        { name: 'Priya Verma', company: 'Microsoft', role: 'Support Engineer', package: '18 LPA' },
-        { name: 'Kushal Reddy', company: 'Amazon', role: 'Cloud Associate', package: '22 LPA' },
-        { name: 'Sakshi Gupta', company: 'Texas Instruments', role: 'Analog Engineer', package: '24 LPA' },
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await getAchievements({ type: 'placements' });
+                setAchievements(res.data || []);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+    const categories = [
+        {
+            title: "Internships",
+            description: "Kickstart your career with hands-on experience at top companies. Explore summer and long-term internship opportunities.",
+            icon: <GraduationCap size={40} />,
+            link: "/placements/internships",
+            color: "from-emerald-400 to-cyan-500",
+            stats: "200+ Active Roles",
+            tag: "Learning"
+        },
+        {
+            title: "Full-Time Jobs",
+            description: "Direct campus placement opportunities with industry leaders. Secure your future with competitive packages and roles.",
+            icon: <Briefcase size={40} />,
+            link: "/placements/jobs",
+            color: "from-primary to-indigo-600",
+            stats: "50+ Top Recruiters",
+            tag: "Career"
+        }
     ];
 
     return (
-        <div className="flex flex-col gap-24 pb-32">
-            {/* Placement Header Banner */}
-            <section className="bg-primary py-24 md:py-40 relative overflow-hidden">
-                {/* Abstract background shapes */}
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px] -mr-[200px] -mt-[200px]" />
-                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-400/10 rounded-full blur-[80px] -ml-[100px] -mb-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-16">
-                    <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="max-w-2xl flex flex-col gap-8">
-                        <div className="flex items-center gap-3 text-blue-200 font-bold uppercase text-xs tracking-widest">
-                            <Building size={16} /> Placement & Career Center
-                        </div>
-                        <h1 className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter">
-                            ELEVATE YOUR <span className="text-blue-400">CAREER</span>
+        <div className="min-h-screen bg-slate-50">
+            {/* Hero Section */}
+            <div className="bg-slate-900 text-white py-24 px-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/20 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-blue-500/10 blur-[100px] rounded-full -translate-x-1/2 translate-y-1/2"></div>
+                
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col gap-6 text-center lg:text-left lg:max-w-2xl"
+                    >
+                        <span className="text-primary font-black uppercase tracking-[5px] text-xs">Career Gateway</span>
+                        <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight">
+                            Your Future <br/> Starts <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Here.</span>
                         </h1>
-                        <p className="text-lg text-blue-50/70 font-medium leading-relaxed max-w-xl">
-                            Bridging the gap between academic brilliance and industry standards. Access the latest internship drives, recruitment news, and career counseling directly from the cell.
+                        <p className="text-slate-400 font-medium text-lg md:text-xl">
+                            The official Placement and Internship Portal of RGUKT Ongole. Connecting talented students with world-class opportunities.
                         </p>
-                        <div className="flex flex-wrap gap-6 pt-4">
-                            <button className="bg-white text-primary px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl hover:-translate-y-2 transition-all">
-                                View New Opportunities
-                            </button>
-                            <button className="px-10 py-5 border border-white/20 bg-white/5 backdrop-blur-md rounded-2xl text-white font-bold uppercase text-xs tracking-widest hover:bg-white hover:text-primary transition-all">
-                                <Download size={18} className="inline-block mr-2" /> Placement Brochure
-                            </button>
-                        </div>
                     </motion.div>
-
-                    <div className="grid grid-cols-2 gap-6 w-full md:w-auto">
-                        {stats.map((stat, i) => (
-                            <div key={i} className="bg-white/10 backdrop-blur-lg border border-white/10 p-8 rounded-3xl flex flex-col gap-4 text-white shadow-xl hover:bg-white/15 transition-all cursor-default">
-                                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
-                                    <stat.icon className="w-5 h-5 text-blue-300" />
-                                </div>
-                                <div>
-                                    <div className="text-3xl font-black leading-none">{stat.value}</div>
-                                    <div className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mt-1 opacity-70">{stat.label}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </div>
-            </section>
+            </div>
 
-            {/* Navigation Cards: Internships & Jobs */}
-            <section className="max-w-7xl mx-auto px-6 w-full -mt-24 relative z-20">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <Link to="/placements/internships" className="bg-white p-12 rounded-[56px] shadow-2xl border-4 border-slate-50 flex flex-col items-center justify-center gap-8 group hover:bg-slate-900 transition-all duration-700 min-h-[350px]">
-                        <div className="w-20 h-20 bg-emerald-500 rounded-[32px] flex items-center justify-center text-white shadow-xl group-hover:rotate-12 transition-transform">
-                            <TrendingUp size={40} />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-4xl font-black text-gray-800 group-hover:text-white transition-colors tracking-tighter uppercase">Internships</h3>
-                            <p className="text-gray-400 font-medium group-hover:text-blue-100/60 transition-colors uppercase text-[10px] tracking-widest mt-2 font-bold">Latest Summer & Winter Drives</p>
-                        </div>
-                        <div className="flex items-center gap-3 text-emerald-500 group-hover:text-white font-black uppercase text-[10px] tracking-widest">
-                            Explore Roles <ChevronRight size={16} />
-                        </div>
-                    </Link>
-
-                    <Link to="/placements/jobs" className="bg-white p-12 rounded-[56px] shadow-2xl border-4 border-slate-50 flex flex-col items-center justify-center gap-8 group hover:bg-primary transition-all duration-700 min-h-[350px]">
-                        <div className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center text-white shadow-xl group-hover:rotate-12 transition-transform">
-                            <Briefcase size={40} />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-4xl font-black text-gray-800 group-hover:text-white transition-colors tracking-tighter uppercase">Full-Time Jobs</h3>
-                            <p className="text-gray-400 font-medium group-hover:text-blue-100/60 transition-colors uppercase text-[10px] tracking-widest mt-2 font-bold">Elite Recruitments & Referrals</p>
-                        </div>
-                        <div className="flex items-center gap-3 text-primary group-hover:text-white font-black uppercase text-[10px] tracking-widest">
-                            Explore Roles <ChevronRight size={16} />
-                        </div>
-                    </Link>
-                </div>
-            </section>
-
-            {/* Main Content Areas */}
-            <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 w-full">
-
-                {/* Left: Companies & Recent Hires */}
-                <div className="lg:col-span-8 flex flex-col gap-16">
-                    <div className="flex flex-col gap-6">
-                        <h2 className="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-4">
-                            <span className="w-10 h-1.5 bg-primary rounded-full" />
-                            Hall of Success
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {recentPlacements.map((hire, i) => (
-                                <div key={i} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-6 group hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-150 transition-transform">
-                                        <Building size={64} />
-                                    </div>
-                                    <div className="w-20 h-20 bg-primary/5 rounded-2xl flex-shrink-0 flex items-center justify-center border-2 border-primary/10 group-hover:bg-primary transition-colors">
-                                        <Users size={32} className="text-primary group-hover:text-white transition-colors" />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <h4 className="text-xl font-bold text-gray-800 group-hover:text-primary transition-colors">{hire.name}</h4>
-                                        <p className="text-xs text-primary font-black uppercase tracking-widest">{hire.company}</p>
-                                        <div className="flex items-center gap-3 mt-2">
-                                            <span className="text-[10px] bg-slate-100 text-gray-400 px-3 py-1 rounded-full font-bold uppercase">{hire.role}</span>
-                                            <span className="text-[10px] bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full font-bold uppercase">{hire.package}</span>
+            {/* Selection Cards */}
+            <div className="max-w-7xl mx-auto px-6 -mt-16 pb-24 relative z-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {categories.map((cat, idx) => (
+                        <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.2 }}
+                        >
+                            <Link to={cat.link} className="group block h-full">
+                                <div className="bg-white rounded-[40px] p-10 shadow-2xl border border-slate-100 h-full flex flex-col justify-between hover:shadow-primary/10 transition-all duration-500 relative overflow-hidden">
+                                    <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-bl-[100px]`}></div>
+                                    
+                                    <div>
+                                        <div className={`w-20 h-20 bg-gradient-to-br ${cat.color} rounded-3xl flex items-center justify-center text-white shadow-lg mb-8 group-hover:scale-110 transition-transform duration-500`}>
+                                            {cat.icon}
                                         </div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-3 py-1 rounded-full">{cat.tag}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{cat.stats}</span>
+                                        </div>
+                                        <h2 className="text-4xl font-black text-slate-800 mb-4 group-hover:text-primary transition-colors">{cat.title}</h2>
+                                        <p className="text-slate-500 text-lg leading-relaxed mb-8">{cat.description}</p>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest group-hover:gap-5 transition-all">
+                                        Explore Opportunities <ChevronRight size={18} />
                                     </div>
                                 </div>
+                            </Link>
+                        </motion.div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-16">
+                    {[
+                        { icon: <Building size={20}/>, label: "Partner Companies", val: "150+" },
+                        { icon: <Users size={20}/>, label: "Placed Students", val: "1200+" },
+                        { icon: <Target size={20}/>, label: "Placement Rate", val: "94%" },
+                        { icon: <Rocket size={20}/>, label: "Avg Package", val: "6.5 LPA" }
+                    ].map((stat, i) => (
+                        <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary">{stat.icon}</div>
+                            <div>
+                                <h4 className="text-xl font-black text-slate-800">{stat.val}</h4>
+                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{stat.label}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Achievements section */}
+                <div className="mt-24 flex flex-col gap-10">
+                    <div className="flex flex-col gap-2">
+                        <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter italic flex items-center gap-4">
+                            <Award className="text-emerald-500 w-10 h-10" /> Success Stories
+                        </h3>
+                        <div className="h-1.5 w-24 bg-emerald-500 rounded-full" />
+                    </div>
+
+                    {achievements.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {achievements.slice(0, 3).map((ach) => (
+                                <Link to={`/achievements/${ach._id}`} key={ach._id} className="bg-white p-6 rounded-[48px] shadow-xl shadow-slate-200/20 border border-slate-100 flex flex-col gap-6 group hover:-translate-y-2 transition-all duration-500">
+                                    <div className="h-48 rounded-[40px] overflow-hidden relative">
+                                        {ach.cardImage ? (
+                                            <img src={`http://localhost:5000${ach.cardImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="Victory" />
+                                        ) : (
+                                            <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                                                <Award size={48} className="text-slate-200" />
+                                            </div>
+                                        )}
+                                        <div className="absolute top-4 right-4 bg-emerald-500 text-white px-5 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">{ach.year}</div>
+                                    </div>
+                                    <div className="px-4 pb-4">
+                                        <h4 className="text-xl font-black text-slate-800 uppercase tracking-tight leading-tight group-hover:text-primary transition-colors italic line-clamp-2">{ach.title}</h4>
+                                        <p className="text-slate-400 text-[10px] font-bold mt-3 leading-relaxed line-clamp-2 italic">"{ach.description}"</p>
+                                    </div>
+                                </Link>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Placement Policy */}
-                    <div className="bg-slate-900 p-12 rounded-[40px] text-white flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-blue-600/10 pointer-events-none" />
-                        <div className="flex flex-col gap-6 relative z-10 max-w-xl">
-                            <h3 className="text-3xl font-black tracking-tight leading-none">The TPO Policy & Guidelines</h3>
-                            <p className="text-blue-100/60 font-medium leading-relaxed">Ensure you meet all eligibility criteria before applying. Download the 2024-25 Placement Handbook for detailed guidelines on the recruitment process.</p>
-                            <div className="flex gap-4">
-                                <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
-                                    <CheckCircle size={16} /> Eligible Students
-                                </div>
-                                <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
-                                    <CheckCircle size={16} /> Resume Certified
-                                </div>
-                            </div>
+                    ) : (
+                        <div className="p-20 bg-white rounded-[48px] border-2 border-dashed border-slate-100 flex flex-col items-center gap-4 text-center">
+                            <Award className="text-slate-200 w-12 h-12" />
+                            <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Our placement records are being updated...</p>
                         </div>
-                        <button className="relative z-10 bg-white text-primary px-8 py-4 rounded-xl font-bold uppercase text-xs tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                            Download Handbook
-                        </button>
-                    </div>
+                    )}
                 </div>
-
-                {/* Right Sidebar: Key Contacts & Deadlines */}
-                <div className="lg:col-span-4 flex flex-col gap-10">
-                    <div className="flex flex-col gap-10">
-                        <div className="flex flex-col gap-6">
-                            <h3 className="text-2xl font-black text-gray-800 tracking-tight">Recruitment Schedule</h3>
-                            <div className="flex flex-col gap-4">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="flex gap-6 p-6 bg-white border border-slate-100 rounded-3xl group cursor-pointer hover:border-primary/20 transition-all">
-                                        <div className="text-center bg-slate-50 p-3 rounded-2xl w-16 group-hover:bg-primary/5 transition-colors">
-                                            <span className="block text-xl font-black text-primary">2{i}</span>
-                                            <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest">MAR</span>
-                                        </div>
-                                        <div className="flex flex-col justify-center">
-                                            <h4 className="font-bold text-gray-800 text-md">Accenture Pre-Placement</h4>
-                                            <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">Main Seminar Hall • 10:00 AM</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="bg-primary/5 p-10 rounded-[40px] border border-primary/10 flex flex-col gap-8">
-                            <h3 className="text-xl font-black text-primary tracking-tight">Counseling Sessions</h3>
-                            <p className="text-sm text-gray-500 font-medium leading-relaxed">Book a 1-on-1 session with our career experts to refine your resume and prepare for technical interviews.</p>
-                            <button className="bg-primary text-white w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
-                                Book an Appointment
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </div>
         </div>
     );
 };

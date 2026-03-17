@@ -19,7 +19,7 @@ const ManageEvents = () => {
         try {
             setLoading(true);
             const { data } = await getEvents();
-            setEvents(data);
+            setEvents(data.events || []);
         } catch (err) {
             console.error(err);
         } finally {
@@ -40,7 +40,8 @@ const ManageEvents = () => {
     };
 
     const filteredEvents = events.filter(event => {
-        const matchesSearch = event.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const title = event.eventTitle || event.eventName || '';
+        const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (event.subcategory && event.subcategory.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesType = filterType === 'all' || event.eventType === filterType;
         return matchesSearch && matchesType;
@@ -123,7 +124,7 @@ const ManageEvents = () => {
                                 <div className="h-64 w-full overflow-hidden relative">
                                     <img
                                         src={event.image ? (event.image.startsWith('http') ? event.image : `http://localhost:5000${event.image}`) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2670&auto=format&fit=crop'}
-                                        alt={event.eventName}
+                                        alt={event.eventTitle || event.eventName}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                                     />
                                     <div className="absolute top-6 right-6 flex flex-col gap-2 scale-0 group-hover:scale-100 transition-transform duration-300 origin-top-right">
@@ -143,9 +144,9 @@ const ManageEvents = () => {
                                 <div className="p-10 flex flex-col gap-6 flex-1">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2 text-primary font-black uppercase text-[9px] tracking-widest">
-                                            <Calendar size={12} /> {event.date} {event.month}, {event.year}
+                                            <Calendar size={12} /> {event.eventDate ? new Date(event.eventDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'No Date Set'}
                                         </div>
-                                        <h3 className="text-2xl font-black text-slate-800 leading-tight group-hover:text-primary transition-colors">{event.eventName}</h3>
+                                        <h3 className="text-2xl font-black text-slate-800 leading-tight group-hover:text-primary transition-colors">{event.eventTitle || event.eventName}</h3>
                                     </div>
 
                                     {event.subcategory && (

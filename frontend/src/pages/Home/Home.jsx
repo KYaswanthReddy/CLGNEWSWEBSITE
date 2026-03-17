@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Carousel from '../../components/Carousel';
 import Card from '../../components/Card';
 import NewsTicker from '../../components/NewsTicker';
 import { NavLink, Link } from 'react-router-dom';
+import { getSportEvents, getEvents, getClubTypes } from '../../services/api';
 import {
     Trophy,
     Briefcase,
@@ -21,6 +22,57 @@ import {
 import { motion } from 'framer-motion';
 
 const Home = () => {
+    const [sportsHighlights, setSportsHighlights] = useState([]);
+    const [events, setEvents] = useState([]);
+    const [featuredClub, setFeaturedClub] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchHomeData = async () => {
+            try {
+                setLoading(true);
+                const [sportsRes, eventsRes, clubsRes] = await Promise.all([
+                    getSportEvents({ limit: 4 }),
+                    getEvents({ type: 'ALL', limit: 3 }),
+                    getClubTypes()
+                ]);
+
+                // Sports Highlights
+                const formattedSports = (sportsRes.data.events || []).map(ev => ({
+                    title: ev.eventTitle,
+                    date: new Date(ev.eventDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                    author: 'Sports Dept',
+                    image: (ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`,
+                    description: ev.description || ev.eventDescription,
+                    id: ev._id,
+                    subcategory: ev.subcategory || ev.sportType
+                }));
+                setSportsHighlights(formattedSports);
+
+                // Upcoming Events
+                const formattedEvents = (eventsRes.data.events || [])
+                    .filter(ev => ev.eventDate && ev.eventTitle)
+                    .map(ev => ({
+                        ...ev,
+                        jsDate: new Date(ev.eventDate)
+                    }))
+                    .filter(ev => !isNaN(ev.jsDate.getTime()))
+                    .slice(0, 3);
+                setEvents(formattedEvents);
+
+                // Featured Club (Just picking the first/technical one if available)
+                if (clubsRes.data && clubsRes.data.length > 0) {
+                    setFeaturedClub(clubsRes.data[0]);
+                }
+            } catch (err) {
+                console.error('Error fetching home data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchHomeData();
+    }, []);
+
     const carouselItems = [
         {
             title: "Annual Sports Meet 2024",
@@ -38,62 +90,6 @@ const Home = () => {
             link: "/placements",
             date: "Ongoing · 2024"
         },
-        {
-            title: "Mid Semester Examinations",
-            description: "E1–E4 mid-term schedules are out. Check your branch-wise timetable, seating arrangements and hall tickets.",
-            image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=2670&auto=format&fit=crop",
-            category: "Exams",
-            link: "/exams",
-            date: "April 08–15, 2024"
-        },
-        {
-            title: "Global Tech Symposium",
-            description: "Industry leaders and researchers converge to discuss AI, robotics and sustainability at our campus innovation forum.",
-            image: "https://images.unsplash.com/photo-1540575861501-7cf05a4b125a?q=80&w=2670&auto=format&fit=crop",
-            category: "Events",
-            link: "/events",
-            date: "April 05, 2024"
-        },
-        {
-            title: "Student Achievements 2024",
-            description: "Our students win national hackathons, publish research papers, and represent India at international olympiads.",
-            image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2670&auto=format&fit=crop",
-            category: "Achievements",
-            link: "/achievements",
-            date: "Updated Monthly"
-        },
-        {
-            title: "Pixel Club — Digital Art Expo",
-            description: "The Pixel Club annual art exhibition — 120+ digital and traditional artworks from students across all branches.",
-            image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2671&auto=format&fit=crop",
-            category: "Clubs",
-            link: "/clubs/pixel",
-            date: "May 10, 2024"
-        },
-        {
-            title: "Coding Club — Hackathon 3.0",
-            description: "48-hour competitive programming marathon. Build, code and compete for prizes worth ₹2 lakhs with 250+ participants.",
-            image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2670&auto=format&fit=crop",
-            category: "Clubs",
-            link: "/clubs/coding",
-            date: "May 10–12, 2024"
-        },
-        {
-            title: "Artika 2024 — Cultural Fest",
-            description: "Three days of music, dance, theatre and street art. The biggest cultural celebration at RGUKT Ongole.",
-            image: "https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=2574&auto=format&fit=crop",
-            category: "Cultural",
-            link: "/clubs/cultural",
-            date: "March 25–27, 2024"
-        },
-        {
-            title: "Innovation Club — Startup Pitch",
-            description: "Student founders pitch their MVPs to angel investors. 12 startups born at RGUKT Ongole are now live products.",
-            image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=2670&auto=format&fit=crop",
-            category: "Innovation",
-            link: "/clubs/innovation",
-            date: "April 15, 2024"
-        },
     ];
 
     const categoryCards = [
@@ -103,23 +99,6 @@ const Home = () => {
         { title: 'Upcoming Events', description: 'Workshops, hackathons, and cultural fests calendar.', link: '/events', icon: Rocket, color: 'bg-purple-500', img: 'https://images.unsplash.com/photo-1540575861501-7cf05a4b125a?q=80&w=2670&auto=format&fit=crop' },
         { title: 'Achievements', description: 'Celebrating academic and co-curricular excellence.', link: '/achievements', icon: Award, color: 'bg-amber-500', img: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2670&auto=format&fit=crop' },
         { title: 'Campus Clubs', description: 'Join creative, technical, and sports-oriented clubs.', link: '/clubs', icon: Users, color: 'bg-rose-500', img: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2574&auto=format&fit=crop' },
-    ];
-
-    const sportsHighlights = [
-        {
-            title: 'Inter-College Cricket Victory',
-            date: 'Mar 05, 2024',
-            author: 'Sports Dept',
-            image: 'https://images.unsplash.com/photo-1531415074968-036ba1b565da?q=80&w=2667&auto=format&fit=crop',
-            description: 'The college cricket team secured a thrilling victory in the finals against NIT Delhi by 25 runs. Man of the match was Aryan Sharma with 85 runs.'
-        },
-        {
-            title: 'Women\'s Basketball Runner Up',
-            date: 'Feb 28, 2024',
-            author: 'Sports Dept',
-            image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=2690&auto=format&fit=crop',
-            description: 'Our women basketball team displayed exceptional skill and reached the state-level finals, securing the silver trophy.'
-        }
     ];
 
     return (
@@ -204,7 +183,6 @@ const Home = () => {
                                     variant="simple"
                                     title={cat.title}
                                     description={cat.description}
-                                    link={cat.link}
                                     image={cat.img}
                                 >
                                     <div className={`w-12 h-12 ${cat.color} rounded-lg flex items-center justify-center text-white relative z-10`}>
@@ -239,7 +217,9 @@ const Home = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        {sportsHighlights.map((news, idx) => (
+                        {loading ? (
+                             <div className="col-span-2 text-center text-white/20 font-black uppercase tracking-widest">Warming up the arena...</div>
+                        ) : sportsHighlights.map((news, idx) => (
                             <Card
                                 key={idx}
                                 title={news.title}
@@ -247,7 +227,7 @@ const Home = () => {
                                 author={news.author}
                                 image={news.image}
                                 description={news.description}
-                                link="/sports/highlights"
+                                link={`/sports/${(news.subcategory || news.sportType)?.toLowerCase()?.replace(/\s+/g, '-')}/${news.id}`}
                                 badge="MATCH REPORT"
                                 index={idx}
                             />
@@ -264,22 +244,29 @@ const Home = () => {
                         <h3 className="text-3xl font-black text-gray-800 tracking-tight">Upcoming Events</h3>
                         <p className="text-gray-500 font-medium">Don't miss out on campus life excitement.</p>
                     </div>
-
                     <div className="flex flex-col gap-6">
-                        {[1, 2, 3].map((item) => (
-                            <div key={item} className="flex gap-6 group cursor-pointer bg-white p-6 rounded-3xl border border-slate-100 hover:border-primary/20 hover:shadow-xl transition-all duration-500">
+                        {events.length > 0 ? events.map((ev) => (
+                            <Link 
+                                to={ev.eventType === 'sports' ? `/sports/${(ev.subcategory || ev.sportType)?.toLowerCase()?.replace(/\s+/g, '-')}/${ev._id}` : ev.eventType === 'clubs' ? `/clubs/${(ev.subcategory || ev.clubName)?.toLowerCase().replace(/\s+/g, '-')}` : `/events/${ev._id}`} 
+                                key={ev._id} 
+                                className="flex gap-6 group cursor-pointer bg-white p-6 rounded-3xl border border-slate-100 hover:border-primary/20 hover:shadow-xl transition-all duration-500"
+                            >
                                 <div className="flex flex-col items-center justify-center w-20 h-20 bg-primary/5 rounded-2xl group-hover:bg-primary transition-colors border-2 border-primary/10">
-                                    <span className="text-2xl font-black text-primary group-hover:text-white">1{item}</span>
-                                    <span className="text-[10px] font-bold text-primary group-hover:text-white uppercase tracking-widest">MAR</span>
+                                    <span className="text-2xl font-black text-primary group-hover:text-white">{ev.jsDate.getDate()}</span>
+                                    <span className="text-[10px] font-bold text-primary group-hover:text-white uppercase tracking-widest">{ev.jsDate.toLocaleDateString('en-US', { month: 'short' })}</span>
                                 </div>
                                 <div className="flex flex-col justify-center gap-1">
-                                    <h4 className="text-lg font-bold text-gray-800 group-hover:text-primary transition-colors">Tech Summit 2024</h4>
+                                    <h4 className="text-lg font-bold text-gray-800 group-hover:text-primary transition-colors">{ev.eventTitle}</h4>
                                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} className="text-primary" /> Auditorium A1
+                                        <Calendar size={12} className="text-primary" /> {ev.eventType} • Campus Arena
                                     </p>
                                 </div>
+                            </Link>
+                        )) : (
+                            <div className="p-10 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 text-center text-slate-300 font-black uppercase text-[10px] tracking-widest">
+                                Catching up with calendar...
                             </div>
-                        ))}
+                        )}
                     </div>
                     <Link to="/events" className="mt-4 flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest group">
                         View Full Calendar <ChevronRight className="group-hover:translate-x-2 transition-transform" />
@@ -298,13 +285,20 @@ const Home = () => {
                                 <Users size={32} />
                             </div>
                             <div>
-                                <h3 className="text-4xl font-black leading-tight mb-4 tracking-tighter">Join the Pixel Creative Club</h3>
-                                <p className="text-blue-100/80 font-medium leading-relaxed">Discover your artistic potential with our video editing and graphic design workshops.</p>
+                                <h3 className="text-4xl font-black leading-tight mb-4 tracking-tighter">
+                                    {featuredClub ? `Join the ${featuredClub.name}` : 'Explore Campus Clubs'}
+                                </h3>
+                                <p className="text-blue-100/80 font-medium leading-relaxed">
+                                    {featuredClub ? featuredClub.description : 'Discover your potential with our creative, technical, and sports-oriented organizations.'}
+                                </p>
                             </div>
                         </div>
-                        <button className="relative z-10 mt-auto bg-white text-primary px-8 py-4 rounded-xl font-bold uppercase text-xs tracking-widest hover:-translate-y-2 transition-all shadow-xl">
+                        <Link 
+                            to={featuredClub ? `/clubs/${featuredClub.name.toLowerCase().replace(/\s+/g, '-')}` : '/clubs'} 
+                            className="relative z-10 mt-auto bg-white text-primary px-8 py-4 rounded-xl font-bold uppercase text-xs tracking-widest hover:-translate-y-2 transition-all shadow-xl text-center"
+                        >
                             Explore Club
-                        </button>
+                        </Link>
                     </div>
 
                     {/* Achievement Preview */}
