@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Menu, X, User, LogOut, Search, Bell, ChevronDown, Mail, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Menu, X, User, LogOut, Search, Bell, ChevronDown, Mail, ShieldCheck, ChevronRight, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { getSportTypes, getClubTypes, getBranding } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -9,6 +10,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const { user, logout, isAdmin, isAuthenticated } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
 
     // Close dropdown on outside click
@@ -72,24 +74,10 @@ const Navbar = () => {
 
     return (
         <nav className="fixed w-full z-50 transition-all duration-300">
-            {/* Top Banner */}
-            <div className="bg-primary text-white py-2 px-4 shadow-md hidden md:block">
-                <div className="max-w-7xl mx-auto flex justify-between items-center text-xs font-medium">
-                    <div className="flex gap-4">
-                        <span className="flex items-center gap-1 hover:text-blue-200 cursor-pointer">
-                            Official News Portal
-                        </span>
-                    </div>
-                    <div className="flex gap-4 items-center">
-                        <Search className="w-3.5 h-3.5" />
-                        <Bell className="w-3.5 h-3.5" />
-                        <span className="cursor-pointer hover:text-blue-200 uppercase">Contact Support</span>
-                    </div>
-                </div>
-            </div>
+
 
             {/* Main Navbar */}
-            <div className="bg-white/90 backdrop-blur-md shadow-lg border-b border-primary/10">
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-lg border-b border-primary/10 dark:border-slate-800 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     <div className="flex justify-between items-center h-20">
                         {/* Logo */}
@@ -169,7 +157,11 @@ const Navbar = () => {
                                 </div>
                             ))}
 
-                            <div className="h-6 w-px bg-gray-200 mx-2" />
+                            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2" />
+
+                            <button onClick={toggleTheme} className="p-2 mr-2 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                            </button>
 
                             {isAuthenticated ? (
                                 <div className="flex items-center gap-3">

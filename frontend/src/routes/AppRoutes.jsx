@@ -10,6 +10,8 @@ import AdminRoute from '../components/AdminRoute';
 const Home = lazy(() => import('../pages/Home/Home'));
 const Login = lazy(() => import('../pages/Auth/Login'));
 const Register = lazy(() => import('../pages/Auth/Register'));
+const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const UniversityInfo = lazy(() => import('../pages/About/UniversityInfo'));
 const ExamHome = lazy(() => import('../pages/ExamSchedule/ScheduleTemplate'));
 
@@ -81,6 +83,8 @@ const AppRoutes = () => {
                     <Route index element={<Home />} />
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route path="reset-password/:token" element={<ResetPassword />} />
                     <Route path="about" element={<UniversityInfo />} />
 
                     {/* Sports Routes */}

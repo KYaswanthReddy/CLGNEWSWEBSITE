@@ -23,8 +23,25 @@ const userSchema = mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ['student', 'admin'],
-      default: 'student',
+      enum: ['student', 'visitor', 'admin'],
+      default: 'visitor',
+    },
+    isVerified: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    otp: {
+      type: String,
+    },
+    otpExpiry: {
+      type: Date,
+    },
+    resetToken: {
+      type: String,
+    },
+    resetTokenExpiry: {
+      type: Date,
     },
   },
   {

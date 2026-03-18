@@ -5,6 +5,9 @@ import {
   registerUser,
   loginUser,
   adminLogin,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
 } from '../controllers/authController.js';
 
 router.post(
@@ -40,6 +43,23 @@ router.post(
     check('password', 'Password is required').exists(),
   ],
   adminLogin
+);
+
+router.post('/verify', verifyEmail);
+
+router.post(
+  '/forgot-password',
+  [check('email', 'Please include a valid email').isEmail()],
+  forgotPassword
+);
+
+router.post(
+  '/reset-password/:token',
+  [
+    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+    check('otp', 'OTP is required').exists(),
+  ],
+  resetPassword
 );
 
 export default router;

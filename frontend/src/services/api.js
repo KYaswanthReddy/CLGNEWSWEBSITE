@@ -72,7 +72,10 @@ export const deleteAchievement = (id) => api.delete(`/achievements/${id}`);
 // Auth
 export const login = (credentials) => api.post('/auth/login', credentials);
 export const register = (userData) => api.post('/auth/register', userData);
+export const verifyEmail = (data) => api.post('/auth/verify', data);
 export const adminLogin = (credentials) => api.post('/auth/admin-login', credentials);
+export const forgotPassword = (data) => api.post('/auth/forgot-password', data);
+export const resetPassword = (token, data) => api.post(`/auth/reset-password/${token}`, data);
 
 // Home Carousel
 export const getHomeCarousels = () => api.get('/home-carousel');
