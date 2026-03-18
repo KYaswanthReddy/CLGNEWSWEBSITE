@@ -134,7 +134,6 @@ const Footer = () => {
                         {copyright}
                     </p>
                     <div className="flex gap-6">
-                        <Link to="/admin" className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Admin Panel</Link>
                         <a href="https://rgukt.in" target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Official Site</a>
                     </div>
                 </div>
