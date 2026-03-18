@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -50,8 +50,7 @@ export const deleteAchievement = (id) => api.delete(`/achievements/${id}`);
 
 // Chat
 export const sendChatMessage = (message) => {
-    const chatUrl = 'http://localhost:5000/api/chat';
-    return axios.post(chatUrl, { message });
+    return api.post('/chat', { message });
 };
 
 // Auth
