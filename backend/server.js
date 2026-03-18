@@ -23,7 +23,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 
 // Register the chat functionality
-app.use('/chat', chatRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'UP', message: 'Backend server is running' });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Bot, User, Sparkles, Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
+import { sendChatMessage } from '../services/api';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -99,24 +100,12 @@ const Chatbot = () => {
         setIsTyping(true);
 
         try {
-            const response = await fetch('http://localhost:5000/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: messageText }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-
-            const data = await response.json();
+            const response = await sendChatMessage(messageText);
             
             const botResponse = {
                 id: Date.now() + 1,
                 sender: 'bot',
-                text: data.reply || "Sorry, I didn't get a response.",
+                text: response.data.reply || "Sorry, I didn't get a response.",
                 timestamp: new Date()
             };
             setMessages((prev) => [...prev, botResponse]);

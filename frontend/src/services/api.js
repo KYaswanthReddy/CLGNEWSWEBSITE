@@ -48,6 +48,12 @@ export const createAchievement = (formData) => api.post('/achievements', formDat
 export const updateAchievement = (id, formData) => api.put(`/achievements/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const deleteAchievement = (id) => api.delete(`/achievements/${id}`);
 
+// Chat
+export const sendChatMessage = (message) => {
+    const chatUrl = 'http://localhost:5000/api/chat';
+    return axios.post(chatUrl, { message });
+};
+
 // Auth
 export const login = (credentials) => api.post('/auth/login', credentials);
 export const register = (userData) => api.post('/auth/register', userData);

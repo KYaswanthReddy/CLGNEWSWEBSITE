@@ -44,12 +44,13 @@ const getBuiltinReply = (incoming) => {
 };
 
 export const handleChat = async (req, res) => {
-    try {
-        const { message } = req.body;
+    const { message } = req.body;
 
-        if (!message) {
-            return res.status(400).json({ error: 'Message is required' });
-        }
+    if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+    }
+
+    try {
 
         const systemPrompt = `You are NewsBot, a friendly and energetic chatbot for RGUKT Ongole's official college news website, tailored to Gen-Z students. You are an expert on everything about the college and this website.
 
@@ -124,12 +125,20 @@ Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
         const errorMessage = error?.message || (error?.response?.data && JSON.stringify(error.response.data)) || String(error);
         const quotaExceeded = /quota|resource_exhausted|429/i.test(errorMessage);
 
+        // If the AI service is unavailable (quota or rate limits), fall back to built-in replies.
         if (quotaExceeded) {
+            const fallback = getBuiltinReply(message);
             return res.json({
-                reply: "The AI service is temporarily unavailable (quota limits reached). Please try again in a few minutes, or ask me about the website sections and I'll help based on built-in info."
+                reply: `${fallback} \n\n(⚠️ Note: AI service is currently unavailable due to quota/rate limits.)`
             });
         }
 
-        res.status(500).json({ error: "Failed to generate a response from the AI.", details: errorMessage });
+        // For all other errors, return a generic message while still providing a built-in fallback.
+        const fallback = getBuiltinReply(message);
+        return res.json({
+            error: "Failed to generate a response from the AI.",
+            details: errorMessage,
+            reply: `${fallback} \n\n(⚠️ Note: the AI backend returned an error.)`
+        });
     }
 };
