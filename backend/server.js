@@ -93,7 +93,7 @@ app.put('/api/branding/upload', upload.fields([
 });
 
 // Register the chat functionality
-app.use('/chat', chatRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'UP', message: 'Backend server is running' });
