@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Carousel from '../../components/Carousel';
+import HomeCarouselSlider from '../../components/HomeCarouselSlider';
+import UrgentMarquee from '../../components/UrgentMarquee';
 import Card from '../../components/Card';
-import NewsTicker from '../../components/NewsTicker';
+
 import { NavLink, Link } from 'react-router-dom';
-import { getSportEvents, getEvents, getClubTypes } from '../../services/api';
+import { getSportEvents, getEvents, getClubTypes, getAchievements, getBranding, getSocialMedia } from '../../services/api';
 import {
     Trophy,
     Briefcase,
@@ -17,25 +18,50 @@ import {
     TrendingUp,
     Award,
     BookOpen,
-    Info
+    Info,
+    Instagram,
+    Linkedin,
+    Twitter,
+    Youtube,
+    Facebook,
+    Globe
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const PLATFORM_MAP = {
+    instagram: Instagram,
+    linkedin: Linkedin,
+    twitter: Twitter,
+    x: Twitter,
+    youtube: Youtube,
+    facebook: Facebook,
+    website: Globe,
+    globe: Globe,
+};
 
 const Home = () => {
     const [sportsHighlights, setSportsHighlights] = useState([]);
     const [events, setEvents] = useState([]);
-    const [featuredClub, setFeaturedClub] = useState(null);
+    const [clubs, setClubs] = useState([]);
+    const [achievements, setAchievements] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [branding, setBranding] = useState(null);
+    const [socialLinks, setSocialLinks] = useState([]);
 
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
                 setLoading(true);
-                const [sportsRes, eventsRes, clubsRes] = await Promise.all([
+                const [sportsRes, eventsRes, clubsRes, achievementsRes, brandingRes, socialRes] = await Promise.all([
                     getSportEvents({ limit: 4 }),
                     getEvents({ type: 'ALL', limit: 3 }),
-                    getClubTypes()
+                    getClubTypes(),
+                    getAchievements({ limit: 4 }),
+                    getBranding(),
+                    getSocialMedia()
                 ]);
+                setBranding(brandingRes.data);
+                setSocialLinks(socialRes.data || []);
 
                 // Sports Highlights
                 const formattedSports = (sportsRes.data.events || []).map(ev => ({
@@ -60,10 +86,20 @@ const Home = () => {
                     .slice(0, 3);
                 setEvents(formattedEvents);
 
-                // Featured Club (Just picking the first/technical one if available)
-                if (clubsRes.data && clubsRes.data.length > 0) {
-                    setFeaturedClub(clubsRes.data[0]);
-                }
+                // Clubs
+                setClubs(clubsRes.data || []);
+                
+                // Achievements
+                const formattedAchievements = (achievementsRes.data.activities || achievementsRes.data || []).map(ach => ({
+                    title: ach.title,
+                    date: new Date(ach.date || ach.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                    author: ach.studentName || 'Student',
+                    image: ach.image?.startsWith('http') ? ach.image : `http://localhost:5000${ach.image}`,
+                    description: ach.description,
+                    id: ach._id,
+                    badge: ach.type || 'ACHIEVEMENT'
+                }));
+                setAchievements(formattedAchievements);
             } catch (err) {
                 console.error('Error fetching home data:', err);
             } finally {
@@ -72,25 +108,6 @@ const Home = () => {
         };
         fetchHomeData();
     }, []);
-
-    const carouselItems = [
-        {
-            title: "Annual Sports Meet 2024",
-            description: "Celebrating athleticism across cricket, basketball, volleyball and kabaddi. Over 50 competitions, 300+ student athletes competing.",
-            image: "https://images.unsplash.com/photo-1541252260730-0412e3e2104e?q=80&w=2674&auto=format&fit=crop",
-            category: "Sports",
-            link: "/sports",
-            date: "March 15–20, 2024"
-        },
-        {
-            title: "Campus Placements Drive",
-            description: "Amazon, Deloitte, Infosys and Intel visit RGUKT Ongole. 500+ students placed in top MNCs this season.",
-            image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=2574&auto=format&fit=crop",
-            category: "Placements",
-            link: "/placements",
-            date: "Ongoing · 2024"
-        },
-    ];
 
     const categoryCards = [
         { title: 'Sports', description: 'Real-time updates on cricket, basketball, and more.', link: '/sports', icon: Trophy, color: 'bg-orange-500', img: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=2670&auto=format&fit=crop' },
@@ -103,7 +120,7 @@ const Home = () => {
 
     return (
         <div className="flex flex-col gap-10">
-            {/* Branding Section */}
+            {/* Branding / Hero Identity Section */}
             <section className="bg-white mt-8 py-12 border-b border-slate-100 relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
                     <motion.div
@@ -114,7 +131,12 @@ const Home = () => {
                         {/* Left: Logo + University name (horizontal) */}
                         <div className="flex flex-row items-center gap-5">
                             <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border-4 border-red-100 bg-white shrink-0">
-                                <img src="/rgukt-logo.png" alt="RGUKT Logo" className="w-full h-full object-contain" />
+                                <img
+                                    src={branding?.logo ? (branding.logo.startsWith('http') ? branding.logo : `http://127.0.0.1:5000${branding.logo}`) : '/rgukt-logo.png'}
+                                    alt="Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => { e.target.src = '/rgukt-logo.png'; }}
+                                />
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -122,28 +144,52 @@ const Home = () => {
                                     <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Est. 2008</span>
                                 </div>
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 tracking-tighter leading-tight uppercase">
-                                    Rajiv Gandhi University of <span className="text-red-600">Knowledge Technologies</span>, Ongole
+                                    {branding?.heroTitle || 'Rajiv Gandhi University of Knowledge Technologies'}
                                 </h1>
                                 <p className="text-slate-400 font-bold uppercase text-[10px] sm:text-xs tracking-[0.22em]">
-                                    Catering to the Educational Needs of Gifted Rural Youth
+                                    {branding?.heroSubtitle || 'Catering to the Educational Needs of Gifted Rural Youth'}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Right: CTA */}
-                        <Link to="/about" className="shrink-0 bg-slate-900 text-white px-7 py-3.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-red-700 transition-all hover:-translate-y-1 flex items-center gap-2">
-                            More Details <Info size={15} className="text-red-400" />
-                        </Link>
+                        {/* Right: Dynamic Social Icons or CTA button */}
+                        <div className="flex items-center gap-3 shrink-0">
+                            {socialLinks.length > 0 ? (
+                                socialLinks.map(s => {
+                                    const iconUrl = s.icon?.startsWith('http') ? s.icon : `http://127.0.0.1:5000${s.icon}`;
+                                    const SocialIcon = PLATFORM_MAP[s.name?.toLowerCase()];
+                                    return (
+                                        <a
+                                            key={s._id}
+                                            href={s.link}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            title={s.name}
+                                            className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-red-700 transition-all hover:-translate-y-1 shadow-xl"
+                                        >
+                                            {SocialIcon ? <SocialIcon size={18} /> : <img src={iconUrl} alt={s.name} className="w-5 h-5 object-contain" onError={(e) => { e.target.onerror = null; }} />}
+                                        </a>
+                                    );
+                                })
+                            ) : (
+                                <Link
+                                    to={branding?.ctaLink || '/about'}
+                                    className="shrink-0 bg-slate-900 text-white px-7 py-3.5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-red-700 transition-all hover:-translate-y-1 flex items-center gap-2"
+                                >
+                                    {branding?.ctaText || 'More Details'} <Info size={15} className="text-red-400" />
+                                </Link>
+                            )}
+                        </div>
                     </motion.div>
                 </div>
             </section>
 
 
-            {/* Urgent News Ticker */}
-            <NewsTicker />
+            {/* Urgent Marquee — Live Upcoming Events */}
+            <UrgentMarquee />
 
             {/* Hero Section */}
-            <Carousel items={carouselItems} />
+            <HomeCarouselSlider />
 
             {/* Category Section */}
             <section className="max-w-7xl mx-auto px-6 w-full">
@@ -236,111 +282,95 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Events & Clubs Preview */}
-            <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 w-full">
-                {/* Left Column - Upcoming Events */}
-                <div className="lg:col-span-4 flex flex-col gap-10">
-                    <div className="flex flex-col gap-4">
-                        <h3 className="text-3xl font-black text-gray-800 tracking-tight">Upcoming Events</h3>
-                        <p className="text-gray-500 font-medium">Don't miss out on campus life excitement.</p>
-                    </div>
-                    <div className="flex flex-col gap-6">
-                        {events.length > 0 ? events.map((ev) => (
-                            <Link 
-                                to={ev.eventType === 'sports' ? `/sports/${(ev.subcategory || ev.sportType)?.toLowerCase()?.replace(/\s+/g, '-')}/${ev._id}` : ev.eventType === 'clubs' ? `/clubs/${(ev.subcategory || ev.clubName)?.toLowerCase().replace(/\s+/g, '-')}` : `/events/${ev._id}`} 
-                                key={ev._id} 
-                                className="flex gap-6 group cursor-pointer bg-white p-6 rounded-3xl border border-slate-100 hover:border-primary/20 hover:shadow-xl transition-all duration-500"
-                            >
-                                <div className="flex flex-col items-center justify-center w-20 h-20 bg-primary/5 rounded-2xl group-hover:bg-primary transition-colors border-2 border-primary/10">
-                                    <span className="text-2xl font-black text-primary group-hover:text-white">{ev.jsDate.getDate()}</span>
-                                    <span className="text-[10px] font-bold text-primary group-hover:text-white uppercase tracking-widest">{ev.jsDate.toLocaleDateString('en-US', { month: 'short' })}</span>
-                                </div>
-                                <div className="flex flex-col justify-center gap-1">
-                                    <h4 className="text-lg font-bold text-gray-800 group-hover:text-primary transition-colors">{ev.eventTitle}</h4>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} className="text-primary" /> {ev.eventType} • Campus Arena
-                                    </p>
-                                </div>
-                            </Link>
-                        )) : (
-                            <div className="p-10 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 text-center text-slate-300 font-black uppercase text-[10px] tracking-widest">
-                                Catching up with calendar...
+            {/* Join Clubs Section */}
+            <section className="bg-slate-50 py-24 relative">
+                <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-3 text-rose-500 font-black uppercase text-xs tracking-[0.3em]">
+                                <Users size={16} /> Campus Life
                             </div>
-                        )}
-                    </div>
-                    <Link to="/events" className="mt-4 flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest group">
-                        View Full Calendar <ChevronRight className="group-hover:translate-x-2 transition-transform" />
-                    </Link>
-                </div>
-
-                {/* Middle Column - Campus Stats */}
-                <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Featured Club */}
-                    <div className="card p-10 bg-gradient-to-br from-indigo-600 to-primary text-white flex flex-col justify-between group relative overflow-hidden min-h-[400px]">
-                        <div className="absolute top-0 right-0 p-10 opacity-10 blur-sm group-hover:blur-none transition-all duration-1000">
-                            <Rocket size={200} />
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tighter leading-none">
+                                🚀 Join Clubs
+                            </h2>
+                            <p className="text-slate-500 font-medium max-w-lg mt-2 text-lg">
+                                Discover your potential with our creative, technical, and cultural organizations.
+                            </p>
                         </div>
-                        <div className="relative z-10 flex flex-col gap-8">
-                            <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20">
-                                <Users size={32} />
-                            </div>
-                            <div>
-                                <h3 className="text-4xl font-black leading-tight mb-4 tracking-tighter">
-                                    {featuredClub ? `Join the ${featuredClub.name}` : 'Explore Campus Clubs'}
-                                </h3>
-                                <p className="text-blue-100/80 font-medium leading-relaxed">
-                                    {featuredClub ? featuredClub.description : 'Discover your potential with our creative, technical, and sports-oriented organizations.'}
-                                </p>
-                            </div>
-                        </div>
-                        <Link 
-                            to={featuredClub ? `/clubs/${featuredClub.name.toLowerCase().replace(/\s+/g, '-')}` : '/clubs'} 
-                            className="relative z-10 mt-auto bg-white text-primary px-8 py-4 rounded-xl font-bold uppercase text-xs tracking-widest hover:-translate-y-2 transition-all shadow-xl text-center"
-                        >
-                            Explore Club
+                        <Link to="/clubs" className="px-8 py-4 bg-white border-2 border-slate-100 rounded-2xl text-slate-600 font-bold uppercase text-xs tracking-widest hover:border-rose-500 hover:text-rose-500 transition-all shadow-sm">
+                            View All Clubs
                         </Link>
                     </div>
 
-                    {/* Achievement Preview */}
-                    <div className="card p-10 border-2 border-slate-100 hover:border-primary/10 flex flex-col justify-between group min-h-[400px]">
-                        <div className="flex flex-col gap-8">
-                            <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center border-2 border-primary/10">
-                                <GraduationCap size={32} className="text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="text-4xl font-black leading-tight mb-4 tracking-tighter text-gray-800">Achieving New Heights</h3>
-                                <p className="text-gray-500 font-medium leading-relaxed">Congratulations to the Class of 2024 for an incredible graduation ceremony and placement records.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4 mt-auto">
-                            <div className="flex -space-x-3">
-                                {[1, 2, 3].map(i => <div key={i} className="w-10 h-10 rounded-full border-4 border-white bg-slate-200 overflow-hidden shadow-md"><img src={`https://i.pravatar.cc/150?u=${i}`} alt="user" /></div>)}
-                            </div>
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">+ 500 Students</span>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {loading ? (
+                            <div className="col-span-full text-center text-slate-400 font-bold uppercase">Loading clubs...</div>
+                        ) : clubs.slice(0, 3).map((club, idx) => (
+                            <Link 
+                                to={`/clubs/${club.name.toLowerCase().replace(/\s+/g, '-')}`} 
+                                key={club._id || idx}
+                                className="bg-white rounded-3xl p-8 border border-slate-100 hover:border-rose-500/30 hover:shadow-2xl hover:shadow-rose-500/5 transition-all group flex flex-col gap-6"
+                            >
+                                <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
+                                    <Rocket size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-800 mb-2">{club.name}</h3>
+                                    <p className="text-slate-500 line-clamp-2">{club.description || 'Join this exciting club and explore new opportunities.'}</p>
+                                </div>
+                                <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between text-sm font-bold text-rose-500 uppercase tracking-widest group-hover:gap-4 transition-all w-fit">
+                                    Explore Club <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* Newsletter / CTA */}
-            <section className="max-w-7xl mx-auto px-6 w-full mb-[-120px]">
-                <div className="bg-primary p-12 md:p-24 rounded-[40px] shadow-2xl flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
-
-                    <div className="relative z-10 max-w-xl text-center md:text-left">
-                        <h2 className="text-4xl md:text-6xl font-black text-white leading-none mb-6 tracking-tighter">Stay Connected With Campus</h2>
-                        <p className="text-blue-100/70 text-lg font-medium">Subscribe to get daily notifications about placements, exams, and event updates.</p>
+            {/* Achievements Section */}
+            <section className="bg-white py-24 pb-32 relative">
+                <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-3 text-amber-500 font-black uppercase text-xs tracking-[0.3em]">
+                                <Award size={16} /> Hall of Fame
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tighter leading-none">
+                                🌟 Achieving New Heights
+                            </h2>
+                            <p className="text-slate-500 font-medium max-w-lg mt-2 text-lg">
+                                Celebrating academic excellence, placement milestones, and stellar accomplishments.
+                            </p>
+                        </div>
+                        <Link to="/achievements" className="px-8 py-4 bg-white border-2 border-slate-100 rounded-2xl text-slate-600 font-bold uppercase text-xs tracking-widest hover:border-amber-500 hover:text-amber-500 transition-all shadow-sm">
+                            View All Achievements
+                        </Link>
                     </div>
 
-                    <div className="relative z-10 w-full md:w-auto flex flex-col md:flex-row gap-4">
-                        <input
-                            type="email"
-                            placeholder="your@email.com"
-                            className="bg-white/10 backdrop-blur-xl border border-white/20 px-8 py-5 rounded-2xl text-white placeholder:text-blue-200/50 focus:outline-none focus:ring-4 focus:ring-white/20 w-full md:w-[350px] font-semibold"
-                        />
-                        <button className="bg-white text-primary px-10 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl hover:-translate-y-2 hover:shadow-white/20 transition-all flex items-center justify-center gap-3">
-                            Join Now <ArrowRight size={20} />
-                        </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {loading ? (
+                            <div className="col-span-full text-center text-slate-400 font-bold uppercase">Loading achievements...</div>
+                        ) : achievements.map((ach, idx) => (
+                            <Link 
+                                to={`/achievements/${ach.id}`} 
+                                key={ach.id || idx}
+                                className="group relative rounded-3xl overflow-hidden bg-slate-900 aspect-[4/5] shadow-xl"
+                            >
+                                <img 
+                                    src={ach.image || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1000&auto=format&fit=crop'} 
+                                    alt={ach.title}
+                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-500 group-hover:scale-110"
+                                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1000&auto=format&fit=crop'; }}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-6">
+                                    <span className="text-[10px] bg-amber-500 text-white font-black uppercase tracking-widest px-2 py-1 rounded w-fit mb-3">
+                                        {ach.badge}
+                                    </span>
+                                    <h3 className="text-lg font-black text-white leading-tight mb-1 line-clamp-2">{ach.title}</h3>
+                                    <p className="text-amber-200/80 text-xs font-bold uppercase tracking-wider">{ach.author} • {ach.date}</p>
+                                </div>
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </section>

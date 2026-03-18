@@ -148,6 +148,20 @@ const deleteEvent = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Get upcoming events
+// @route   GET /api/events/upcoming
+// @access  Public
+const getUpcomingEvents = asyncHandler(async (req, res) => {
+  const currentDate = new Date();
+  const events = await Event.find({
+    eventDate: { $gte: currentDate }
+  })
+  .select('_id eventTitle eventDate eventType subcategory')
+  .sort({ eventDate: 1 });
+
+  res.json(events);
+});
+
 // @desc    Get single event by ID
 // @route   GET /api/events/:id
 // @access  Public
@@ -167,5 +181,6 @@ export {
   getEvents,
   getEventById,
   updateEvent,
-  deleteEvent
+  deleteEvent,
+  getUpcomingEvents
 };

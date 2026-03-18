@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://127.0.0.1:5000/api';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -9,6 +9,7 @@ const api = axios.create({
 // Events
 export const getEvents = (params) => api.get('/events', { params });
 export const getEventById = (id) => api.get(`/events/${id}`);
+export const getUpcomingEvents = () => api.get('/events/upcoming');
 export const createEvent = (formData) => api.post('/events', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const updateEvent = (id, formData) => api.put(`/events/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
@@ -73,4 +74,25 @@ export const login = (credentials) => api.post('/auth/login', credentials);
 export const register = (userData) => api.post('/auth/register', userData);
 export const adminLogin = (credentials) => api.post('/auth/admin-login', credentials);
 
+// Home Carousel
+export const getHomeCarousels = () => api.get('/home-carousel');
+export const createHomeCarousel = (formData) => api.post('/home-carousel', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const updateHomeCarousel = (id, formData) => api.put(`/home-carousel/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const deleteHomeCarousel = (id) => api.delete(`/home-carousel/${id}`);
+
+// Footer (Singleton)
+export const getFooter = () => api.get('/footer');
+export const updateFooter = (data) => api.put('/footer', data);
+
+// Social Media
+export const getSocialMedia = () => api.get('/social-media');
+export const createSocialMedia = (data) => api.post('/social-media', data);
+export const updateSocialMedia = (id, data) => api.put(`/social-media/${id}`, data);
+export const deleteSocialMedia = (id) => api.delete(`/social-media/${id}`);
+
+// Branding (Singleton)
+export const getBranding = () => api.get('/branding');
+export const updateBranding = (data) => api.put('/branding/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+
 export default api;
+

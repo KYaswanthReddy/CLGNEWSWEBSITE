@@ -6,7 +6,7 @@ import {
     Share2, Info, AlertCircle, Bookmark,
     ExternalLink, Users, Bell
 } from 'lucide-react';
-import { getEvents } from '../../services/api';
+import { getEventById } from '../../services/api';
 
 const EventDetail = () => {
     const { id } = useParams();
@@ -16,9 +16,8 @@ const EventDetail = () => {
     useEffect(() => {
         const fetchEvent = async () => {
             try {
-                const { data } = await getEvents();
-                const foundEvent = data.find(e => e._id === id);
-                setEvent(foundEvent);
+                const { data } = await getEventById(id);
+                setEvent(data);
             } catch (err) {
                 console.error(err);
             } finally {

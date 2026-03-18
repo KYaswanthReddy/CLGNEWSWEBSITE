@@ -13,6 +13,10 @@ import chatRoutes from './routes/chatRoutes.js';
 import sportRoutes from './routes/sportRoutes.js';
 import clubRoutes from './routes/clubRoutes.js';
 import achievementRoutes from './routes/achievementRoutes.js';
+import homeCarouselRoutes from './routes/homeCarouselRoutes.js';
+import footerRoutes from './routes/footerRoutes.js';
+import socialMediaRoutes from './routes/socialMediaRoutes.js';
+import brandingRoutes from './routes/brandingRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
@@ -48,6 +52,10 @@ app.use('/api/exams', examRoutes);
 app.use('/api/sports', sportRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/home-carousel', homeCarouselRoutes);
+app.use('/api/footer', footerRoutes);
+app.use('/api/social-media', socialMediaRoutes);
+app.use('/api/branding', brandingRoutes);
 
 // SSOT Category Aliases
 import { getSportTypes, createSportType, updateSportType, deleteSportType } from './controllers/sportController.js';
@@ -63,6 +71,26 @@ app.get('/api/club-types', getClubTypes);
 app.post('/api/club-types', upload.single('image'), createClubType);
 app.put('/api/club-types/:id', upload.single('image'), updateClubType);
 app.delete('/api/club-types/:id', deleteClubType);
+
+// Branding Upload Helper
+import { updateBranding } from './controllers/brandingController.js';
+app.put('/api/branding/upload', upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'navbarLogo', maxCount: 1 },
+  { name: 'heroLogo', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const updateData = {};
+    if (req.files['logo']) updateData.logo = `/uploads/${req.files['logo'][0].filename}`;
+    if (req.files['navbarLogo']) updateData.navbarLogo = `/uploads/${req.files['navbarLogo'][0].filename}`;
+    if (req.files['heroLogo']) updateData.heroLogo = `/uploads/${req.files['heroLogo'][0].filename}`;
+    
+    req.body = { ...req.body, ...updateData };
+    return updateBranding(req, res);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Register the chat functionality
 app.use('/chat', chatRoutes);
@@ -84,7 +112,8 @@ const startServer = async () => {
     const PORT = process.env.PORT || 5000;
     app.listen(
       PORT,
-      console.log(
+      '0.0.0.0',
+      () => console.log(
         `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
       )
     );
