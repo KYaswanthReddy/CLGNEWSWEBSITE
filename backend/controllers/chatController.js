@@ -1,17 +1,14 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
-// Using OpenAI API
-const ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const openAiKey = process.env.OPENAI_API_KEY;
 const isOpenAIKey = typeof openAiKey === 'string' && openAiKey.trim().startsWith('sk-');
 
 const openAiClient = isOpenAIKey ? new OpenAI({ apiKey: openAiKey }) : null;
-const genAiClient = !isOpenAIKey && openAiKey ? new GoogleGenAI({ apiKey: openAiKey }) : null;
+const genAiClient = (!isOpenAIKey && openAiKey) ? new GoogleGenAI({ apiKey: openAiKey }) : null;
 
 const getBuiltinReply = (incoming) => {
     const text = (incoming || '').toLowerCase();
@@ -54,7 +51,6 @@ export const handleChat = async (req, res) => {
     }
 
     try {
-
         const systemPrompt = `You are NewsBot, a friendly and energetic chatbot for RGUKT Ongole's official college news website, tailored to Gen-Z students. You are an expert on everything about the college and this website.
 
 ABOUT THE WEBSITE:
@@ -90,21 +86,6 @@ YOUR ROLE:
 
 Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
 
-        const response = await ai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: message }
-            ],
-            temperature: 0.7,
-        });
-
-        const botReply = response.choices[0].message.content;
-
-        res.json({ reply: botReply });
-    } catch (error) {
-        console.error("OpenAI API Error:", error.message);
-        res.status(500).json({ error: "Failed to generate a response from the AI.", details: error.message });
         let botReply;
 
         if (openAiClient) {
@@ -116,7 +97,6 @@ Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
                 ],
                 temperature: 0.7,
             });
-
             botReply = response.choices?.[0]?.message?.content?.trim();
         } else if (genAiClient) {
             const response = await genAiClient.models.generateContent({
@@ -126,7 +106,6 @@ Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
                     temperature: 0.7,
                 }
             });
-
             botReply = response.text;
         } else {
             botReply = getBuiltinReply(message);
