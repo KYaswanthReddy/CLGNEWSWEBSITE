@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Calendar, Star, ArrowRight, ChevronLeft, ExternalLink } from 'lucide-react';
+import { getEvents } from '../services/api';
 
 /**
  * Shared template for every club detail page.
@@ -22,11 +23,34 @@ const ClubTemplate = ({
     heroImage,
     galleryImages = [],
     stats = [],
-    events = [],
+    events: initialEvents = [], // Rename prop to avoid conflict
     about = '',
     features = [],
     meetTime = '',
 }) => {
+    const [events, setEvents] = useState([]);
+    const [loadingEvents, setLoadingEvents] = useState(true);
+
+    useEffect(() => {
+        const fetchClubEvents = async () => {
+            try {
+                const { data } = await getEvents({ type: 'clubs', subcategory: name });
+                // If we have API events, use those, otherwise fallback to static prop events
+                setEvents(data.length > 0 ? data.map(e => ({
+                    title: e.eventName,
+                    date: `${e.date} ${e.month}, ${e.year}`,
+                    description: e.description
+                })) : initialEvents);
+            } catch (err) {
+                console.error(`Error fetching events for ${name}:`, err);
+                setEvents(initialEvents);
+            } finally {
+                setLoadingEvents(false);
+            }
+        };
+        fetchClubEvents();
+    }, [name, initialEvents]);
+
     return (
         <div className="flex flex-col gap-20 pb-32">
             {/* ── Hero Banner ── */}

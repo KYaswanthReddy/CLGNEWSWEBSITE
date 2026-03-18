@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Rocket, Mail, Lock, User, Phone, ArrowRight, ShieldCheck, CheckCircle, AlertCircle } from 'lucide-react';
-import { register as registerApi } from '../../services/api';
+import { register as registerApi, verifyEmail } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 
 const Register = () => {
     const [formData, setFormData] = useState({ name: '', email: '', phoneNumber: '', password: '', confirmPassword: '' });
+    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState(1);
     const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -17,6 +20,10 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (step === 2) {
+            return handleVerify(e);
+        }
 
         // Basic validations
         if (formData.name.trim().length < 2) {
@@ -37,21 +44,46 @@ const Register = () => {
         }
 
         setLoading(true);
+        setMessage('');
         try {
             const { data } = await registerApi({
                 name: formData.name.trim(),
                 email: formData.email.trim().toLowerCase(),
                 phoneNumber: formData.phoneNumber.trim(),
                 password: formData.password,
-                role: 'student',
             });
+            setMessage(data.message || 'OTP sent successfully!');
+            setStep(2);
+        } catch (err) {
+            setError(
+                err.response && err.response.data.message
+                    ? err.response.data.message
+                    : 'Registration failed. Please try again.'
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerify = async (e) => {
+        e.preventDefault();
+        setError('');
+        
+        if (!otp || otp.length < 5) {
+           setError('Please enter a valid OTP.');
+           return;
+        }
+
+        setLoading(true);
+        try {
+            const { data } = await verifyEmail({ email: formData.email.trim().toLowerCase(), otp });
             login(data);
             navigate('/', { replace: true });
         } catch (err) {
             setError(
                 err.response && err.response.data.message
                     ? err.response.data.message
-                    : 'Registration failed. Please try again.'
+                    : 'Verification failed. Please try again.'
             );
         } finally {
             setLoading(false);
@@ -119,8 +151,16 @@ const Register = () => {
                             </div>
                         )}
 
+                        {message && (
+                            <div className="bg-green-50 text-green-600 px-4 py-3 rounded-2xl flex items-start gap-3 border border-green-100 text-sm font-semibold mb-4">
+                                <CheckCircle size={17} className="mt-0.5 shrink-0" /> {message}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                            {/* Full Name */}
+                            {step === 1 ? (
+                                <>
+                                    {/* Full Name */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] uppercase font-black text-primary tracking-widest ml-1">Full Name</label>
                                 <div className="group relative">
@@ -200,13 +240,31 @@ const Register = () => {
                                     />
                                 </div>
                             </div>
+                            </>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[10px] uppercase font-black text-primary tracking-widest ml-1">Verification OTP</label>
+                                    <div className="group relative">
+                                        <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
+                                        <input
+                                            type="text"
+                                            placeholder="Enter OTP sent to email"
+                                            required
+                                            value={otp}
+                                            onChange={(e) => setOtp(e.target.value)}
+                                            className={inputClass}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 font-medium ml-1 mt-1">We securely emailed a one-time passcode to <span className="text-primary font-bold">{formData.email}</span></p>
+                                </div>
+                            )}
 
                              <button
                                 type="submit"
                                 disabled={loading}
                                 className="bg-primary text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/20 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Creating Profile...' : 'Create Profile'} <ArrowRight size={18} />
+                                {loading ? (step === 1 ? 'Creating Profile...' : 'Verifying...') : (step === 1 ? 'Create Profile' : 'Verify Account')} <ArrowRight size={18} />
                             </button>
                         </form>
 

@@ -115,7 +115,7 @@ const Login = () => {
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between items-end ml-1">
                                     <label className="text-[10px] uppercase font-black text-primary tracking-widest">Secret Key</label>
-                                    <NavLink to="/" className="text-[10px] uppercase font-bold text-gray-400 hover:text-primary transition-colors">Forgot Password?</NavLink>
+                                    <NavLink to="/forgot-password" className="text-[10px] uppercase font-bold text-gray-400 hover:text-primary transition-colors">Forgot Password?</NavLink>
                                 </div>
                                 <div className="group relative">
                                     <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />

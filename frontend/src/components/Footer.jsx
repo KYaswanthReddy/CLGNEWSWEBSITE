@@ -1,107 +1,141 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, MapPin, Phone, Rocket } from 'lucide-react';
+import { Rocket, Instagram, Linkedin, Twitter, Youtube, Facebook, Globe } from 'lucide-react';
+import { getFooter, getSocialMedia, getBranding } from '../services/api';
+
+const API_BASE = 'http://127.0.0.1:5000';
+
+const PLATFORM_MAP = {
+    instagram: Instagram,
+    facebook: Facebook,
+    twitter: Twitter,
+    x: Twitter,
+    youtube: Youtube,
+    linkedin: Linkedin,
+    website: Globe,
+    globe: Globe,
+};
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const [footer, setFooter] = useState(null);
+    const [socialLinks, setSocialLinks] = useState([]);
+    const [branding, setBranding] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const footerLinks = [
-        { title: 'Campus Life', links: ['Clubs', 'Sports', 'Events', 'Achievements'] },
-        { title: 'Academic', links: ['Exam Schedule', 'Placements', 'Curriculum', 'Gallery'] },
-        { title: 'Support', links: ['Help Center', 'Official Website', 'Privacy Policy', 'Terms of Service'] },
-    ];
+    useEffect(() => {
+        const fetchFooterData = async () => {
+            try {
+                const [footerRes, socialRes, brandingRes] = await Promise.all([
+                    getFooter(),
+                    getSocialMedia(),
+                    getBranding()
+                ]);
+                setFooter(footerRes.data);
+                setSocialLinks(socialRes.data);
+                setBranding(brandingRes.data);
+            } catch (error) {
+                console.error("Failed to fetch footer data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchFooterData();
+    }, []);
+
+    const logoUrl = branding
+        ? (() => {
+            const l = branding.logo || branding.navbarLogo;
+            return l ? (l.startsWith('http') ? l : `${API_BASE}${l}`) : null;
+        })()
+        : null;
+
+    const collegeName = branding?.collegeName || 'College News';
+    const description = footer?.description || 'Empowering students with real-time news, academic updates, and campus achievements.';
+    const copyright = footer?.copyright || `© ${currentYear} ${collegeName}. All Rights Reserved.`;
+    const sections = footer?.sections || [];
 
     return (
-        <footer className="bg-primary-dark text-white relative pt-20 pb-10 overflow-hidden shadow-2xl">
-            {/* Decorative Gradient Background */}
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/20 via-transparent to-transparent opacity-50 z-0 pointer-events-none" />
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-primary to-blue-600 z-10" />
+        <footer className="bg-slate-900 text-white relative pt-16 pb-8 overflow-hidden">
+            {/* Top gradient line */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-blue-400 to-primary z-10" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 border-b border-white/10 pb-16">
-                    {/* Logo & Info */}
-                    <div className="flex flex-col gap-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-12 border-b border-white/10 pb-12 ${sections.length > 0 ? `lg:grid-cols-${Math.min(sections.length + 2, 5)}` : 'lg:grid-cols-3'}`}>
+                    {/* Logo & Info Column */}
+                    <div className="flex flex-col gap-6 md:col-span-2 lg:col-span-1">
                         <Link to="/" className="flex items-center gap-3 group">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transform group-hover:rotate-12 transition-all duration-300 shadow-xl shadow-blue-500/20">
-                                <Rocket className="text-primary w-7 h-7" />
+                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transform group-hover:rotate-12 transition-all duration-300 shadow-xl shadow-blue-500/20 overflow-hidden p-1">
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+                                ) : (
+                                    <Rocket className="text-primary w-7 h-7" />
+                                )}
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-xl font-bold text-white tracking-tight leading-none uppercase">College News</span>
+                                <span className="text-lg font-black text-white tracking-tight leading-none uppercase">{collegeName}</span>
                                 <span className="text-[10px] text-blue-300 font-bold tracking-widest uppercase mt-1">Official University Portal</span>
                             </div>
                         </Link>
-                        <p className="text-blue-100/70 text-sm leading-relaxed max-w-xs font-medium">
-                            Empowering students with real-time news, academic updates, and campus achievements since 1995.
-                        </p>
-                        <div className="flex flex-col gap-4">
-                            <div className="flex gap-4">
-                                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all duration-300 hover:-translate-y-1 shadow-md border border-white/10 group">
-                                    <Facebook className="w-4 h-4 text-blue-100 group-hover:text-white" />
-                                </a>
-                                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all duration-300 hover:-translate-y-1 shadow-md border border-white/10 group">
-                                    <Twitter className="w-4 h-4 text-blue-100 group-hover:text-white" />
-                                </a>
-                                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all duration-300 hover:-translate-y-1 shadow-md border border-white/10 group">
-                                    <Instagram className="w-4 h-4 text-blue-100 group-hover:text-white" />
-                                </a>
-                                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all duration-300 hover:-translate-y-1 shadow-md border border-white/10 group">
-                                    <Linkedin className="w-4 h-4 text-blue-100 group-hover:text-white" />
-                                </a>
+                        <p className="text-blue-100/70 text-sm leading-relaxed max-w-xs font-medium">{description}</p>
+
+                        {/* Social Icons */}
+                        {socialLinks.length > 0 && (
+                            <div className="flex flex-wrap gap-3">
+                                {socialLinks.map((social) => {
+                                    const platformKey = (social.name || social.platform || social.icon || '').toLowerCase();
+                                    const SocialIcon = PLATFORM_MAP[platformKey];
+                                    return (
+                                        <a
+                                            key={social._id}
+                                            href={social.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all duration-300 hover:-translate-y-1 shadow-md border border-white/10"
+                                            title={social.name || social.platform}
+                                        >
+                                            {SocialIcon
+                                                ? <SocialIcon size={16} />
+                                                : <span className="text-xs font-black text-white">{(social.name || social.platform || 'S')[0].toUpperCase()}</span>
+                                            }
+                                        </a>
+                                    );
+                                })}
                             </div>
-                            <div className="flex flex-col gap-1 text-[10px] font-black uppercase tracking-widest text-blue-400/60">
-                                <span className="flex items-center gap-2 italic hover:text-white cursor-pointer transition-colors"><Instagram size={10} /> @college_insta</span>
-                                <span className="flex items-center gap-2 italic hover:text-white cursor-pointer transition-colors"><Twitter size={10} /> @college_twitter</span>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* Quick Links */}
-                    {footerLinks.map((section) => (
-                        <div key={section.title} className="flex flex-col gap-6">
-                            <h3 className="text-md font-bold text-white tracking-wider uppercase border-l-4 border-blue-400 pl-4">{section.title}</h3>
+                    {/* Dynamic Section Links */}
+                    {sections.map((section) => (
+                        <div key={section._id || section.title} className="flex flex-col gap-5">
+                            <h3 className="text-sm font-black text-white tracking-widest uppercase border-l-4 border-primary pl-4">{section.title}</h3>
                             <ul className="flex flex-col gap-3">
-                                {section.links.map((link) => (
-                                    <li key={link}>
-                                        <Link to={`/${link.toLowerCase().replace(' ', '-')}`} className="text-blue-100/60 hover:text-white transition-all text-sm font-medium hover:translate-x-2 inline-block">
-                                            {link}
-                                        </Link>
+                                {(section.links || []).map((link, idx) => (
+                                    <li key={idx}>
+                                        <a
+                                            href={link.url}
+                                            target={link.url?.startsWith('http') ? '_blank' : '_self'}
+                                            rel="noreferrer"
+                                            className="text-blue-100/60 hover:text-white transition-all text-sm font-medium hover:translate-x-2 inline-block"
+                                        >
+                                            {link.label}
+                                        </a>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                     ))}
-
-                    {/* Contact Info */}
-                    <div className="flex flex-col gap-6">
-                        <h3 className="text-md font-bold text-white tracking-wider uppercase border-l-4 border-blue-400 pl-4">Contact Campus</h3>
-                        <div className="flex flex-col gap-5">
-                            <div className="flex items-start gap-4">
-                                <MapPin className="w-5 h-5 text-blue-400 mt-1 flex-shrink-0" />
-                                <p className="text-sm text-blue-100/70 leading-relaxed font-medium">
-                                    University Main Road, Tech Park, City - 560012, India
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <Phone className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                                <p className="text-sm text-blue-100/70 font-medium">+91 1234 567 890</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                                <p className="text-sm text-blue-100/70 font-medium">news@college.edu</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
+
                 {/* Bottom copyright */}
-                <div className="flex flex-col md:flex-row justify-between items-center py-10 gap-6">
-                    <p className="text-xs text-blue-100/40 font-bold uppercase tracking-[0.2em] order-2 md:order-1">
-                        © {currentYear} College News. All Rights Reserved.
+                <div className="flex flex-col md:flex-row justify-between items-center py-8 gap-4">
+                    <p className="text-xs text-blue-100/40 font-bold uppercase tracking-[0.2em]">
+                        {copyright}
                     </p>
-                    <div className="flex gap-8 order-1 md:order-2">
-                        <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Digital Library</span>
-                        <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Alumni Portal</span>
-                        <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Staff Login</span>
+                    <div className="flex gap-6">
+                        <Link to="/admin" className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Admin Panel</Link>
+                        <a href="https://rgukt.in" target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Official Site</a>
                     </div>
                 </div>
             </div>

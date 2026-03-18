@@ -10,6 +10,8 @@ import AdminRoute from '../components/AdminRoute';
 const Home = lazy(() => import('../pages/Home/Home'));
 const Login = lazy(() => import('../pages/Auth/Login'));
 const Register = lazy(() => import('../pages/Auth/Register'));
+const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const UniversityInfo = lazy(() => import('../pages/About/UniversityInfo'));
 const ExamHome = lazy(() => import('../pages/ExamSchedule/ScheduleTemplate'));
 
@@ -36,18 +38,13 @@ const E3 = lazy(() => import('../pages/ExamSchedule/E3/E3'));
 const E4 = lazy(() => import('../pages/ExamSchedule/E4/E4'));
 
 // Events & Achievements & Clubs
-const UpcomingEvents = lazy(() => import('../pages/Events/UpcomingEvents'));
 const StudentAchievements = lazy(() => import('../pages/Achievements/StudentAchievements'));
+const AchievementDetail = lazy(() => import('../pages/Achievements/AchievementDetail'));
+const UpcomingEvents = lazy(() => import('../pages/Events/UpcomingEvents'));
+const EventDetail = lazy(() => import('../pages/Events/EventDetail'));
 const Clubs = lazy(() => import('../pages/Clubs/Clubs'));
-const PixelClub = lazy(() => import('../pages/Clubs/PixelClub'));
-const CulturalClub = lazy(() => import('../pages/Clubs/CulturalClub'));
-const TechnicalClub = lazy(() => import('../pages/Clubs/TechnicalClub'));
-const GraphicDesignClub = lazy(() => import('../pages/Clubs/GraphicDesignClub'));
-const InnovationClub = lazy(() => import('../pages/Clubs/InnovationClub'));
-const CodingClub = lazy(() => import('../pages/Clubs/CodingClub'));
-const SportsClub = lazy(() => import('../pages/Clubs/SportsClub'));
-const ArtixClub = lazy(() => import('../pages/Clubs/ArtixClub'));
-const InaugurationClub = lazy(() => import('../pages/Clubs/InaugurationClub'));
+const ClubDetail = lazy(() => import('../pages/Clubs/ClubDetail'));
+const ClubEventDetail = lazy(() => import('../pages/Clubs/ClubEventDetail'));
 
 // Admin
 const AdminDashboard = lazy(() => import('../pages/Admin/AdminDashboard'));
@@ -55,9 +52,20 @@ const AddNews = lazy(() => import('../pages/Admin/AddNews'));
 const ManageEvents = lazy(() => import('../pages/Admin/ManageEvents'));
 const ManageClubs = lazy(() => import('../pages/Admin/ManageClubs'));
 const UploadExam = lazy(() => import('../pages/Admin/UploadExam'));
-const AddSports = lazy(() => import('../pages/Admin/AddSports'));
-const AddPlacement = lazy(() => import('../pages/Admin/AddPlacement'));
+const ManageSports = lazy(() => import('../pages/Admin/ManageSports'));
+const ManagePlacements = lazy(() => import('../pages/Admin/ManagePlacements'));
+const SportDetail = lazy(() => import('../pages/Sports/SportDetail'));
+const SportEventDetail = lazy(() => import('../pages/Sports/SportEventDetail'));
 const AddAchievement = lazy(() => import('../pages/Admin/AddAchievement'));
+const CreateEvent = lazy(() => import('../pages/Admin/CreateEvent'));
+const EditEvent = lazy(() => import('../pages/Admin/EditEvent'));
+const ManageHomeCarousel = lazy(() => import('../pages/Admin/ManageHomeCarousel'));
+const ManageFooter = lazy(() => import('../pages/Admin/ManageFooter'));
+const ManageSocialLinks = lazy(() => import('../pages/Admin/ManageSocialLinks'));
+const ManageBranding = lazy(() => import('../pages/Admin/ManageBranding'));
+
+// Placements Detail (NEW)
+const PlacementDetail = lazy(() => import('../pages/Placements/PlacementDetail'));
 
 // Global page-loading spinner
 const PageLoader = () => (
@@ -75,19 +83,15 @@ const AppRoutes = () => {
                     <Route index element={<Home />} />
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route path="reset-password/:token" element={<ResetPassword />} />
                     <Route path="about" element={<UniversityInfo />} />
 
                     {/* Sports Routes */}
                     <Route path="sports">
                         <Route index element={<Sports />} />
-                        <Route path="cricket" element={<Cricket />} />
-                        <Route path="basketball" element={<Basketball />} />
-                        <Route path="kabaddi" element={<Kabaddi />} />
-                        <Route path="badminton" element={<Badminton />} />
-                        <Route path="throwball" element={<Throwball />} />
-                        <Route path="khokho" element={<KhoKho />} />
-                        <Route path="running" element={<Running />} />
-                        <Route path="volleyball" element={<Volleyball />} />
+                        <Route path=":sportType/:id" element={<SportEventDetail />} />
+                        <Route path=":sportType" element={<SportDetail />} />
                     </Route>
 
                     {/* Protected Placements Routes */}
@@ -95,6 +99,7 @@ const AppRoutes = () => {
                         <Route index element={<ProtectedRoute><Placements /></ProtectedRoute>} />
                         <Route path="internships" element={<ProtectedRoute><Internships /></ProtectedRoute>} />
                         <Route path="jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
+                        <Route path="detail/:id" element={<ProtectedRoute><PlacementDetail /></ProtectedRoute>} />
                     </Route>
 
                     {/* Exam Schedule Routes — Login Required */}
@@ -107,20 +112,19 @@ const AppRoutes = () => {
                     </Route>
 
                     {/* Events, Achievements, Clubs */}
-                    <Route path="events" element={<UpcomingEvents />} />
-                    <Route path="achievements" element={<StudentAchievements />} />
+                    <Route path="events">
+                        <Route index element={<UpcomingEvents />} />
+                        <Route path=":id" element={<EventDetail />} />
+                    </Route>
+                    <Route path="achievements">
+                        <Route index element={<StudentAchievements />} />
+                        <Route path=":id" element={<AchievementDetail />} />
+                    </Route>
 
                     <Route path="clubs">
                         <Route index element={<Clubs />} />
-                        <Route path="pixel" element={<PixelClub />} />
-                        <Route path="cultural" element={<CulturalClub />} />
-                        <Route path="technical" element={<TechnicalClub />} />
-                        <Route path="graphic-design" element={<GraphicDesignClub />} />
-                        <Route path="innovation" element={<InnovationClub />} />
-                        <Route path="coding" element={<CodingClub />} />
-                        <Route path="sports" element={<SportsClub />} />
-                        <Route path="artix" element={<ArtixClub />} />
-                        <Route path="inauguration" element={<InaugurationClub />} />
+                        <Route path=":clubName/:id" element={<ClubEventDetail />} />
+                        <Route path=":clubName" element={<ClubDetail />} />
                     </Route>
 
                     {/* Admin Routes */}
@@ -129,9 +133,17 @@ const AppRoutes = () => {
                     <Route path="admin/manage-events" element={<AdminRoute><ManageEvents /></AdminRoute>} />
                     <Route path="admin/manage-clubs" element={<AdminRoute><ManageClubs /></AdminRoute>} />
                     <Route path="admin/upload-exam" element={<AdminRoute><UploadExam /></AdminRoute>} />
-                    <Route path="admin/add-sports" element={<AdminRoute><AddSports /></AdminRoute>} />
-                    <Route path="admin/add-placement" element={<AdminRoute><AddPlacement /></AdminRoute>} />
+                    <Route path="admin/manage-sports" element={<AdminRoute><ManageSports /></AdminRoute>} />
+                    <Route path="admin/add-sports" element={<AdminRoute><ManageSports /></AdminRoute>} />
+                    <Route path="admin/manage-placements" element={<AdminRoute><ManagePlacements /></AdminRoute>} />
                     <Route path="admin/add-achievements" element={<AdminRoute><AddAchievement /></AdminRoute>} />
+                    <Route path="admin/create-event" element={<AdminRoute><CreateEvent /></AdminRoute>} />
+                    <Route path="admin/edit-event/:id" element={<AdminRoute><EditEvent /></AdminRoute>} />
+                    <Route path="admin/manage-home-carousel" element={<AdminRoute><ManageHomeCarousel /></AdminRoute>} />
+                    <Route path="admin/manage-footer" element={<AdminRoute><ManageFooter /></AdminRoute>} />
+                    <Route path="admin/manage-social" element={<AdminRoute><ManageSocialLinks /></AdminRoute>} />
+                    <Route path="admin/manage-branding" element={<AdminRoute><ManageBranding /></AdminRoute>} />
+
 
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/" replace />} />

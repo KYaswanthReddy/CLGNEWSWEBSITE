@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Toaster } from 'react-hot-toast';
 
 const MainLayout = () => {
     const { pathname } = useLocation();
@@ -12,7 +13,8 @@ const MainLayout = () => {
     }, [pathname]);
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 font-sans selection:bg-primary selection:text-white overflow-x-hidden">
+        <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900 font-sans selection:bg-primary selection:text-white transition-colors duration-300 overflow-x-hidden">
+            <Toaster position="top-center" reverseOrder={false} />
             <Navbar />
 
             <main className="flex-grow w-full relative pt-20">

@@ -1,9 +1,12 @@
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
+// Using OpenAI API
+const ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const openAiKey = process.env.OPENAI_API_KEY;
 const isOpenAIKey = typeof openAiKey === 'string' && openAiKey.trim().startsWith('sk-');
 
@@ -87,6 +90,21 @@ YOUR ROLE:
 
 Always be helpful, accurate, and enthusiastic about RGUKT Ongole!`;
 
+        const response = await ai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: message }
+            ],
+            temperature: 0.7,
+        });
+
+        const botReply = response.choices[0].message.content;
+
+        res.json({ reply: botReply });
+    } catch (error) {
+        console.error("OpenAI API Error:", error.message);
+        res.status(500).json({ error: "Failed to generate a response from the AI.", details: error.message });
         let botReply;
 
         if (openAiClient) {

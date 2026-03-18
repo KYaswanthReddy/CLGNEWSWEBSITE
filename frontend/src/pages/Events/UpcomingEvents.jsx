@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
+import { useNavigate } from 'react-router-dom';
 import 'react-calendar/dist/Calendar.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getEvents } from '../../services/api';
@@ -20,29 +21,27 @@ const UpcomingEvents = () => {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState('ALL'); // Added filter state
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const { data } = await getEvents();
-                // Map API data to include a Date object for the calendar logic
-                const monthMap = {
-                    'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
-                    'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11,
-                    'January': 0, 'February': 1, 'March': 2, 'April': 3, 'June': 5,
-                    'July': 6, 'August': 7, 'September': 8, 'October': 9, 'November': 10, 'December': 11
-                };
-
-                const processedEvents = data.map(e => {
-                    const monthIndex = monthMap[e.month] !== undefined ? monthMap[e.month] : parseInt(e.month) - 1;
-                    return {
-                        ...e,
-                        jsDate: new Date(parseInt(e.year), monthIndex, parseInt(e.date))
-                    };
-                });
-                setEvents(processedEvents);
+                // Fetch all events (Type: ALL) to show clubs, sports, and general events on the calendar
+                const { data } = await getEvents({ type: 'ALL' });
+                
+                if (data && Array.isArray(data.events)) {
+                    const processedEvents = data.events
+                        .filter(e => e.eventDate) // Only keep events with dates
+                        .map(e => ({
+                            ...e,
+                            jsDate: new Date(e.eventDate)
+                        }))
+                        .filter(e => !isNaN(e.jsDate.getTime())); // Remove invalid dates
+                    setEvents(processedEvents);
+                }
             } catch (err) {
-                console.error(err);
+                console.error('Error fetching calendar events:', err);
             } finally {
                 setLoading(false);
             }
@@ -57,6 +56,19 @@ const UpcomingEvents = () => {
             setSelectedEvent(event);
         } else {
             setSelectedEvent(null);
+        }
+    };
+
+    const handleEventClick = (event) => {
+        const id = event._id;
+        const subSlug = (event.subcategory || event.clubName || event.sportType)?.toLowerCase().replace(/\s+/g, '-');
+        
+        if (event.eventType === 'clubs') {
+            navigate(`/clubs/${subSlug}`); // Clubs detail page usually uses the club type slug
+        } else if (event.eventType === 'sports') {
+            navigate(`/sports/${subSlug}/${id}`);
+        } else {
+            navigate(`/events/${event._id}`);
         }
     };
 
@@ -125,35 +137,50 @@ const UpcomingEvents = () => {
                                     </div>
 
                                     <div className="relative z-10 flex flex-col gap-6">
-                                        {selectedEvent.image && (
-                                            <div className="w-full h-40 rounded-3xl overflow-hidden mb-4">
-                                                <img src={`http://localhost:5000${selectedEvent.image}`} alt={selectedEvent.name} className="w-full h-full object-cover" />
+                                        {(selectedEvent.image || selectedEvent.eventImage) && (
+                                            <div className="w-full h-40 rounded-3xl overflow-hidden mb-4 shadow-xl">
+                                                <img src={(selectedEvent.image || selectedEvent.eventImage).startsWith('http') ? (selectedEvent.image || selectedEvent.eventImage) : `http://localhost:5000${selectedEvent.image || selectedEvent.eventImage}`} alt={selectedEvent.eventTitle} className="w-full h-full object-cover" />
                                             </div>
                                         )}
-                                        <span className="text-[10px] font-black tracking-widest bg-white/10 px-4 py-2 rounded-lg border border-white/10 mb-2 inline-block uppercase w-fit">UPCOMING EVENT</span>
-                                        <h4 className="text-4xl font-black leading-tight tracking-tight mb-4">{selectedEvent.name}</h4>
+                                        <span className={`text-[10px] font-black tracking-widest bg-white/10 px-4 py-2 rounded-lg border border-white/10 mb-2 inline-block uppercase w-fit ${selectedEvent.eventType === 'clubs' ? 'text-emerald-400' : selectedEvent.eventType === 'sports' ? 'text-amber-400' : 'text-primary'}`}>
+                                            {selectedEvent.subcategory || selectedEvent.eventType}
+                                        </span>
+                                        <h4 className="text-4xl font-black leading-tight tracking-tight mb-4 uppercase italic">{selectedEvent.eventTitle}</h4>
                                         <p className="text-blue-100/70 text-lg leading-relaxed mb-8">{selectedEvent.description}</p>
                                     </div>
 
                                     <div className="relative z-10 grid grid-cols-2 gap-6 mt-auto pt-10 border-t border-white/10">
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-2 text-primary font-black uppercase text-[10px] tracking-widest"><Clock size={14} /> Schedule</div>
-                                            <span className="text-sm font-bold uppercase tracking-tighter">{selectedEvent.date} {selectedEvent.month}</span>
+                                            <span className="text-sm font-bold uppercase tracking-tighter">
+                                                {selectedEvent.jsDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                            </span>
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-2 text-primary font-black uppercase text-[10px] tracking-widest"><MapPin size={14} /> Venue</div>
                                             <span className="text-sm font-bold uppercase tracking-tighter">Main Campus</span>
                                         </div>
                                     </div>
+
+                                    <button 
+                                        onClick={() => handleEventClick(selectedEvent)}
+                                        className="mt-8 bg-primary text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-primary transition-all flex items-center justify-center gap-3"
+                                    >
+                                        View Details <ArrowRight size={16} />
+                                    </button>
                                 </motion.div>
                             ) : (
-                                <div className="h-full min-h-[400px] border-2 border-dashed border-slate-100 rounded-[40px] flex flex-col items-center justify-center p-20 text-center gap-6 group">
-                                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center border-2 border-slate-100 group-hover:bg-primary/5 transition-colors">
-                                        <CalendarIcon size={32} className="text-gray-300 group-hover:text-primary transition-colors" />
-                                    </div>
-                                    <h4 className="text-xl font-bold text-gray-400 font-black uppercase tracking-widest">No events scheduled.</h4>
-                                    <p className="text-slate-400 text-sm max-w-xs leading-relaxed font-bold">Please select dates with indicators to view campus activities.</p>
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-slate-50 rounded-[40px] border border-dashed border-slate-200">
+                                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
+                                    <CalendarIcon className="text-slate-300" size={32} />
                                 </div>
+                                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
+                                    {filter === 'ALL' ? 'No Events Available' : 
+                                     filter === 'sports' ? 'No Sports Available' : 
+                                     filter === 'clubs' ? 'No Clubs Available' : 'No Events Available'}
+                                </h3>
+                                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2 italic">Check back later for updates</p>
+                            </div>
                             )}
                         </div>
                     </div>
@@ -165,25 +192,39 @@ const UpcomingEvents = () => {
                 <div className="flex flex-col gap-10">
                     <h2 className="text-4xl font-black text-gray-800 tracking-tight px-4 border-l-8 border-primary uppercase">All Campus Events</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        {events.map((e, i) => (
-                            <div key={i} className="bg-white p-10 rounded-[40px] flex flex-col gap-8 shadow-xl border border-slate-100 hover:-translate-y-4 group cursor-pointer transition-all duration-500">
-                                <div className="flex justify-between items-start">
-                                    <div className="w-16 h-16 bg-primary/5 rounded-2xl flex flex-col items-center justify-center border-2 border-primary/10 group-hover:bg-primary transition-colors">
-                                        <span className="text-xl font-black text-primary group-hover:text-white leading-none tracking-tighter">{e.date}</span>
-                                        <span className="text-[10px] font-black text-primary/60 group-hover:text-white uppercase tracking-widest">{e.month.substring(0, 3)}</span>
+                        {events.length > 0 ? (
+                            events.map((e, i) => (
+                                <div 
+                                    key={i} 
+                                    onClick={() => handleEventClick(e)}
+                                    className="bg-white p-10 rounded-[40px] flex flex-col gap-8 shadow-xl border border-slate-100 hover:-translate-y-4 group cursor-pointer transition-all duration-500"
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="w-16 h-16 bg-primary/5 rounded-2xl flex flex-col items-center justify-center border-2 border-primary/10 group-hover:bg-primary transition-colors">
+                                            <span className="text-xl font-black text-primary group-hover:text-white leading-none tracking-tighter">{e.jsDate.getDate()}</span>
+                                            <span className="text-[10px] font-black text-primary/60 group-hover:text-white uppercase tracking-widest">{e.jsDate.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                        </div>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-full ${e.eventType === 'clubs' ? 'text-emerald-500' : e.eventType === 'sports' ? 'text-amber-500' : 'text-primary'}`}>
+                                            <Users size={14} /> {e.eventType.toUpperCase()}
+                                        </span>
                                     </div>
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-full"><Users size={14} className="text-primary" /> Active Event</span>
+                                    <div>
+                                        <h4 className="text-2xl font-black text-gray-800 leading-tight mb-2 group-hover:text-primary transition-colors uppercase tracking-tighter italic">{e.eventTitle}</h4>
+                                        <p className="text-sm text-gray-500 font-medium leading-relaxed line-clamp-3 font-bold italic">{e.description}</p>
+                                    </div>
+                                    <div className="mt-4 pt-6 border-t border-slate-50 flex justify-between items-center group-hover:border-primary/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-xs font-black text-primary group-hover:translate-x-2 transition-transform uppercase tracking-widest">More Details <ChevronRight size={14} /></div>
+                                        <CheckCircle size={20} className="text-emerald-500" />
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="text-2xl font-black text-gray-800 leading-tight mb-2 group-hover:text-primary transition-colors uppercase tracking-tighter">{e.name}</h4>
-                                    <p className="text-sm text-gray-500 font-medium leading-relaxed line-clamp-3 font-bold">{e.description}</p>
-                                </div>
-                                <div className="mt-4 pt-6 border-t border-slate-50 flex justify-between items-center group-hover:border-primary/20 transition-colors">
-                                    <div className="flex items-center gap-2 text-xs font-black text-primary group-hover:translate-x-2 transition-transform uppercase tracking-widest">More Details <ChevronRight size={14} /></div>
-                                    <CheckCircle size={20} className="text-emerald-500" />
-                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-1 md:col-span-3 py-20 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200 text-center flex flex-col items-center gap-4">
+                                <CalendarIcon className="text-slate-300 w-16 h-16" />
+                                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-widest mt-2">No Upcoming Schedule</h3>
+                                <p className="text-slate-400 font-bold uppercase text-xs tracking-widest italic">The campus grounds are at rest</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             </section>
