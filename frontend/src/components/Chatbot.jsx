@@ -28,11 +28,32 @@ const Chatbot = () => {
     // Initial greeting when opened for the first time
     useEffect(() => {
         if (isOpen && messages.length === 0) {
+            const now = new Date();
+            const hour = now.getHours();
+            let timeGreeting = '';
+
+            if (hour >= 5 && hour < 12) {
+                timeGreeting = 'morning';
+            } else if (hour >= 12 && hour < 17) {
+                timeGreeting = 'afternoon';
+            } else if (hour >= 17 && hour < 21) {
+                timeGreeting = 'evening';
+            } else {
+                timeGreeting = 'night';
+            }
+
+            const initialGreetings = [
+                `Yo! 👋 Good ${timeGreeting}! I'm NewsBot, your campus hype squad! Ready to spill the tea on RGUKT Ongole? What's popping? 🔥`,
+                `Hey bestie! 💫 Good ${timeGreeting}! NewsBot here with that fresh campus energy. What's the vibe today? Events, clubs, or placements? ✨`,
+                `Sup fam! 🌟 Good ${timeGreeting}! I'm NewsBot, your go-to for RGUKT Ongole updates. What's the tea? Need some campus deets? 🎉`,
+                `What's good! 👋 Good ${timeGreeting}! NewsBot bringing that campus energy. What's the word? Events, clubs, or placement updates? ⚡`
+            ];
+
             setMessages([
                 {
                     id: Date.now(),
                     sender: 'bot',
-                    text: "Hey there! 👋 I'm NewsBot. How can I help you navigate the campus today?",
+                    text: initialGreetings[Math.floor(Math.random() * initialGreetings.length)],
                     timestamp: new Date()
                 }
             ]);
