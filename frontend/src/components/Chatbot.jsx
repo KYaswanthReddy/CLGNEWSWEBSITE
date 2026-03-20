@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Bot, User, Sparkles, Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
 import { sendChatMessage } from '../services/api';
+import Vapi from "@vapi-ai/web";
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +13,8 @@ const Chatbot = () => {
     const [isMuted, setIsMuted] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
     const [callStatus, setCallStatus] = useState('');
+    const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
+    const [lastSpokenText, setLastSpokenText] = useState('');
 
     const quickReplies = [
         "Events 🎉",
@@ -24,6 +27,84 @@ const Chatbot = () => {
 
     const messagesEndRef = useRef(null);
     const formRef = useRef(null);
+    const vapiRef = useRef(null);
+
+    const VAPI_PUBLIC_KEY = import.meta.env.VITE_VAPI_PUBLIC_KEY 
+    const VAPI_ASSISTANT_ID = import.meta.env.VITE_VAPI_ASSISTANT_ID 
+
+    useEffect(() => {
+        if (!VAPI_PUBLIC_KEY) {
+            console.warn('VAPI_PUBLIC_KEY is not defined. Voice calls will be disabled.');
+            return;
+        }
+
+        const vapi = new Vapi(VAPI_PUBLIC_KEY);
+        vapiRef.current = vapi;
+
+        // Call lifecycle events
+        vapi.on('call-start', () => {
+            setIsCalling(true);
+            setCallStatus('connected');
+        });
+
+        vapi.on('call-end', () => {
+            setIsCalling(false);
+            setCallStatus('');
+            setCallDuration(0);
+            setIsMuted(false);
+        });
+
+        vapi.on('error', (error) => {
+            console.error('Vapi error:', error);
+            setCallStatus('failed');
+            setIsCalling(false);
+        });
+
+        // Assistant speech state
+        vapi.on('speech-start', () => {
+            setIsAssistantSpeaking(true);
+        });
+
+        vapi.on('speech-end', () => {
+            setIsAssistantSpeaking(false);
+        });
+
+        // Capture assistant messages and surface them in the chat
+        vapi.on('message', (message) => {
+            try {
+                if (message?.role === 'assistant' && message?.content) {
+                    const text =
+                        typeof message.content === 'string'
+                            ? message.content
+                            : Array.isArray(message.content)
+                                ? message.content.map((c) => c.text || '').join(' ')
+                                : '';
+
+                    if (!text.trim()) return;
+
+                    const botMessage = {
+                        id: Date.now(),
+                        sender: 'bot',
+                        text,
+                        timestamp: new Date()
+                    };
+
+                    setLastSpokenText(text);
+                    setMessages((prev) => [...prev, botMessage]);
+                }
+            } catch (err) {
+                console.warn('Failed to process Vapi message', err);
+            }
+        });
+
+        return () => {
+            if (vapiRef.current?.stop) {
+                vapiRef.current
+                    .stop()
+                    .catch((err) => console.warn('Vapi stop cleanup failed', err));
+            }
+        };
+    }, [VAPI_PUBLIC_KEY]);
 
     // Initial greeting when opened for the first time
     useEffect(() => {
@@ -78,22 +159,44 @@ const Chatbot = () => {
         return () => clearInterval(interval);
     }, [isCalling, callStatus]);
 
-    const initiateCall = () => {
-        setIsCalling(true);
-        setCallStatus('connecting');
-        setCallDuration(0);
+    const initiateCall = async () => {
+        try {
+            if (!VAPI_PUBLIC_KEY || !VAPI_ASSISTANT_ID) {
+                console.warn('VAPI_PUBLIC_KEY or VAPI_ASSISTANT_ID is missing. Cannot start call.');
+                setCallStatus('failed');
+                return;
+            }
 
-        // Simulate connecting delay
-        setTimeout(() => {
-            setCallStatus('connected');
-        }, 2000);
+            if (!vapiRef.current) {
+                vapiRef.current = new Vapi(VAPI_PUBLIC_KEY);
+            }
+
+            setIsCalling(true);
+            setCallStatus('connecting');
+            setCallDuration(0);
+
+            await vapiRef.current.start(VAPI_ASSISTANT_ID);
+        } catch (error) {
+            console.error('Vapi start failed:', error);
+            setCallStatus('failed');
+            setIsCalling(false);
+            return;
+        }
     };
 
-    const endCall = () => {
-        setIsCalling(false);
-        setCallStatus('');
-        setCallDuration(0);
-        setIsMuted(false);
+    const endCall = async () => {
+        try {
+            if (vapiRef.current?.stop) {
+                await vapiRef.current.stop();
+            }
+        } catch (error) {
+            console.error('Vapi stop failed:', error);
+        } finally {
+            setIsCalling(false);
+            setCallStatus('');
+            setCallDuration(0);
+            setIsMuted(false);
+        }
     };
 
     const formatTime = (seconds) => {
@@ -222,21 +325,62 @@ const Chatbot = () => {
                                 </div>
 
                                 {/* Avatar */}
-                                <div className="relative z-10 w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/50 mb-6">
-                                    <Bot className="w-12 h-12 text-white" />
+                                <div className="relative z-10 mb-6">
+                                    <div
+                                        className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/50 bg-gradient-to-br from-indigo-500 to-purple-600 ${
+                                            isAssistantSpeaking ? 'ring-4 ring-yellow-400 animate-pulse' : ''
+                                        }`}
+                                    >
+                                        <Bot className="w-12 h-12 text-white" />
+                                    </div>
                                 </div>
 
                                 {/* Info */}
-                                <h3 className="relative z-10 text-2xl font-bold font-heading mb-2">Bot</h3>
-                                <p className="relative z-10 text-slate-300 mb-12 h-6 flex items-center justify-center">
-                                    {callStatus === 'connecting' ? 'Connecting...' : formatTime(callDuration)}
+                                <h3 className="relative z-10 text-2xl font-bold font-heading mb-1">Bot</h3>
+                                <p className="relative z-10 text-slate-300 mb-1 h-6 flex items-center justify-center text-xs uppercase tracking-[0.2em]">
+                                    {callStatus === 'connecting'
+                                        ? 'Connecting...'
+                                        : isAssistantSpeaking
+                                            ? 'Speaking'
+                                            : 'Listening'}
                                 </p>
+                                <p className="relative z-10 text-slate-400 mb-1 h-5 flex items-center justify-center text-xs">
+                                    {callStatus === 'connected' && formatTime(callDuration)}
+                                </p>
+
+                                {callStatus === 'connecting' && (
+                                    <p className="relative z-10 mb-2 max-w-xs text-center text-[11px] text-slate-300/90 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur">
+                                        Your campus assistant is connecting to the call. This usually takes just a moment.
+                                    </p>
+                                )}
+
+                                {lastSpokenText && callStatus === 'connected' && (
+                                    <p className="relative z-10 mb-4 max-w-xs text-center text-sm text-slate-100/90 bg-white/5 px-3 py-2 rounded-2xl border border-white/10 backdrop-blur">
+                                        {lastSpokenText}
+                                    </p>
+                                )}
+
+                                {callStatus === 'failed' && (
+                                    <p className="relative z-10 mb-8 text-xs text-red-300 text-center px-4">
+                                        Voice call failed. Please check your internet connection and Vapi configuration.
+                                    </p>
+                                )}
 
                                 {/* Controls */}
                                 <div className="relative z-10 flex items-center gap-6 mt-auto mb-8">
                                     <button
-                                        onClick={() => setIsMuted(!isMuted)}
-                                        className={`p-4 rounded-full transition-colors ${isMuted ? 'bg-slate-700/80 text-white' : 'bg-slate-700/80 text-white'}`}
+                                        onClick={async () => {
+                                            try {
+                                                const nextMuted = !isMuted;
+                                                setIsMuted(nextMuted);
+                                                if (vapiRef.current?.setMuted) {
+                                                    await vapiRef.current.setMuted(nextMuted);
+                                                }
+                                            } catch (error) {
+                                                console.error('Failed to toggle mute:', error);
+                                            }
+                                        }}
+                                        className="p-4 rounded-full transition-colors bg-slate-700/80 text-white"
                                     >
                                         {isMuted ? <MicOff className="w-6 h-6 text-red-400" /> : <Mic className="w-6 h-6" />}
                                     </button>
@@ -335,6 +479,8 @@ const Chatbot = () => {
                                         className="relative flex items-center"
                                     >
                                         <input
+                                            id="chatbot-message"
+                                            name="chatbot-message"
                                             type="text"
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
