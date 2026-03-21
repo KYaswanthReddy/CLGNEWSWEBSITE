@@ -1,4 +1,9 @@
 import axios from 'axios';
+
+/**
+ * Backend base URL (Express + MongoDB). Chatbot uses POST /chat → loads live DB context.
+ * Set VITE_API_URL in .env — e.g. https://your-api.onrender.com/api for production.
+ */
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
@@ -69,8 +74,8 @@ export const updateAchievement = (id, formData) => api.put(`/achievements/${id}`
 export const deleteAchievement = (id) => api.delete(`/achievements/${id}`);
 
 // Chat
-export const sendChatMessage = (message) => {
-    return api.post('/chat', { message });
+export const sendChatMessage = (message, history = []) => {
+    return api.post('/chat', { message, history });
 };
 
 // Auth

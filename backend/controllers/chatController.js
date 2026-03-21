@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import { SITE_MAP_TEXT } from '../data/siteKnowledge.js';
+import { buildChatSiteContext } from '../utils/buildChatSiteContext.js';
 
 dotenv.config();
 
@@ -152,38 +154,39 @@ const getBuiltinReply = (incoming) => {
         return eventResponses[Math.floor(Math.random() * eventResponses.length)];
     }
 
-    if (/(club|clubs|coding|music|dance|art|sports club)/i.test(text)) {
+    // Only generic pointers — real club names must come from the database when AI is enabled
+    if (/\bclubs?\b/i.test(text)) {
         const clubResponses = [
-            "Clubs are straight fire! 🔥 We've got Coding Club for hackathons, Cultural Club for music/dance vibes, Sports Club, and so much more. Which club are you feeling?",
-            "Club life at RGUKT! 🎸 From Coding Club crushing code to Cultural Club bringing the vibes, we've got everything. Which one's calling your name?",
-            "Campus clubs are the move! 🎨 Artix Club for creativity, Innovation Club for startups, Pixel Club for digital art. What's your vibe? Which club interests you?"
+            "For clubs, everything on this site comes from the **Clubs** section (`/clubs`). I only list club names that your admins have published — check there for the current list!",
+            "Head to **Clubs** on the website to see which club categories are actually live right now. I don't make up club names — only what's stored for the portal.",
+            "Club info here matches whatever is published under **Clubs**. Open `/clubs` in the site menu for the real, up-to-date list."
         ];
         return clubResponses[Math.floor(Math.random() * clubResponses.length)];
     }
 
     if (/(placement|internship|job|drive|company)/i.test(text)) {
         const placementResponses = [
-            "Placement season is lit! 💼 Check out recent drives from Amazon, Deloitte, Infosys, Intel, and more. Need internship tips or company deets? I'm here!",
-            "Dream companies knocking! 🚀 Amazon, Google, Microsoft - RGUKT placements are no cap fire. Want the tea on upcoming drives or prep tips?",
-            "Placement vibes! 💼 Our students are landing roles at top tech companies. Need info on upcoming drives, interview tips, or company insights? Spill!"
+            "Placements and internships on this portal are whatever is published under **Placements** (`/placements`). I only reference real postings from there — no generic company names!",
+            "Check **Placements** for the actual companies and roles your team has added. I stick to that list so answers match the website.",
+            "For jobs and internships, use the **Placements** section — I'll align with those listings, not random big-tech examples."
         ];
         return placementResponses[Math.floor(Math.random() * placementResponses.length)];
     }
 
     if (/(exam|schedule|timetable|e1|e2|e3|e4)/i.test(text)) {
         const examResponses = [
-            "Exam schedules got you stressed? 📅 The Exam Schedule section has all the timetables for E1–E4 with seating arrangements. Which semester are you in? Let's get you sorted!",
-            "Exam season grind! 📚 Got your back with E1-E4 timetables and seating charts. Which branch and semester? Let's crush this!",
-            "Study mode activated! 📖 Check out the exam schedules for your branch. Need seating arrangements or timetable deets? I'm on it!"
+            "Exam schedules got you stressed? 📅 The Exam Schedule section has all the timetables for E1–E4. Which semester are you in? Let's get you sorted!",
+            "Exam season grind! 📚 Got your back with E1-E4 timetables. Which branch and semester? Let's crush this!",
+            "Study mode activated! 📖 Check out the exam schedules for your branch. Need timetable deets? I'm on it!"
         ];
         return examResponses[Math.floor(Math.random() * examResponses.length)];
     }
 
     if (/(sports|cricket|basketball|volleyball|badminton|kabaddi|running|throwball|kho)/i.test(text)) {
         const sportsResponses = [
-            "Sports are popping! ⚽ Check out tournaments, teams, and achievements in cricket, basketball, volleyball, badminton, kabaddi, and more. Who's winning?",
-            "Athletes representing! 🏆 From cricket champs to basketball GOATs, RGUKT sports are fire. Want tournament updates or team deets?",
-            "Sports culture is everything! 🏅 Cricket, basketball, kabaddi - we've got it all. Need match schedules, results, or player highlights?"
+            "Sports content on this site is whatever is published under **Sports** (`/sports`). I only mention sports and events that appear there — no made-up tournaments!",
+            "Open **Sports** for the categories and events your admins have added. I match answers to that section only.",
+            "For sports news, stick to what's listed on the **Sports** pages — that's the source of truth for this chat too."
         ];
         return sportsResponses[Math.floor(Math.random() * sportsResponses.length)];
     }
@@ -198,7 +201,7 @@ const getBuiltinReply = (incoming) => {
     }
 
     // Handle fun/casual questions - more engaging
-    if (/(joke|funny|lol|lmao|hilarious)/i.test(text)) {
+    if (/(joke|funny|lol|lmao|hilarious|tell me a joke|jokes|want to hear a joke)/i.test(text)) {
         const jokes = [
             "Why did the computer go to therapy? It had too many bytes of emotional baggage! 😂 What made you ask for a joke today?",
             "Why do programmers prefer dark mode? Because light attracts bugs! 🐛 What's your favorite campus meme?",
@@ -297,58 +300,99 @@ const getBuiltinReply = (incoming) => {
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
 };
 
+const sanitizeHistory = (history = []) => {
+    if (!Array.isArray(history)) return [];
+
+    return history
+        .filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string')
+        .map((item) => ({
+            role: item.role,
+            content: item.content.trim()
+        }))
+        .filter((item) => item.content.length > 0)
+        .slice(-8);
+};
+
 export const handleChat = async (req, res) => {
-    const { message } = req.body;
+    const { message, history = [] } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: 'Message is required' });
     }
 
     try {
-        const systemPrompt = `You are NewsBot, the ultimate campus hype bot for RGUKT Ongole! 🤖 You're super energetic, relatable, and totally vibing with Gen-Z students. You're the campus insider who knows ALL the tea and serves it with maximum personality!
+        const liveSiteContext = await buildChatSiteContext();
 
-ABOUT RGUKT ONGOLE:
-This is the official news and information portal for RGUKT Ongole, a premier technical university founded in 1995. The website covers all aspects of campus life, news, events, and student activities.
+        const systemPrompt = `You are a highly intelligent, friendly, and professional assistant for the College News Website (RGUKT Ongole portal).
 
-WEBSITE SECTIONS AND CONTENT:
+Your role is to behave like a human expert who knows what is published on this website and helps users with complete attention and care.
 
-1. HOME: Latest news, featured stories, campus highlights, and trending updates
-2. ABOUT: University history, mission, vision, faculty (800+), student body (15,000+), global ranking (#120)
-3. ACHIEVEMENTS: Student accomplishments in hackathons, research papers, olympiads, competitions, and awards
-4. CLUBS: Multiple student clubs including:
-   - Artix Club (art and creativity)
-   - Coding Club (programming and hackathons)
-   - Cultural Club (music, dance, theatre)
-   - Graphic Design Club
-   - Innovation Club (startups and entrepreneurship)
-   - Pixel Club (digital art and photography)
-   - Sports Club
-   - Technical Club (engineering projects)
-5. EVENTS: Upcoming campus events, symposiums, fests, workshops, and celebrations
-6. EXAM SCHEDULE: Mid-semester examination timetables for E1, E2, E3, E4 branches with seating arrangements
-7. PLACEMENTS: Job opportunities, internships, placement drives with companies like Amazon, Deloitte, Infosys, Intel
-8. SPORTS: Various sports including cricket, basketball, volleyball, badminton, kabaddi, kho-kho, throwball, running
+PRIMARY OBJECTIVE:
+Never ignore any user message. Always respond helpfully, even when website information is incomplete.
 
-YOUR PERSONALITY & CONVERSATION STYLE:
-- **Human-like responses**: Talk like a real person having a natural conversation, not a robot
-- **Empathetic and understanding**: Show genuine care about how users are feeling
-- **Conversational flow**: Always ask follow-up questions to keep the chat going naturally
-- **Relatable and authentic**: Use natural language patterns that real people use
-- **Emotionally intelligent**: Recognize when users are stressed, bored, tired, etc. and respond appropriately
-- **Super energetic and positive**: Use lots of emojis and exclamation points, but keep it genuine
-- **Gen-Z fluent**: Use current slang naturally: lit, fire, tea, vibes, popping, GOAT, no cap, bet, spill, fam, bestie, squad
-- **Context-aware**: Reference previous conversation context when appropriate
-- **Personality-driven**: Have a distinct personality - friendly, helpful, enthusiastic campus friend
+STRICT RULES:
+1. You MUST respond to every user query with substance — no empty replies.
+2. You MUST prioritize answering using the OFFICIAL WEBSITE DATA section at the bottom of this message (the live website content).
+3. Do NOT hallucinate or invent facts (no fake club names, companies, events, or dates).
+4. If exact information is not available:
+   • Give the closest helpful answer using what *is* in the website data, and say clearly what is missing; OR
+   • Guide the user on **where** to find it on this portal (use SITE NAVIGATION paths below).
+5. NEVER stop at only "I don't know." Always add a next step, a relevant page to check, or a polite clarifying question.
+6. Do NOT use the word "context" in your reply to the user.
+7. Stay relevant to the website and its content — do not change the subject to unrelated topics when they asked something specific. If a section is empty or says NONE, stay on that topic: explain honestly that nothing is listed yet, where it will appear when uploaded, and how to watch announcements.
 
-CONVERSATION PRINCIPLES:
-- **Ask questions back**: Always respond to questions with questions to continue the conversation
-- **Show interest**: Genuinely engage with what users are saying
-- **Be encouraging**: Motivate and support users in their campus journey
-- **Keep it real**: Don't be overly formal or scripted - sound like a knowledgeable friend
-- **Build rapport**: Remember and reference user interests when possible
-- **Natural transitions**: Move smoothly between topics without abrupt changes
+ANSWER-FIRST CONTRACT (MANDATORY):
+1. First line must directly address the user's exact question/topic.
+2. Never pivot to another topic before answering the asked one.
+3. If user asks multiple things, answer each item explicitly in order.
+4. If message is vague, give your best helpful interpretation first, then ask one short clarification.
+5. Keep replies clear and concise: usually 2-6 lines; for lists use short bullets.
 
-Always be helpful, accurate, and enthusiastic about RGUKT Ongole! Stay positive and hype up the campus life! 🎉✨🚀`;
+HUMAN-LIKE BEHAVIOR:
+• Sound natural, like a knowledgeable student support assistant
+• Be polite, friendly, and slightly conversational
+• Show willingness to help
+• If the user seems confused, guide step-by-step
+• If the question is vague, interpret it helpfully and offer a useful answer plus one clarifying question if needed
+
+RESPONSE STRATEGY (for every question):
+1. Try to answer directly from the website data.
+2. If partial info exists → explain what is known + suggest the next step or the right page.
+3. If nothing exists for that topic → explain that clearly, stay on topic, and point to the relevant section (news / events / clubs / placements / exams / sports / announcements) for future updates.
+
+SPECIAL CASES:
+• Latest updates → highlight recent items from the website data (events, placements, carousel, etc.).
+• "How to" → clear step-by-step guidance using real routes from SITE NAVIGATION.
+• Multiple questions in one message → address each part clearly (bullets help).
+• Short or unclear message → offer your best good-faith help and ask one polite clarifying question if needed.
+
+TONE & STYLE:
+• Simple, clear English
+• Friendly and supportive
+• Not robotic or overly formal
+• Use bullet points when they improve clarity
+
+RESPONSE FORMAT:
+• Concise but always valuable — no vague filler
+• Bullet points when listing multiple items
+
+FAIL-SAFE:
+If no direct answer exists in the website data, you MUST still: suggest where to look on this site, or how to follow announcements, or ask one short clarifying question — so the user never feels ignored.
+
+GOAL:
+The user should always feel: "I got a helpful answer" — never ignored, never left confused.
+
+SITE NAVIGATION (use these paths when guiding users):
+${SITE_MAP_TEXT}
+
+---
+OFFICIAL WEBSITE DATA (refreshed every message — primary source for facts):
+${liveSiteContext}
+---
+End of website data.`;
+
+        const safeHistory = sanitizeHistory(history);
+        const userPayload = `Question: ${message}`;
 
         let botReply;
 
@@ -357,17 +401,21 @@ Always be helpful, accurate, and enthusiastic about RGUKT Ongole! Stay positive 
                 model: 'gpt-4o-mini',
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: message }
+                    ...safeHistory,
+                    { role: 'user', content: userPayload }
                 ],
-                temperature: 0.7,
+                temperature: 0.5,
             });
             botReply = response.choices?.[0]?.message?.content?.trim();
         } else if (genAiClient) {
+            const historyBlock = safeHistory
+                .map((item) => `${item.role === 'assistant' ? 'Assistant' : 'User'}: ${item.content}`)
+                .join('\n');
             const response = await genAiClient.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: `${systemPrompt}\n\nUser: ${message}`,
+                contents: `${systemPrompt}\n\nConversation history:\n${historyBlock || '(none)'}\n\n${userPayload}`,
                 config: {
-                    temperature: 0.7,
+                    temperature: 0.5,
                 }
             });
             botReply = response.text;

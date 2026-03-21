@@ -18,7 +18,7 @@ const Chatbot = () => {
 
     const quickReplies = [
         "Events 🎉",
-        "Time Table 📅",
+        "Exams 📅",
         "Clubs 🎸",
         "Placements 💼",
         "Sports ⚽",
@@ -224,7 +224,15 @@ const Chatbot = () => {
         setIsTyping(true);
 
         try {
-            const response = await sendChatMessage(messageText);
+            const recentHistory = messages
+                .filter((msg) => msg.sender === 'user' || msg.sender === 'bot')
+                .slice(-8)
+                .map((msg) => ({
+                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    content: msg.text
+                }));
+
+            const response = await sendChatMessage(messageText, recentHistory);
             
             const botResponse = {
                 id: Date.now() + 1,

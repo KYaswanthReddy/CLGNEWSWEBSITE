@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "clear-clubs": "node scripts/clearClubTypes.js"
   },
   "dependencies": {
     "@google/genai": "^1.46.0",
