@@ -17,6 +17,7 @@ import homeCarouselRoutes from './routes/homeCarouselRoutes.js';
 import footerRoutes from './routes/footerRoutes.js';
 import socialMediaRoutes from './routes/socialMediaRoutes.js';
 import brandingRoutes from './routes/brandingRoutes.js';
+import websiteRoutes from './routes/websiteRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 dotenv.config();
@@ -56,6 +57,7 @@ app.use('/api/home-carousel', homeCarouselRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/branding', brandingRoutes);
+app.use('/api', websiteRoutes);
 
 // SSOT Category Aliases
 import { getSportTypes, createSportType, updateSportType, deleteSportType } from './controllers/sportController.js';

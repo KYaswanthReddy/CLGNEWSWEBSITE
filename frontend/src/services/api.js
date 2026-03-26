@@ -78,6 +78,33 @@ export const sendChatMessage = (message, history = []) => {
     return api.post('/chat', { message, history });
 };
 
+// News
+export const getNews = (params) => api.get('/news', { params });
+export const getLatestNews = () => api.get('/news/latest');
+export const getRecentNews = () => api.get('/news/recent');
+
+// Announcements
+export const getAnnouncements = (params) => api.get('/announcements', { params });
+export const getTodayAnnouncements = () => api.get('/announcements/today');
+export const getRecentAnnouncements = () => api.get('/announcements/recent');
+
+// Holidays
+export const getHolidays = (params) => api.get('/holidays', { params });
+export const getUpcomingHolidays = () => api.get('/holidays/upcoming');
+
+// Results
+export const getResults = (params) => api.get('/results', { params });
+export const getLatestResults = () => api.get('/results/latest');
+export const checkResultsReleased = () => api.get('/results/status');
+
+// Internships
+export const getInternships = (params) => api.get('/internships', { params });
+export const getLatestInternships = () => api.get('/internships/latest');
+
+// Scholarships
+export const getScholarships = (params) => api.get('/scholarships', { params });
+export const getLatestScholarships = () => api.get('/scholarships/latest');
+
 // Auth
 export const login = (credentials) => api.post('/auth/login', credentials);
 export const register = (userData) => api.post('/auth/register', userData);

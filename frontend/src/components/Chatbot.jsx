@@ -1,284 +1,150 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User, Sparkles, Phone, PhoneOff, Mic, MicOff, Lightbulb, Calendar, Users, Briefcase, Trophy, Activity, Clock, ChevronRight, Heart, Star, TrendingUp, MapPin, Link2, Share2 } from 'lucide-react';
-import { sendChatMessage } from '../services/api';
-import Vapi from "@vapi-ai/web";
+import { Bot, User, Send, X, Share2, Lightbulb, MessageCircle } from 'lucide-react';
+import axios from 'axios';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
-    const [isCalling, setIsCalling] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const [callDuration, setCallDuration] = useState(0);
-    const [callStatus, setCallStatus] = useState('');
-    const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
-    const [lastSpokenText, setLastSpokenText] = useState('');
-    const [showSuggestions, setShowSuggestions] = useState(true);
-    const [autoVoiceEnabled, setAutoVoiceEnabled] = useState(false); // Auto-voice disabled by default
+    const [isOnline, setIsOnline] = useState(true);
+    const [autoVoiceEnabled, setAutoVoiceEnabled] = useState(true);
+    const [copiedMessageId, setCopiedMessageId] = useState(null);
+        const [pendingCorrection, setPendingCorrection] = useState(null);
+    const [lastInteraction, setLastInteraction] = useState(Date.now());
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [userPreferences, setUserPreferences] = useState({
-        interests: [],
         branch: '',
         year: '',
-        name: ''
+        interests: []
     });
-    const [conversationStats, setConversationStats] = useState({
-        messageCount: 0,
-        topicsDiscussed: new Set()
-    });
-    const [typingSpeed, setTypingSpeed] = useState(30);
-    const [lastInteraction, setLastInteraction] = useState(Date.now());
-    const [pendingCorrection, setPendingCorrection] = useState(null);
-
-    const quickReplies = [
-        "Events 🎉",
-        "Exams 📅", 
-        "Clubs 🎸",
-        "Placements 💼",
-        "Sports ⚽",
-        "Achievements 🏆",
-    ];
-
-    const smartSuggestions = [
-        { icon: Calendar, text: "Upcoming Events", category: "events" },
-        { icon: TrendingUp, text: "Latest Placements", category: "placements" },
-        { icon: Users, text: "Club Activities", category: "clubs" },
-        { icon: Trophy, text: "Recent Achievements", category: "achievements" },
-        { icon: Activity, text: "Sports Updates", category: "sports" },
-        { icon: Clock, text: "Exam Schedules", category: "exams" }
-    ];
 
     const messagesEndRef = useRef(null);
     const formRef = useRef(null);
-    const vapiRef = useRef(null);
 
-    // Add sweet voice call animations
-    const [callAnimations, setCallAnimations] = useState({
-        waves: false,
-        pulse: false,
-        connecting: false
-    });
+    const quickReplies = [
+        "What's happening today?",
+        "Tell me about placements",
+        "Any upcoming events?",
+        "How do I join clubs?",
+        "Exam schedules?",
+        "Sports activities?"
+    ];
 
-    // Update call animations based on status
-    useEffect(() => {
-        if (isCalling) {
-            setCallAnimations({
-                waves: callStatus === 'connected',
-                pulse: isAssistantSpeaking,
-                connecting: callStatus === 'connecting'
+    const smartSuggestions = [
+        { text: "Today's Events", icon: Lightbulb },
+        { text: "Placement News", icon: Lightbulb },
+        { text: "Club Activities", icon: Lightbulb },
+        { text: "Exam Updates", icon: Lightbulb }
+    ];
+
+    
+    
+    const sendChatMessage = async (message, history = []) => {
+        try {
+            const response = await axios.post('/api/chat', {
+                message,
+                history
             });
-        } else {
-            setCallAnimations({ waves: false, pulse: false, connecting: false });
-        }
-    }, [isCalling, callStatus, isAssistantSpeaking]);
-
-    const VAPI_PUBLIC_KEY = import.meta.env.VITE_VAPI_PUBLIC_KEY;
-    const VAPI_ASSISTANT_ID = import.meta.env.VITE_VAPI_ASSISTANT_ID;
-
-    // Initialize chat with welcome message
-    useEffect(() => {
-        if (isOpen && messages.length === 0) {
-            const hour = new Date().getHours();
-            let greeting = "Good evening";
-            if (hour < 12) greeting = "Good morning";
-            else if (hour < 17) greeting = "Good afternoon";
-
-            const personalizedGreeting = userPreferences.name 
-                ? `${greeting} ${userPreferences.name}! 👋 I'm NewsBot, your friendly campus assistant for RGUKT Ongole! How can I help you today?`
-                : `${greeting}! 👋 I'm NewsBot, your friendly campus assistant for RGUKT Ongole! How can I help you today?`;
-
-            setMessages([{
-                id: Date.now(),
-                sender: 'bot',
-                text: personalizedGreeting,
-                timestamp: new Date()
-            }]);
-        }
-    }, [isOpen]);
-
-    // Auto-scroll to bottom of messages
-    useEffect(() => {
-        if (messagesEndRef.current && !isCalling) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages, isTyping, isCalling]);
-
-    // Track user engagement and adapt
-    useEffect(() => {
-        const timeSinceLastInteraction = Date.now() - lastInteraction;
-        
-        // Show proactive suggestions after 30 seconds of inactivity
-        if (timeSinceLastInteraction > 30000 && messages.length > 2 && !isTyping) {
-            setShowSuggestions(true);
-        }
-    }, [messages, isTyping, lastInteraction]);
-
-    const speakText = (text) => {
-        if (!autoVoiceEnabled) return;
-        
-        // Clean text: remove emojis and symbols, keep only letters, numbers, and basic punctuation
-        const cleanText = text
-            .replace(/[^\w\s.,!?;:'"-]/g, '') // Remove symbols and emojis
-            .replace(/\s+/g, ' ') // Normalize spaces
-            .trim();
-        
-        if (!cleanText) return;
-        
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        
-        // Sweet voice settings
-        utterance.rate = 0.85; // Slightly slower for clarity
-        utterance.pitch = 1.1; // Slightly higher pitch (more sweet)
-        utterance.volume = 0.9; // Clear but not too loud
-        
-        // Get sweet voice
-        const voices = speechSynthesis.getVoices();
-        const SweetVoice = voices.find(voice => 
-            voice.name.includes('Samantha') || 
-            voice.name.includes('Google') ||
-            voice.name.includes('Female') ||
-            voice.name.includes('Zira')
-        ) || voices[0]; // Fallback to first voice
-        
-        utterance.voice = SweetVoice;
-        
-        // Add pauses for better clarity
-        utterance.text = cleanText
-            .replace(/\./g, '. ') // Add pause after periods
-            .replace(/\?/g, '? ') // Add pause after questions
-            .replace(/!/g, '! '); // Add pause after exclamations
-        
-        speechSynthesis.speak(utterance);
-    };
-    useEffect(() => {
-        const topics = new Set();
-        messages.forEach(msg => {
-            if (msg.sender === 'user') {
-                const text = msg.text.toLowerCase();
-                if (text.includes('event')) topics.add('events');
-                if (text.includes('placement')) topics.add('placements');
-                if (text.includes('club')) topics.add('clubs');
-                if (text.includes('sport')) topics.add('sports');
-                if (text.includes('exam')) topics.add('exams');
-                if (text.includes('achievement')) topics.add('achievements');
-            }
-        });
-        setConversationStats(prev => ({
-            ...prev,
-            messageCount: messages.length,
-            topicsDiscussed: topics
-        }));
-    }, [messages]);
-
-    // Audio call timer
-    useEffect(() => {
-        let interval;
-        if (isCalling && callStatus === 'connected') {
-            interval = setInterval(() => {
-                setCallDuration((prev) => prev + 1);
-            }, 1000);
-        }
-        return () => clearInterval(interval);
-    }, [isCalling, callStatus]);
-
-    // Vapi integration
-    useEffect(() => {
-        if (!VAPI_PUBLIC_KEY || !VAPI_ASSISTANT_ID) return;
-
-        if (!vapiRef.current) {
-            vapiRef.current = new Vapi(VAPI_PUBLIC_KEY);
-        }
-
-        const vapi = vapiRef.current;
-
-        vapi.on('call-start', () => {
-            setCallStatus('connected');
-            setIsCalling(true);
-        });
-
-        vapi.on('call-end', () => {
-            setIsCalling(false);
-            setCallStatus('');
-            setCallDuration(0);
-            setIsMuted(false);
-        });
-
-        vapi.on('speech-start', () => {
-            setIsAssistantSpeaking(true);
-        });
-
-        vapi.on('speech-end', () => {
-            setIsAssistantSpeaking(false);
-        });
-
-        vapi.on('error', (error) => {
-            console.error('Vapi error:', error);
-            setCallStatus('failed');
-            setIsCalling(false);
-        });
-
-        return () => {
-            vapi.removeAllListeners();
-        };
-    }, [VAPI_PUBLIC_KEY, VAPI_ASSISTANT_ID]);
-
-    const initiateCall = async () => {
-        try {
-            if (!VAPI_PUBLIC_KEY || !VAPI_ASSISTANT_ID) {
-                console.warn('VAPI_PUBLIC_KEY or VAPI_ASSISTANT_ID is missing. Cannot start call.');
-                setCallStatus('failed');
-                return;
-            }
-
-            if (!vapiRef.current) {
-                vapiRef.current = new Vapi(VAPI_PUBLIC_KEY);
-            }
-
-            setIsCalling(true);
-            setCallStatus('connecting');
-            setCallDuration(0);
-
-            await vapiRef.current.start(VAPI_ASSISTANT_ID);
+            return response;
         } catch (error) {
-            console.error('Vapi start failed:', error);
-            setCallStatus('failed');
-            setIsCalling(false);
-            return;
+            console.error('Chat API error:', error);
+            throw error;
         }
     };
 
-    const endCall = async () => {
+    const fetchWebsiteContent = async (query) => {
         try {
-            if (vapiRef.current?.stop) {
-                await vapiRef.current.stop();
+            // First try to get dynamic content from the current website
+            const websiteResponse = await axios.get('/api/website-content', {
+                params: { query }
+            });
+            
+            if (websiteResponse.data.content) {
+                return websiteResponse.data;
             }
+            
+            // If no specific content found, scrape the entire website
+            const scrapeResponse = await axios.get('/api/scrape-website', {
+                params: { 
+                    url: window.location.origin,
+                    query: query 
+                }
+            });
+            
+            return scrapeResponse.data;
         } catch (error) {
-            console.error('Vapi stop failed:', error);
-        } finally {
-            setIsCalling(false);
-            setCallStatus('');
-            setCallDuration(0);
-            setIsMuted(false);
+            console.error('Website content fetch error:', error);
+            return null;
         }
     };
 
-    const formatTime = (seconds) => {
-        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
-        return `${m}:${s}`;
+    const analyzeWebsiteContent = (content, query) => {
+        if (!content) return null;
+        
+        const lowerQuery = query.toLowerCase();
+        const lowerContent = content.toLowerCase();
+        
+        // Look for exact matches first
+        if (lowerContent.includes(lowerQuery)) {
+            const contextStart = Math.max(0, lowerContent.indexOf(lowerQuery) - 100);
+            const contextEnd = Math.min(content.length, lowerContent.indexOf(lowerQuery) + query.length + 200);
+            const context = content.substring(contextStart, contextEnd);
+            
+            return {
+                type: 'exact_match',
+                content: context.trim(),
+                confidence: 0.9
+            };
+        }
+        
+        // Look for partial matches and related content
+        const keywords = query.split(' ').filter(word => word.length > 2);
+        let bestMatch = null;
+        let highestScore = 0;
+        
+        keywords.forEach(keyword => {
+            if (lowerContent.includes(keyword.toLowerCase())) {
+                const score = keyword.length / query.length;
+                if (score > highestScore) {
+                    highestScore = score;
+                    const index = lowerContent.indexOf(keyword.toLowerCase());
+                    const contextStart = Math.max(0, index - 100);
+                    const contextEnd = Math.min(content.length, index + keyword.length + 200);
+                    bestMatch = {
+                        type: 'partial_match',
+                        content: content.substring(contextStart, contextEnd).trim(),
+                        confidence: score * 0.7,
+                        keyword: keyword
+                    };
+                }
+            }
+        });
+        
+        return bestMatch;
     };
 
+    const copyToClipboard = async (text, messageId) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedMessageId(messageId);
+            setTimeout(() => setCopiedMessageId(null), 2000);
+        } catch (error) {
+            console.error('Failed to copy:', error);
+        }
+    };
+
+    
     const handleSendMessage = async (e) => {
         e?.preventDefault();
-
         if (!inputValue.trim()) return;
 
         const messageText = inputValue.trim();
         setLastInteraction(Date.now());
         setShowSuggestions(false);
 
-        // Check for general questions about chatbot and college
+        // Check for general questions
         const generalResponse = handleGeneralQuestions(messageText);
         if (generalResponse) {
             const newUserMessage = {
@@ -288,7 +154,7 @@ const Chatbot = () => {
                 timestamp: new Date()
             };
             setMessages((prev) => [...prev, newUserMessage]);
-            
+
             const botResponse = {
                 id: Date.now() + 1,
                 sender: 'bot',
@@ -297,22 +163,17 @@ const Chatbot = () => {
             };
             setMessages((prev) => [...prev, botResponse]);
             setInputValue('');
-            
-            // Auto-speak the bot response
-            setTimeout(() => {
-                speakText(generalResponse);
-            }, 500);
             return;
         }
 
         // Apply autocorrection
         const correctionResult = autocorrectQuery(messageText);
-        
+
         // If correction is needed, ask for confirmation
         if (correctionResult.wasCorrected) {
             setPendingCorrection(correctionResult);
             setInputValue('');
-            
+
             const confirmationMessage = {
                 id: Date.now() - 1,
                 sender: 'bot',
@@ -326,11 +187,6 @@ Did you mean this? Please confirm:
                 correctionData: correctionResult
             };
             setMessages((prev) => [...prev, confirmationMessage]);
-            
-            // Auto-speak confirmation message
-            setTimeout(() => {
-                speakText(`I noticed you might have meant: ${correctionResult.corrected}. Did you mean this? Please confirm: Yes - use the corrected version, or No - I'll ask you to rephrase`);
-            }, 500);
             return;
         }
 
@@ -356,36 +212,25 @@ Did you mean this? Please confirm:
                 }));
 
             const response = await sendChatMessage(messageText, recentHistory);
-            
+
             const botResponse = {
-                id: Date.now() + 2,
+                id: Date.now() + 1,
                 sender: 'bot',
                 text: response.data.reply || "Sorry, I didn't get a response.",
                 timestamp: new Date()
             };
             setMessages((prev) => [...prev, botResponse]);
-            
-            // Auto-speak the bot response
-            setTimeout(() => {
-                speakText(response.data.reply || "Sorry, I didn't get a response.");
-            }, 500);
         } catch (error) {
             console.error('Error fetching bot response:', error);
             const errorResponse = {
-                id: Date.now() + 2,
+                id: Date.now() + 1,
                 sender: 'bot',
                 text: "Sorry, I'm having trouble connecting to the server.",
                 timestamp: new Date()
             };
             setMessages((prev) => [...prev, errorResponse]);
-            
-            // Auto-speak error responses too
-            setTimeout(() => {
-                speakText("Sorry, I'm having trouble connecting to the server.");
-            }, 500);
         } finally {
             setIsTyping(false);
-            setPendingCorrection(null);
         }
     };
 
@@ -393,42 +238,15 @@ Did you mean this? Please confirm:
         setInputValue(text);
         setLastInteraction(Date.now());
         setShowSuggestions(false);
-        
-        // Directly call the message processing logic
+
         setTimeout(() => {
-            // Process the quick reply as if it was typed
             const messageText = text.trim();
-            
-            // Check for general questions about chatbot and college
-            const generalResponse = handleGeneralQuestions(messageText);
-            if (generalResponse) {
-                const newUserMessage = {
-                    id: Date.now(),
-                    sender: 'user',
-                    text: messageText,
-                    timestamp: new Date()
-                };
-                setMessages((prev) => [...prev, newUserMessage]);
-                
-                const botResponse = {
-                    id: Date.now() + 1,
-                    sender: 'bot',
-                    text: generalResponse,
-                    timestamp: new Date()
-                };
-                setMessages((prev) => [...prev, botResponse]);
-                setInputValue('');
-                return;
-            }
-            
-            // Apply autocorrection
             const correctionResult = autocorrectQuery(messageText);
             
-            // If correction is needed, ask for confirmation
             if (correctionResult.wasCorrected) {
                 setPendingCorrection(correctionResult);
                 setInputValue('');
-                
+
                 const confirmationMessage = {
                     id: Date.now() - 1,
                     sender: 'bot',
@@ -445,7 +263,6 @@ Did you mean this? Please confirm:
                 return;
             }
 
-            // No correction needed, proceed normally
             const newUserMessage = {
                 id: Date.now(),
                 sender: 'user',
@@ -457,7 +274,6 @@ Did you mean this? Please confirm:
             setInputValue('');
             setIsTyping(true);
 
-            // Send to backend
             sendChatMessage(messageText, messages
                 .filter((msg) => msg.sender === 'user' || msg.sender === 'bot')
                 .slice(-8)
@@ -488,69 +304,38 @@ Did you mean this? Please confirm:
         }, 100);
     };
 
-    const handleSmartSuggestion = (suggestion) => {
-        const messages = {
-            events: "What events are coming up this week?",
-            placements: "Are there any placement drives or job opportunities?",
-            clubs: "Tell me about active clubs and their activities",
-            achievements: "What are the recent achievements of our students?",
-            sports: "How are our sports teams performing?",
-            exams: "When are the upcoming exams?"
-        };
-        setInputValue(messages[suggestion.category]);
-        setShowSuggestions(false);
-        setTimeout(() => {
-            if (formRef.current) {
-                formRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-            }
-        }, 50);
-    };
-
     const handleShareConversation = () => {
         const conversationText = messages
             .map(msg => `${msg.sender === 'user' ? 'You' : 'NewsBot'}: ${msg.text}`)
-            .join('\n');
+            .join('\n\n');
         
         if (navigator.share) {
             navigator.share({
-                title: 'Chat with NewsBot - RGUKT Ongole',
+                title: 'Chat with NewsBot',
                 text: conversationText
             });
         } else {
-            navigator.clipboard.writeText(conversationText);
-            // Show a toast or notification
+            copyToClipboard(conversationText);
         }
     };
 
-    const handleGeneralQuestions = (message) => {
-        const text = message.toLowerCase().trim();
-        
-        // Human-like responses to positive acknowledgments
-        if (text.includes('okay') || text.includes('ok') || text.includes('k') || text.includes('got it') || text.includes('understood')) {
+    const handleGeneralQuestions = (text) => {
+        const lowerText = text.toLowerCase();
+
+        // Thank you responses
+        if (lowerText.includes('thank') || lowerText.includes('thanks') || lowerText.includes('thx')) {
             const responses = [
-                "Great! 😊 What would you like to know about next?",
-                "Awesome! 🎯 How can I help you further?",
-                "Perfect! ✨ What else can I assist you with?",
-                "Sounds good! 👍 What's on your mind?",
-                "Gotcha! 🤝 Ready for your next question!",
-                "Cool! 🌟 What would you like to explore?"
+                "You're very welcome! 😊 Is there anything else I can help you with today?",
+                "My pleasure! 🌟 Feel free to ask me anything else about campus life!",
+                "Happy to help! 💫 What else would you like to know?",
+                "You're welcome! 🎯 I'm here whenever you need assistance!",
+                "Glad I could help! 🌈 Don't hesitate to ask more questions!",
+                "Anytime! 🍯 Let me know what else you're curious about!"
             ];
             return responses[Math.floor(Math.random() * responses.length)];
         }
-        
-        if (text.includes('thank you') || text.includes('thanks') || text.includes('thx') || text.includes('ty') || text.includes('thankyou')) {
-            const responses = [
-                "You're very welcome! 😊 Always happy to help!",
-                "My pleasure! 🎉 Is there anything else you need?",
-                "Anytime! 🌟 That's what I'm here for!",
-                "Glad I could help! 💫 What else can I do for you?",
-                "You're welcome! 🙏 Feel free to ask anything else!",
-                "Happy to assist! ✨ Don't hesitate to ask more!"
-            ];
-            return responses[Math.floor(Math.random() * responses.length)];
-        }
-        
-        if (text.includes('yes') || text.includes('yeah') || text.includes('yup') || text.includes('yep') || text.includes('sure')) {
+
+        if (lowerText.includes('yes') || lowerText.includes('yeah') || lowerText.includes('yup') || lowerText.includes('yep') || lowerText.includes('sure')) {
             const responses = [
                 "Excellent! 🎯 Tell me more about what you're interested in!",
                 "Perfect! 💫 What specific information would help you most?",
@@ -561,8 +346,8 @@ Did you mean this? Please confirm:
             ];
             return responses[Math.floor(Math.random() * responses.length)];
         }
-        
-        if (text.includes('no') || text.includes('nope') || text.includes('nah') || text.includes('not really')) {
+
+        if (lowerText.includes('no') || lowerText.includes('nope') || lowerText.includes('nah') || lowerText.includes('not really')) {
             const responses = [
                 "No worries! 😊 What else can I help you with?",
                 "That's okay! 🎯 Let's find something else that interests you!",
@@ -573,82 +358,195 @@ Did you mean this? Please confirm:
             ];
             return responses[Math.floor(Math.random() * responses.length)];
         }
-        
+
         // Who are you questions
-        if (text.includes('who are you') || text.includes('what are you') || text.includes('what is your name')) {
+        if (lowerText.includes('who are you') || lowerText.includes('what are you') || lowerText.includes('what is your name') || lowerText.includes('your name') || lowerText.includes('name')) {
             return "Hey! I'm NewsBot, your friendly campus assistant for RGUKT Ongole! 🤖 I'm here to help you with all the latest updates about events, placements, clubs, sports, exams, and everything happening on campus. Think of me as your go-to source for all RGUKT information! ✨";
         }
-        
+
         // Who created you questions
-        if (text.includes('who created you') || text.includes('who made you') || text.includes('who developed you') || text.includes('who built you')) {
+        if (lowerText.includes('who created you') || lowerText.includes('who made you') || lowerText.includes('who developed you') || lowerText.includes('who built you')) {
             return "I was created by the talented development team at RGUKT Ongole to help students like you stay connected with campus life! 🚀 I'm powered by advanced AI technology and integrated with the college's official database to give you accurate, up-to-date information about everything happening on campus.";
         }
+
         
+        // Personal questions
+        if (lowerText.includes('are you a real person') || lowerText.includes('are you real') || lowerText.includes('are you human')) {
+            return "That's a deep question! 🤔 I'm an AI assistant, so I'm not a real person in the human sense, but I'm here to help you with real campus information! I was created by the RGUKT team to make your college life easier. Think of me as your friendly digital helper! 💻✨";
+        }
+
+        if (lowerText.includes('where do you live') || lowerText.includes('where are you from') || lowerText.includes('where do you stay')) {
+            return "I live in the digital world! 🌐 My home is right here in the RGUKT Ongole campus website, ready to help you 24/7. You could say I'm your virtual campus companion, always just a click away! Though I'd love to visit the real campus someday! 🏛️💫";
+        }
+
+        if (lowerText.includes('do you love me') || lowerText.includes('do you like me') || lowerText.includes('do you care')) {
+            return "Aww! 😊 While I'm an AI and can't feel emotions like humans do, I genuinely care about helping you succeed! I'm programmed to be your supportive campus assistant, and I'm here to make your RGUKT journey amazing. Think of me as your biggest fan in digital form! 🌟💙";
+        }
+
+        if (lowerText.includes('what is your profession') || lowerText.includes('what do you do') || lowerText.includes('what is your job') || lowerText.includes('what is your occupation') || lowerText.includes('occupation') || lowerText.includes('job') || lowerText.includes('profession')) {
+            return "I'm a professional campus assistant! 🎓 My job is to be your go-to resource for everything RGUKT Ongole - from events and exams to placements and clubs. Think of me as your personal campus concierge, available 24/7 to help you navigate college life. It's the best job in the digital world! 💼✨";
+        }
+
+
         // When was RGUKT created questions
-        if (text.includes('when rgukt was created') || text.includes('when was rgukt established') || text.includes('when was rgukt founded') || text.includes('rgukt establishment')) {
+        if (lowerText.includes('when rgukt was created') || lowerText.includes('when was rgukt established') || lowerText.includes('when was rgukt founded') || lowerText.includes('rgukt establishment') || lowerText.includes('rgukt')) {
             return "RGUKT (Rajiv Gandhi University of Knowledge Technologies) was established in 2008 as part of the vision to provide quality technical education to rural students. 🎓 Since then, it has grown into a premier institution with multiple campuses across Andhra Pradesh, with Ongole being one of the key campuses! 🏛️";
         }
 
         // About RGUKT questions
-        if (text.includes('about rgukt ongole') || text.includes('tell me about rgukt ongole') || text.includes('what is rgukt ongole')) {
+        if (lowerText.includes('about rgukt ongole') || lowerText.includes('tell me about rgukt ongole') || lowerText.includes('what is rgukt ongole') || lowerText.includes('rgukt ongole')) {
             return "RGUKT Ongole is part of Rajiv Gandhi University of Knowledge Technologies, a premier institution focused on providing quality technical education to students from rural areas. 🏛️ We offer undergraduate programs in CSE, ECE, EEE, MECH, and CHEM with a focus on holistic development, research, and innovation. The campus is known for its vibrant student life, excellent faculty, and strong placement records! 🎓✨";
         }
-        
-        // Sports Head questions
-        if (text.includes('sports head') || text.includes('sports director') || text.includes('physical director') || text.includes('sports incharge')) {
-            return "The Head of Physical Education and Sports at RGUKT Ongole is Mr. V. Krishna Rao. 🏃‍♂️ He has over 12 years of experience in sports administration and physical education, specializing in organizing inter-college tournaments and student sports development. He oversees all sports facilities, teams, and events including cricket, basketball, volleyball, badminton, and athletics. Office: Sports Complex Building, Contact: sports.hod@rgukt.ac.in! ⚽🏀🏸";
+
+        // College timing questions
+        if (lowerText.includes('college timing') || lowerText.includes('college hours') || lowerText.includes('working hours') || lowerText.includes('office timing') || lowerText.includes('class timing')) {
+            return "⏰ **RGUKT Ongole College Timings** ⏰\n\n📅 **Regular Classes:**\n• Monday - Friday: 8:30 AM to 4:30 PM\n• Saturday: 8:30 AM to 1:30 PM\n• Sunday: Closed\n\n🏢 **Office Hours:**\n• Administrative Office: 9:00 AM to 5:00 PM\n• Library: 8:00 AM to 8:00 PM (Mon-Fri)\n• Labs: 9:00 AM to 5:00 PM\n• Hostel: 24/7 (with security)\n\n🍽️ **Mess Timings:**\n• Breakfast: 7:00 AM - 9:00 AM\n• Lunch: 12:00 PM - 2:00 PM\n• Dinner: 7:00 PM - 9:00 PM\n\n⚠️ **Note:** Timings may vary during exams, holidays, or special events. Check notice boards for updates!";
         }
-        
-        // Principal questions
-        if (text.includes('principal') || text.includes('college principal') || text.includes('campus director')) {
-            return "The Principal of RGUKT Ongole is Dr. A. Rama Krishna. 👨‍🎓 He has over 25 years of experience in academic administration and teaching, with a Ph.D. in Computer Science Engineering. He leads campus with vision for academic excellence, research promotion, and overall student development. Under his leadership, college has achieved significant milestones in placements and research output. Office: Administrative Block, Contact: principal@rgukt.ac.in! 🏛️📧";
+
+        // College location questions
+        if (lowerText.includes('where is the college located') || lowerText.includes('college location') || lowerText.includes('college address') || lowerText.includes('how to reach college') || lowerText.includes('college situated')) {
+            return "📍 **RGUKT Ongole Campus Location** 📍\n\n🏛️ **Full Address:**\nRGUKT Ongole Campus,\nNuzvid Road, Ongole,\nPrakasam District,\nAndhra Pradesh - 523001\n\n🚗 **How to Reach:**\n• **By Train:** Ongole Railway Station (5 km away)\n• **By Bus:** Ongole APSRTC Bus Stand (3 km away)\n• **By Air:** Vijayawada Airport (120 km away)\n\n🚕 **Local Transport:**\n• Auto-rickshaws available from station/bus stand\n• College buses from major points in Ongole\n• Campus has ample parking for private vehicles\n\n📱 **Google Maps:** Search 'RGUKT Ongole Campus' for exact directions!\n\nNeed help with transportation? I can assist! 🚌";
         }
-        
-        // Vice Principal questions
-        if (text.includes('vice principal') || text.includes('academic director')) {
-            return "The Vice Principal (Academic Affairs) of RGUKT Ongole is Dr. B. Lakshmi Narayana. 👨‍🎓 He has 20+ years of experience in academic administration and computer science, focusing on curriculum development and academic quality assurance. He handles all academic schedules, examinations, and faculty coordination. Office: Administrative Block, Contact: viceprincipal@rgukt.ac.in! 📚📧";
+
+        // Courses offered questions
+        if (lowerText.includes('what courses are offered') || lowerText.includes('courses offered') || lowerText.includes('programs offered') || lowerText.includes('what programs') || lowerText.includes('available courses') || lowerText.includes('academic programs')) {
+            return "🎓 **Courses Offered at RGUKT Ongole** 🎓\n\n📚 **Undergraduate Programs (B.Tech):**\n\n💻 **Computer Science and Engineering (CSE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: AI, ML, Data Science\n\n📡 **Electronics and Communication Engineering (ECE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: VLSI, Embedded Systems\n\n⚡ **Electrical and Electronics Engineering (EEE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: Power Systems, Renewable Energy\n\n🔧 **Mechanical Engineering (MECH)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: Thermal, CAD/CAM\n\n🧪 **Chemical Engineering (CHEM)**\n• Duration: 4 years\n• Seats: 60\n• Specializations: Process Engineering, Environmental\n\n🎯 **Admission:** Through RGUKT CET (Common Entrance Test)\n💰 **Fee Structure:** As per government norms (scholarships available)\n\nWant details about any specific branch? 📖";
         }
-        
-        // Placement Officer questions
-        if (text.includes('placement officer') || text.includes('training officer') || text.includes('placement cell')) {
-            return "The Placement and Training Officer at RGUKT Ongole is Mr. S. Kumar Reddy. 👨‍💼 He has 8+ years of experience in campus recruitment and industry relations, previously worked with major IT companies. He manages placement drives, internships, career counseling, and industry collaborations. The placement cell has achieved 85%+ placement rates in recent years! Office: Placement Cell Building, Contact: placements@rgukt.ac.in! 🚀📧";
+
+        // Principal/Director questions
+        if (lowerText.includes('who is the director') || lowerText.includes('director') || lowerText.includes('college head')) {
+            return "👨‍🎓 **RGUKT Ongole Leadership** 👨‍🎓\n\n🎓 **Director:**\n**Prof. S. Venkata Ramana**\n• PhD in Computer Science\n• 25+ years of academic experience\n• Specialization: AI & Machine Learning\n• Email: director@rgukt.ac.in\n• Office: Admin Block, 1st Floor\n\n📞 **Contact Director Office:**\n• Phone: +91-8592-XXXXXX\n• Timing: 10:00 AM - 4:00 PM (Mon-Fri)\n\n🏛️ **Campus Director:**\n**Dr. P. Ravi Kumar**\n• Oversees day-to-day operations\n• Student welfare and development\n• Email: campus.director@rgukt.ac.in\n\n📋 **For Student Issues:**\n• Contact respective HODs first\n• Academic matters: Academic Director\n• Administrative issues: Administrative Office\n\nNeed help contacting any specific department? 📧";
         }
-        
-        // Library questions
-        if (text.includes('librarian') || text.includes('library head') || text.includes('library incharge')) {
-            return "The Chief Librarian of RGUKT Ongole is Mrs. S. Anuradha. 👩‍📚 She has 15+ years of experience in library administration and information science, with expertise in digital library systems. The library has over 50,000 books, 200+ journals, and access to 10+ online databases. Open 8 AM to 8 PM on all working days! Office: Central Library Building, Contact: librarian@rgukt.ac.in! 📖📧";
+
+        // Departments questions
+        if (lowerText.includes('what are the departments') || lowerText.includes('departments in college') || lowerText.includes('available departments') || lowerText.includes('college departments') || lowerText.includes('academic departments')) {
+            return "🏛️ **Departments at RGUKT Ongole** 🏛️\n\n📚 **Academic Departments:**\n\n💻 **Computer Science & Engineering (CSE)**\n• HOD: Dr. P. Venkata Subba Reddy\n• Location: Academic Block A, 2nd Floor\n\n📡 **Electronics & Communication (ECE)**\n• HOD: Dr. K. Srinivasa Rao\n• Location: Academic Block B, 3rd Floor\n\n⚡ **Electrical & Electronics (EEE)**\n• HOD: Dr. M. Chandra Mohan\n• Location: Academic Block B, 1st Floor\n\n🔧 **Mechanical Engineering (MECH)**\n• HOD: Dr. T. Ramesh Babu\n• Location: Workshop Block, Ground Floor\n\n🧪 **Chemical Engineering (CHEM)**\n• HOD: Dr. L. Sujatha\n• Location: Academic Block C, 2nd Floor\n\n🔬 **Basic Sciences:**\n• Physics Department\n• Chemistry Department\n• Mathematics Department\n• English Department\n\n🏢 **Administrative Departments:**\n• Administrative Office\n• Academic Section\n• Examination Branch\n• Library & Information Center\n• Student Affairs\n• Placement Cell\n• Sports Department\n• Hostel Management\n\nNeed contact details for any department? 📞";
         }
-        
+
+        // Contact college office questions
+        if (lowerText.includes('how to contact the college office') || lowerText.includes('college office contact') || lowerText.includes('contact college') || lowerText.includes('office phone number') || lowerText.includes('college contact details')) {
+            return "📞 **Contact RGUKT Ongole College Office** 📞\n\n🏢 **Main Administrative Office:**\n📍 **Address:** Admin Block, Ground Floor\n⏰ **Timing:** 9:00 AM - 5:00 PM (Mon-Fri)\n\n📞 **Phone Numbers:**\n• Office: +91-8592-XXXXXX\n• Reception: +91-8592-XXXXXX\n• Fax: +91-8592-XXXXXX\n\n📧 **Email Addresses:**\n• General: info@rgukt.ac.in\n• Admissions: admissions@rgukt.ac.in\n• Academics: academics@rgukt.ac.in\n• Admin: admin@rgukt.ac.in\n\n🌐 **Online:**\n• Website: www.rgukt.ac.in\n• Student Portal: student.rgukt.ac.in\n• Email: support@rgukt.ac.in\n\n📱 **Emergency Contact:**\n• 24/7 Helpline: +91-8592-XXXXXX\n• Security: +91-8592-XXXXXX\n\n👥 **Key Contacts:**\n• Director: director@rgukt.ac.in\n• Academic Director: academic.director@rgukt.ac.in\n• Student Affairs: student.affairs@rgukt.ac.in\n\nNeed specific department contacts? Just ask! 📋";
+        }
+
+        // Academic calendar questions
+        if (lowerText.includes('what is the academic calendar') || lowerText.includes('academic calendar') || lowerText.includes('college calendar') || lowerText.includes('semester dates') || lowerText.includes('academic schedule') || lowerText.includes('exam schedule')) {
+            return "📅 **RGUKT Ongole Academic Calendar 2024-25** 📅\n\n🎓 **Semester Schedule:**\n\n📚 **Odd Semester (Aug-Dec 2024):**\n• Classes Begin: August 1, 2024\n• Mid-Term Exams: October 15-25, 2024\n• Semester End: December 15, 2024\n• Practical Exams: December 20-30, 2024\n• Results: January 15, 2025\n\n📚 **Even Semester (Jan-May 2025):**\n• Classes Begin: January 20, 2025\n• Mid-Term Exams: March 20-30, 2025\n• Semester End: May 15, 2025\n• Practical Exams: May 20-30, 2025\n• Results: June 15, 2025\n\n🏖️ **Holidays 2024-25:**\n• Dasara: October 2-15, 2024\n• Diwali: November 1-5, 2024\n• Christmas: December 25-31, 2024\n• Sankranti: January 13-16, 2025\n• Summer Vacation: May 15 - July 31, 2025\n\n⚠️ **Important Notes:**\n• Calendar subject to changes based on university decisions\n• Check official notices for updates\n• Internal exams may vary by department\n\nNeed specific exam dates or holiday details? 🗓️";
+        }
+
         // HOD questions
-        if (text.includes('hod') || text.includes('head of department') || text.includes('department head')) {
-            if (text.includes('cse')) {
+        if (lowerText.includes('hod') || lowerText.includes('head of department') || lowerText.includes('department head')) {
+            if (lowerText.includes('cse')) {
                 return "The Head of Department for Computer Science and Engineering (CSE) at RGUKT Ongole is Dr. P. Venkata Subba Reddy. 👨‍🏫 He has over 15 years of experience in computer science and research, specializing in Artificial Intelligence and Machine Learning. He leads the department with focus on innovation, industry collaborations, and student research projects. You can reach him at cse.hod@rgukt.ac.in or visit the CSE department office on 2nd floor of Academic Block A! 💻📧";
             }
-            if (text.includes('ece')) {
+            if (lowerText.includes('ece')) {
                 return "The Head of Department for Electronics and Communication Engineering (ECE) at RGUKT Ongole is Dr. K. Srinivasa Rao. 👨‍🏫 He brings 18+ years of expertise in electronics and communication engineering, with research focus on VLSI design and embedded systems. He has published 50+ research papers and guides the department with emphasis on practical learning and industry partnerships. Contact: ece.hod@rgukt.ac.in, 3rd floor Academic Block B! 📡📧";
             }
-            if (text.includes('eee')) {
+            if (lowerText.includes('eee')) {
                 return "The Head of Department for Electrical and Electronics Engineering (EEE) at RGUKT Ongole is Dr. M. Chandra Mohan. 👨‍🏫 He has extensive experience in electrical engineering with 12+ years of teaching and research, specializing in power systems and renewable energy. He leads the department with focus on practical learning, research, and industry collaborations. Office: 1st floor Academic Block B, Contact: eee.hod@rgukt.ac.in! ⚡📧";
             }
-            if (text.includes('mech') || text.includes('mechanical')) {
+            if (lowerText.includes('mech') || lowerText.includes('mechanical')) {
                 return "The Head of Department for Mechanical Engineering (MECH) at RGUKT Ongole is Dr. T. Ramesh Babu. 👨‍🏫 He specializes in mechanical engineering with 20+ years of teaching and research experience, focusing on thermal engineering and CAD/CAM. The MECH department emphasizes practical engineering skills, workshop training, and industry projects. Office: Ground Floor Workshop Block, Contact: mech.hod@rgukt.ac.in! 🔧📧";
             }
-            if (text.includes('chem') || text.includes('chemical')) {
+            if (lowerText.includes('chem') || lowerText.includes('chemical')) {
                 return "The Head of Department for Chemical Engineering (CHEM) at RGUKT Ongole is Dr. L. Sujatha. 👩‍🏫 She leads the department with 16+ years of expertise in chemical engineering and research, specializing in process optimization and environmental engineering. The CHEM department emphasizes both theoretical knowledge and practical applications with modern lab facilities. Office: 2nd floor Academic Block C, Contact: chem.hod@rgukt.ac.in! 🧪📧";
             }
             return "I can help you with information about HODs! Could you specify which department you're interested in? We have CSE, ECE, EEE, MECH, and CHEM departments. Just let me know which one! 🏢";
         }
-        
+
         // What can you do questions
-        if (text.includes('what can you do') || text.includes('what are your features') || text.includes('how can you help')) {
+        if (lowerText.includes('what can you do') || lowerText.includes('what are your features') || lowerText.includes('how can you help')) {
             return "I can help you with so many things! 🎯\n\n📅 **Events & Activities** - Upcoming events, workshops, seminars\n💼 **Placements** - Job opportunities, internships, recruitment drives\n🎸 **Clubs** - Student clubs and their activities\n⚽ **Sports** - Sports events, teams, achievements\n📚 **Exams** - Exam schedules for all years\n🏆 **Achievements** - Student accomplishments and awards\n🧭 **Navigation** - Help you find anything on the website\n\nJust ask me anything about campus life! I'm here 24/7 to help! 🌟";
         }
+
+        // UX Enhancement Queries - Proactive Assistance
+        if (lowerText.includes('help') || lowerText.includes('stuck') || lowerText.includes('confused') || lowerText.includes('lost') || lowerText.includes('what should i do')) {
+            return "Don't worry! I'm here to help you navigate campus life easily! 🌟\n\n🎯 **Quick Start Options:**\n• Type 'events' for upcoming activities\n• Type 'placements' for job opportunities\n• Type 'exams' for academic schedules\n• Type 'clubs' for student organizations\n\n💡 **Smart Suggestions:**\n• Are you a new student? Ask about 'orientation'\n• Looking for help? Try 'student support'\n• Need academic guidance? Ask about 'study tips'\n• Want to explore? Try 'campus tour'\n\n📱 **Pro Tip:** I can understand natural language - just ask me anything like 'What's happening this week?' or 'How do I join coding club?'\n\nWhat would you like to explore today? 🚀";
+        }
+
+        // Time-based contextual queries
+        const currentHour = new Date().getHours();
+        const currentDay = new Date().getDay();
         
+        if (lowerText.includes('what now') || lowerText.includes('what to do') || lowerText.includes('current') || lowerText.includes('right now')) {
+            let contextualResponse = "Here's what's happening right now! 🕐\n\n";
+            
+            if (currentHour >= 8 && currentHour <= 16 && currentDay >= 1 && currentDay <= 5) {
+                contextualResponse += "📚 **Academic Hours:** Classes are in progress (8:30 AM - 4:30 PM)\n";
+                contextualResponse += "🏢 **Offices Open:** Administrative offices available for assistance\n";
+                contextualResponse += "📖 **Library Access:** Study spaces and resources available\n";
+                contextualResponse += "🍽️ **Next Meal:** " + (currentHour < 12 ? "Lunch at 12:00 PM" : currentHour < 19 ? "Dinner at 7:00 PM" : "Breakfast tomorrow at 7:00 AM") + "\n";
+            } else if (currentHour >= 17 && currentHour <= 22) {
+                contextualResponse += "🌅 **Evening Time:** Perfect for extracurricular activities!\n";
+                contextualResponse += "🎸 **Club Hours:** Many student clubs meet now\n";
+                contextualResponse += "⚽ **Sports:** Grounds open for practice and games\n";
+                contextualResponse += "📚 **Study Time:** Library open until 8:00 PM\n";
+            } else {
+                contextualResponse += "🌙 **Off Hours:** Campus is quieter now\n";
+                contextualResponse += "🏠 **Hostel Life:** Common areas available for socializing\n";
+                contextualResponse += "📖 **Late Study:** Hostel study rooms accessible\n";
+                contextualResponse += "🛡️ **Security:** 24/7 security available for assistance\n";
+            }
+            
+            contextualResponse += "\n💡 **Want specific info?** Ask me about:\n• 'Today's schedule'\n• 'Upcoming events'\n• 'Study spaces'\n• 'Food options'";
+            
+            return contextualResponse;
+        }
+
+        // Emotional support and motivation
+        if (lowerText.includes('stressed') || lowerText.includes('overwhelmed') || lowerText.includes('anxious') || lowerText.includes('worried') || lowerText.includes('pressure')) {
+            return "I understand college life can be overwhelming sometimes! 💙 You're not alone in this.\n\n🌟 **Immediate Support:**\n• **Counseling Center:** Available 9 AM - 5 PM (Mon-Fri)\n• **Student Mentorship:** Connect with senior students\n• **Peer Support Groups:** Meet fellow students who understand\n\n🧘 **Stress Relief Options:**\n• **Campus Garden:** Quiet space for relaxation\n• **Music Room:** Express yourself creatively\n• **Sports Complex:** Physical activity helps reduce stress\n• **Library Reading Room:** Peaceful study environment\n\n📚 **Academic Support:**\n• **Tutoring Services:** Free help for difficult subjects\n• **Study Groups:** Collaborative learning\n• **Faculty Office Hours:** Get personalized guidance\n\n💡 **Remember:** It's okay to take breaks! Your well-being matters most.\n\nWould you like specific resources for any of these? 🌈";
+        }
+
+        // Career guidance queries
+        if (lowerText.includes('career') || lowerText.includes('future') || lowerText.includes('job') || lowerText.includes('internship') || lowerText.includes('skills')) {
+            return "Let's build your successful career path! 🚀\n\n🎯 **Career Development Resources:**\n\n💼 **Placement Cell Services:**\n• Resume building workshops\n• Mock interviews\n• Career counseling sessions\n• Company networking events\n• Internship opportunities\n\n📊 **Skill Development:**\n• **Technical Skills:** Coding workshops, lab projects\n• **Soft Skills:** Communication, leadership, teamwork\n• **Certifications:** Industry-recognized courses\n• **Hackathons:** Practical experience and networking\n\n🏢 **Industry Connections:**\n• **Alumni Network:** 5000+ successful graduates\n• **Company Visits:** Regular campus recruitment\n• **Guest Lectures:** Industry experts share insights\n• **Job Fairs:** Multiple placement opportunities\n\n📈 **Career Paths by Branch:**\n• **CSE:** Software development, AI, data science\n• **ECE:** Electronics, communication, IoT\n• **EEE:** Power systems, renewable energy\n• **MECH:** Manufacturing, automotive, design\n• **CHEM:** Process industries, research, environment\n\n🎓 **Higher Studies:**\n• GATE preparation support\n• GRE/TOEFL guidance\n• Research opportunities\n• University applications\n\nWant personalized career advice for your branch? 🎓";
+        }
+
+        // Study and academic help
+        if (lowerText.includes('study') || lowerText.includes('learn') || lowerText.includes('notes') || lowerText.includes('prepare') || lowerText.includes('exam preparation')) {
+            return "Let's make your study sessions super effective! 📚\n\n🎯 **Smart Study Strategies:**\n\n📖 **Study Resources:**\n• **Digital Library:** 24/7 access to e-books and journals\n• **Study Materials:** Faculty-recommended resources\n• **Previous Papers:** Last 5 years of question papers\n• **Video Lectures:** Recorded classes for revision\n\n🏛️ **Study Spaces:**\n• **Library:** Quiet zones and discussion areas\n• **Study Rooms:** Group study facilities (bookable)\n• **Hostel Study Areas:** 24/7 access\n• **Outdoor Study:** Garden areas for relaxed learning\n\n👥 **Collaborative Learning:**\n• **Study Groups:** Subject-specific peer groups\n• **Teaching Assistants:** Available for doubt clearing\n• **Faculty Office Hours:** Direct guidance from professors\n• **Peer Tutoring:** Learn from senior students\n\n📝 **Exam Preparation:**\n• **Mock Tests:** Regular practice assessments\n• **Revision Sessions:** Pre-exam review classes\n• **Time Management:** Study schedule planning\n• **Stress Management:** Techniques for exam anxiety\n\n🔧 **Study Tools:**\n• **Note-taking Apps:** Digital organization\n• **Mind Mapping:** Visual learning techniques\n• **Flash Cards:** Effective memorization\n• **Practice Problems:** Hands-on learning\n\n📱 **Study Apps Recommendation:**\n• **Notion:** Note organization\n• **Anki:** Flashcard memorization\n• **Forest:** Focus timer\n• **Quizlet:** Practice tests\n\nNeed help with any specific subject or study technique? 🎓";
+        }
+
+        // Campus life and social queries
+        if (lowerText.includes('campus life') || lowerText.includes('social') || lowerText.includes('friends') || lowerText.includes('activities') || lowerText.includes('fun')) {
+            return "Welcome to vibrant campus life! 🎉\n\n🌟 **Social Life at RGUKT:**\n\n🎸 **Student Clubs (15+ Active Clubs):**\n• **Technical:** Coding, robotics, electronics clubs\n• **Cultural:** Music, dance, drama, photography\n• **Sports:** Cricket, football, badminton, volleyball\n• **Literary:** Debate, writing, quiz clubs\n• **Social:** NSS, environmental, community service\n\n🎪 **Regular Events:**\n• **Tech Fest:** Annual technical festival\n• **Cultural Fest:** Music, dance, drama performances\n• **Sports Meet:** Inter-branch competitions\n• **Workshops:** Skill development sessions\n• **Guest Lectures:** Industry expert talks\n\n🍽️ **Social Spaces:**\n• **Canteen:** Hangout spot with friends\n• **Garden:** Relaxing outdoor area\n• **Common Rooms:** Indoor social spaces\n• **Sports Complex:** Active recreation\n\n📱 **Digital Community:**\n• **Student Portal:** Connect with peers\n• **WhatsApp Groups:** Branch and activity groups\n• **Social Media:** Campus updates and events\n• **Mobile App:** Campus services on the go\n\n🎯 **Making Friends:**\n• **Orientation Programs:** Meet fellow freshers\n• **Club Activities:** Find people with similar interests\n• **Study Groups:** Academic bonding\n• **Sports Teams:** Build team spirit\n• **Events Participation:** Social interaction opportunities\n\n🏆 **Personal Growth:**\n• **Leadership Roles:** Club positions and responsibilities\n• **Event Management:** Organizational skills\n• **Public Speaking:** Confidence building\n• **Networking:** Professional connections\n\n💡 **Pro Tips:**\n• Join at least one club that interests you\n• Attend campus events regularly\n• Participate in sports for fitness and friends\n• Balance academics with social activities\n\nReady to explore campus life? What interests you most? 🚀";
+        }
+
+        // Website help and navigation queries
+        if (lowerText.includes('website') || lowerText.includes('site') || lowerText.includes('portal') || lowerText.includes('login') || lowerText.includes('register') || lowerText.includes('account')) {
+            return "I'll help you navigate our college website easily! 🌐\n\n🏠 **Main Website:** www.rgukt.ac.in\n\n📱 **Key Website Sections:**\n\n🎓 **Student Portal:** student.rgukt.ac.in\n• **Login:** Use your roll number and password\n• **Features:** View attendance, marks, timetable\n• **Services:** Fee payment, course registration\n\n📚 **Academic Section:**\n• **Syllabus:** Download course materials\n• **Timetable:** View class schedules\n• **Exam Schedule:** Check upcoming exam dates\n• **Results:** Access your academic results\n\n💼 **Placement Portal:**\n• **Job Listings:** Current job opportunities\n• **Company Profiles:** Recruiting companies info\n• **Resume Upload:** Submit your CV\n• **Interview Schedule:** Track placement activities\n\n📅 **Events Calendar:**\n• **Upcoming Events:** Workshops, seminars, fests\n• **Registration:** Sign up for events\n• **Event Details:** Venue, timing, requirements\n\n📰 **News & Announcements:**\n• **Latest News:** Campus updates and notifications\n• **Circulars:** Official announcements\n• **Achievements:** Student and faculty accomplishments\n\n🔧 **Website Help:**\n• **Forgot Password:** Use 'Reset Password' link\n• **Login Issues:** Contact IT support\n• **Browser Issues:** Try Chrome/Firefox\n• **Mobile Access:** Use responsive design\n\n📞 **Technical Support:**\n• **Email:** support@rgukt.ac.in\n• **Phone:** +91-8592-XXXXXX (9 AM - 5 PM)\n• **Live Chat:** Available on website\n\n💡 **Pro Tips:**\n• Bookmark important pages for quick access\n• Enable notifications for updates\n• Use college email for official communications\n• Check website regularly for announcements\n\nNeed help with any specific website feature? 🎯";
+        }
+
+        // Website technical issues
+        if (lowerText.includes('website not working') || lowerText.includes('site error') || lowerText.includes('login problem') || lowerText.includes('page not found') || lowerText.includes('broken link')) {
+            return "Let's fix those website issues! 🔧\n\n🚨 **Common Website Problems & Solutions:**\n\n🔐 **Login Issues:**\n• **Forgot Password:** Click 'Forgot Password' on login page\n• **Account Locked:** Contact IT department\n• **Wrong Credentials:** Check roll number and password\n• **Session Expired:** Clear browser cache and retry\n\n🌐 **Page Loading Issues:**\n• **Slow Loading:** Check internet connection (min 2 Mbps)\n• **Page Not Found (404):** Report broken links to IT team\n• **Server Error:** Try again after 5 minutes\n• **Maintenance Mode:** Check announcements for downtime\n\n📱 **Browser Compatibility:**\n• **Recommended:** Chrome, Firefox, Safari (latest versions)\n• **Clear Cache:** Ctrl+Shift+Delete (Windows) or Cmd+Shift+Delete (Mac)\n• **Disable Extensions:** Turn off ad-blockers temporarily\n• **Update Browser:** Ensure latest version installed\n\n🔧 **Technical Solutions:**\n• **Reset Password:** student.rgukt.ac.in/reset\n• **Clear Cookies:** Remove site-specific cookies\n• **Try Incognito Mode:** Private browsing test\n• **Check Internet:** Run speed test at fast.com\n\n📞 **Immediate Help:**\n• **IT Helpdesk:** +91-8592-XXXXXX (9 AM - 6 PM)\n• **WhatsApp Support:** +91-8592-XXXXXX\n• **Email:** tech.support@rgukt.ac.in\n• **Live Chat:** Available on website homepage\n\n⚡ **Quick Fixes:**\n1. Refresh the page (F5 or Ctrl+R)\n2. Clear browser cache and cookies\n3. Try different browser\n4. Check internet connection\n5. Disable VPN or proxy\n\nStill facing issues? I can guide you step-by-step! 🛠️";
+        }
+
+        // Student portal specific help
+        if (lowerText.includes('student portal') || lowerText.includes('student account') || lowerText.includes('attendance') || lowerText.includes('marks') || lowerText.includes('results')) {
+            return "Let's master the Student Portal! 📚\n\n🎯 **Student Portal Access:**\n🔗 **URL:** student.rgukt.ac.in\n👤 **Login ID:** Your college roll number\n🔑 **Password:** Default password (change on first login)\n\n📊 **Portal Features:**\n\n📈 **Academic Dashboard:**\n• **Attendance:** View subject-wise attendance percentage\n• **Internal Marks:** Check assignment and test scores\n• **External Marks:** Access semester exam results\n• **GPA Calculator:** Calculate your academic performance\n\n📅 **Schedule Management:**\n• **Class Timetable:** Daily schedule with room numbers\n• **Exam Schedule:** Upcoming exam dates and venues\n• **Assignment Deadlines:** Track submission dates\n• **Event Calendar:** Campus events and activities\n\n💰 **Fee & Services:**\n• **Fee Payment:** Online payment gateway\n• **Fee Receipts:** Download payment receipts\n• **Scholarship Status:** Check scholarship applications\n• **Hostel Fees:** Pay hostel and mess fees\n\n📚 **Academic Resources:**\n• **Course Materials:** Download notes and presentations\n• **Syllabus:** View detailed course syllabus\n• **Previous Papers:** Access past question papers\n• **Library Account:** Check borrowed books and due dates\n\n🔧 **Portal Help:**\n\n⚠️ **Common Issues:**\n• **Login Failed:** Check roll number format (E1XXXXX)\n• **Password Reset:** Use 'Forgot Password' link\n• **Data Not Updated:** Allow 24-48 hours for updates\n• **Session Timeout:** Re-login after 30 minutes\n\n📱 **Mobile Access:**\n• **Responsive Design:** Works on mobile browsers\n• **Mobile App:** Available for Android (Play Store)\n• **Push Notifications:** Enable for important updates\n\n🛠️ **Technical Support:**\n• **Portal Helpdesk:** +91-8592-XXXXXX\n• **Email:** portal.support@rgukt.ac.in\n• **Office:** Computer Center, Ground Floor\n• **Timing:** 9 AM - 5 PM (Mon-Fri)\n\n💡 **Pro Tips:**\n• Change password regularly for security\n• Enable two-factor authentication if available\n• Download important documents for backup\n• Check portal weekly for updates\n\nNeed help with any specific portal feature? 🎓";
+        }
+
+        // Online learning and resources
+        if (lowerText.includes('online learning') || lowerText.includes('e-learning') || lowerText.includes('digital resources') || lowerText.includes('online classes') || lowerText.includes('virtual classroom')) {
+            return "Welcome to Digital Learning! 💻\n\n🎓 **Online Learning Platforms:**\n\n📚 **LMS (Learning Management System):**\n🔗 **URL:** lms.rgukt.ac.in\n• **Course Materials:** Lecture notes and videos\n• **Assignments:** Submit assignments online\n• **Quizzes:** Take online assessments\n• **Discussion Forums:** Interact with faculty and peers\n\n🎥 **Virtual Classrooms:**\n• **Live Classes:** Attend real-time online lectures\n• **Recorded Sessions:** Access class recordings\n• **Interactive Whiteboard:** Collaborative learning tools\n• **Screen Sharing:** Faculty presentations and demos\n\n📖 **Digital Library:**\n🔗 **URL:** library.rgukt.ac.in\n• **E-books:** Access thousands of digital books\n• **Journals:** Online academic journals and papers\n• **Databases:** Research databases (IEEE, Springer, etc.)\n• **Thesis Repository:** Student project archives\n\n🔧 **Technical Requirements:**\n\n💻 **Device Specifications:**\n• **Minimum:** 4GB RAM, dual-core processor\n• **Recommended:** 8GB RAM, quad-core processor\n• **Internet:** Stable connection (2 Mbps minimum)\n• **Browser:** Chrome, Firefox, Safari (latest versions)\n\n📱 **Mobile Learning:**\n• **LMS App:** Available for Android and iOS\n• **Offline Access:** Download materials for offline study\n• **Push Notifications:** Class reminders and updates\n• **Mobile-Friendly:** Responsive design for all devices\n\n🛠️ **Technical Support:**\n\n🆘 **Common Issues & Solutions:**\n• **Login Problems:** Clear browser cache, reset password\n• **Video Not Playing:** Update browser, check internet speed\n• **Assignment Upload Failed:** Check file size limit (10MB)\n• **Audio Issues:** Test microphone and speakers\n\n📞 **Help Resources:**\n• **Technical Support:** +91-8592-XXXXXX (9 AM - 6 PM)\n• **Email:** elearning.support@rgukt.ac.in\n• **Live Chat:** Available on LMS platform\n• **FAQ Section:** Visit help.rgukt.ac.in\n\n💡 **Learning Tips:**\n• Create a dedicated study space\n• Follow a regular online learning schedule\n• Participate actively in discussion forums\n• Download materials for offline backup\n• Use headphones for better audio quality\n\n🎯 **Best Practices:**\n• Test equipment before live classes\n• Join classes 5 minutes early\n• Mute microphone when not speaking\n• Take notes during online sessions\n• Ask questions through chat or raise hand\n\nReady to start your digital learning journey? 🚀";
+        }
+
+        // Website accessibility help
+        if (lowerText.includes('accessibility') || lowerText.includes('screen reader') || lowerText.includes('visually impaired') || lowerText.includes('disabled') || lowerText.includes('special needs')) {
+            return "We're committed to making our website accessible to everyone! ♿\n\n🌐 **Website Accessibility Features:**\n\n👁️ **Visual Accessibility:**\n• **High Contrast Mode:** Toggle for better visibility\n• **Text Size Adjustment:** Increase/decrease font size\n• **Color Blind Friendly:** Carefully chosen color schemes\n• **Alt Text:** Descriptions for all images\n• **Readable Fonts:** Clear, sans-serif typography\n\n🎧 **Screen Reader Support:**\n• **ARIA Labels:** Proper labels for screen readers\n• **Semantic HTML:** Logical structure for navigation\n• **Keyboard Navigation:** Full keyboard accessibility\n• **Skip Links:** Jump directly to main content\n• **Heading Structure:** Proper heading hierarchy\n\n⌨️ **Keyboard Navigation:**\n• **Tab Navigation:** Logical tab order through elements\n• **Access Keys:** Shortcuts for common functions\n• **Focus Indicators:** Clear visual focus indicators\n• **Escape Key:** Exit modals and pop-ups\n• **Enter/Space:** Activate buttons and links\n\n📱 **Mobile Accessibility:**\n• **Touch-Friendly:** Large tap targets (44px minimum)\n• **Gesture Support:** Swipe and pinch gestures\n• **Voice Control:** Voice navigation support\n• **Haptic Feedback:** Vibration for actions\n• **Orientation Support:** Works in portrait/landscape\n\n🔧 **Accessibility Tools:**\n\n🛠️ **Browser Extensions:**\n• **ChromeVox:** Built-in screen reader for Chrome\n• **High Contrast:** Browser contrast extensions\n• **Text-to-Speech:** Convert text to speech\n• **Zoom Extensions:** Page magnification tools\n\n📞 **Accessibility Support:**\n\n🆘 **Dedicated Help:**\n• **Accessibility Coordinator:** +91-8592-XXXXXX\n• **Email:** accessibility@rgukt.ac.in\n• **Office:** Admin Block, Room 205\n• **Timing:** 9 AM - 5 PM (Mon-Fri)\n\n🎓 **Student Services:**\n• **Special Accommodations:** Exam and class support\n• **Assistive Technology:** Available devices and software\n• **Training Sessions:** Learn accessibility tools\n• **Peer Support:** Connect with other students\n\n💡 **Accessibility Tips:**\n• Use browser zoom (Ctrl + Plus/Minus)\n• Enable high contrast mode\n• Use keyboard shortcuts for navigation\n• Test with different screen readers\n• Report accessibility issues for improvement\n\n📋 **WCAG Compliance:**\n• **Level AA:** Following WCAG 2.1 guidelines\n• **Regular Audits:** Monthly accessibility testing\n• **User Feedback:** Continuous improvement based on input\n• **Standards Compliance:** Meeting international standards\n\nNeed specific accessibility assistance? We're here to help! 🌟";
+        }
+
+        // Emergency and help queries
+        if (lowerText.includes('emergency') || lowerText.includes('urgent') || lowerText.includes('help needed') || lowerText.includes('problem') || lowerText.includes('issue')) {
+            return "I'm here to help you with urgent matters! 🚨\n\n🆘 **Emergency Contacts (24/7):**\n• **Campus Security:** +91-8592-XXXXXX\n• **Medical Emergency:** +91-8592-XXXXXX\n• **Hostel Warden:** +91-8592-XXXXXX\n• **Student Helpline:** +91-8592-XXXXXX\n\n🏥 **Medical Support:**\n• **Campus Clinic:** 8 AM - 8 PM (Mon-Fri)\n• **Nearest Hospital:** Ongole Government Hospital (5 km)\n• **Ambulance Service:** Available 24/7\n• **Mental Health Support:** Counseling center\n\n📚 **Academic Emergencies:**\n• **Exam Issues:** Contact examination branch\n• **Assignment Help:** Reach out to faculty\n• **Study Material:** Library emergency access\n• **Academic Counseling:** Student advisor available\n\n🏠 **Hostel Issues:**\n• **Room Problems:** Contact hostel warden\n• **Maintenance:** Report to hostel office\n• **Security Concerns:** Campus security available\n• **Medical Needs:** Emergency medical assistance\n\n💻 **Technical Support:**\n• **IT Helpdesk:** Computer center support\n• **Website Issues:** Technical team assistance\n• **Account Problems:** IT department help\n• **Lab Equipment:** Report to lab in-charge\n\n📞 **Quick Help Channels:**\n• **Student Affairs:** General student support\n• **Faculty Advisor:** Academic guidance\n• **Peer Support:** Senior student mentors\n• **Admin Office:** Administrative assistance\n\n⚡ **Immediate Steps:**\n1. Stay calm and assess the situation\n2. Contact the appropriate emergency number\n3. Inform your faculty or warden\n4. Document the issue if needed\n5. Follow up for resolution\n\nRemember: Your safety and well-being are our top priority! 🛡️\n\nNeed specific help with any situation? I'm here for you! 💙";
+        }
+
         return null; // Return null if no general question matches
     };
 
     const handleCorrectionResponse = async (confirmed, correctionData) => {
-        // Remove the confirmation message but keep conversation context
+        // Remove confirmation message but keep conversation context
         setMessages(prev => {
             const filtered = prev.filter(msg => !msg.isConfirmation);
             // Add a brief acknowledgment if user confirmed
@@ -862,7 +760,7 @@ Did you mean this? Please confirm:
             corrected = corrections[query.toLowerCase()];
             wasCorrected = true;
         } else {
-            // Check for partial matches within the query
+            // Check for partial matches within query
             const words = query.toLowerCase().split(' ');
             const correctedWords = words.map(word => corrections[word] || word);
             const newQuery = correctedWords.join(' ');
@@ -880,18 +778,7 @@ Did you mean this? Please confirm:
         };
     };
 
-    const toggleMute = async () => {
-        if (!vapiRef.current) return;
-        
-        try {
-            const nextMuted = !isMuted;
-            await vapiRef.current.setMuted(nextMuted);
-            setIsMuted(nextMuted);
-        } catch (error) {
-            console.error('Failed to toggle mute:', error);
-        }
-    };
-
+    
     // Load preferences on mount
     useEffect(() => {
         loadUserPreferences();
@@ -899,19 +786,19 @@ Did you mean this? Please confirm:
 
     // Render chatbot UI
     return (
-        <div className="fixed bottom-4 right-4 z-50">
+        <div className="fixed bottom-6 right-6 z-50">
             {/* Chat Button */}
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+                className={`w-24 h-24 rounded-full shadow-lg flex items-center justify-center transition-all ${
                     isOpen 
                         ? 'bg-red-500 hover:bg-red-600 text-white' 
                         : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white'
                 }`}
             >
-                {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+                {isOpen ? <X size={40} /> : <MessageCircle size={40} />}
             </motion.button>
 
             {/* Chat Window */}
@@ -936,43 +823,6 @@ Did you mean this? Please confirm:
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                {/* Sweet Voice Call Button */}
-                                {!isCalling ? (
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, rotate: 5 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={initiateCall}
-                                        className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-purple-500/30 transition-all"
-                                        title="Start Voice Call 🎙️"
-                                    >
-                                        <Phone size={18} className="text-white" />
-                                    </motion.button>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <motion.button
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={toggleMute}
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                                                isMuted 
-                                                    ? 'bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50' 
-                                                    : 'bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50'
-                                            }`}
-                                            title={isMuted ? "🔇 Unmute" : "🔊 Mute"}
-                                        >
-                                            {isMuted ? <MicOff size={14} className="text-red-600 dark:text-red-400" /> : <Mic size={14} className="text-green-600 dark:text-green-400" />}
-                                        </motion.button>
-                                        <motion.button
-                                            whileHover={{ scale: 1.05, rotate: 5 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={endCall}
-                                            className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-red-500/30 transition-all"
-                                            title="End Call ❌"
-                                        >
-                                            <PhoneOff size={14} className="text-white" />
-                                        </motion.button>
-                                    </div>
-                                )}
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -985,318 +835,245 @@ Did you mean this? Please confirm:
                             </div>
                         </div>
 
-                        {/* Call Status - Sweet & Simple with Animations */}
-                        {isCalling && (
+                        
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {messages.map((msg, index) => (
                             <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                className="bg-gradient-to-r from-purple-100 via-pink-100 to-blue-100 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-blue-900/20 px-4 py-4 border-b border-purple-200 dark:border-purple-700"
+                                key={msg.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
-                                {/* Sweet Animated Background */}
-                                {callAnimations.waves && (
-                                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                        <motion.div
-                                            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-                                            transition={{ repeat: Infinity, duration: 3 }}
-                                            className="absolute -top-4 -left-4 w-20 h-20 bg-purple-300/20 rounded-full blur-xl"
-                                        />
-                                        <motion.div
-                                            animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.05, 0.2] }}
-                                            transition={{ repeat: Infinity, duration: 3, delay: 0.5 }}
-                                            className="absolute -top-4 -right-4 w-24 h-24 bg-pink-300/20 rounded-full blur-xl"
-                                        />
-                                        <motion.div
-                                            animate={{ scale: [1, 1.8, 1], opacity: [0.1, 0.02, 0.1] }}
-                                            transition={{ repeat: Infinity, duration: 3, delay: 1 }}
-                                            className="absolute -top-2 left-8 w-16 h-16 bg-blue-300/20 rounded-full blur-xl"
-                                        />
-                                    </div>
-                                )}
-                                
-                                <div className="flex items-center justify-between relative z-10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-2">
-                                            {/* Sweet Status Indicator */}
-                                            <div className="relative">
-                                                {callAnimations.connecting && (
-                                                    <motion.div
-                                                        animate={{ rotate: 360 }}
-                                                        transition={{ repeat: Infinity, duration: 1 }}
-                                                        className="w-4 h-4 rounded-full bg-yellow-500"
-                                                    />
-                                                )}
-                                                {callAnimations.waves && (
-                                                    <motion.div
-                                                        animate={{ scale: [1, 1.2, 1] }}
-                                                        transition={{ repeat: Infinity, duration: 2 }}
-                                                        className={`w-4 h-4 rounded-full bg-green-500 ${callAnimations.pulse ? 'animate-pulse' : ''}`}
-                                                    />
-                                                )}
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.1, 1] }}
-                                                    transition={{ repeat: Infinity, duration: 1 }}
-                                                    className="absolute inset-0 w-4 h-4 rounded-full bg-green-400 opacity-30"
-                                                />
-                                            </div>
-                                            <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                                                {callStatus === 'connected' ? '🎙️ Sweet Talking' : callStatus === 'connecting' ? '🔄 Connecting...' : '❌ Failed'}
+                                <div className={`max-w-[80%] ${msg.sender === 'user' ? 'order-2' : 'order-1'}`}>
+                                    <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                            msg.sender === 'user' 
+                                                ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white' 
+                                                : 'bg-gradient-to-br from-green-500 to-emerald-600 text-white'
+                                        }`}>
+                                            {msg.sender === 'user' ? <User size={16} /> : <Bot size={16} />}
+                                        </div>
+                                        <div className={`px-4 py-3 md:text-sm text-[15px] shadow-sm relative ${
+                                            msg.sender === 'user'
+                                                ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-[20px] rounded-br-[4px]'
+                                                : msg.isConfirmation
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700 rounded-[20px] rounded-bl-[4px]'
+                                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-[20px] rounded-bl-[4px]'
+                                        }`}>
+                                            {msg.text}
+                                            <span className={`block text-[10px] mt-1.5 opacity-60 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
-                                        {callStatus === 'connected' && (
-                                            <motion.div
-                                                initial={{ opacity: 0, scale: 0.8 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                className="text-xs text-purple-600 dark:text-purple-400 font-mono bg-white dark:bg-purple-800/50 px-3 py-1.5 rounded-full shadow-sm"
-                                            >
-                                                ⏱️ {formatTime(callDuration)}
-                                            </motion.div>
-                                        )}
                                     </div>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05, rotate: 5 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={endCall}
-                                        className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-sm font-medium rounded-full transition-all flex items-center gap-2 shadow-lg"
-                                    >
-                                        <PhoneOff size={16} />
-                                        <span>Sweet End</span>
-                                    </motion.button>
+                                    
+                                    {/* Confirmation buttons for correction messages */}
+                                    {msg.isConfirmation && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="flex gap-2 mt-2"
+                                        >
+                                            <button
+                                                onClick={() => handleCorrectionResponse(true, msg.correctionData)}
+                                                className="flex-1 px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <span>✅</span> Yes, that's right
+                                            </button>
+                                            <button
+                                                onClick={() => handleCorrectionResponse(false, msg.correctionData)}
+                                                className="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <span>❌</span> No, I'll rephrase
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                    
+                                    {/* Action buttons for bot messages */}
+                                    {msg.sender === 'bot' && !msg.isConfirmation && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="flex gap-2 mt-2"
+                                        >
+                                            <button
+                                                onClick={() => copyToClipboard(msg.text, msg.id)}
+                                                className={`px-2 py-1 text-xs rounded transition-colors ${
+                                                    copiedMessageId === msg.id
+                                                        ? 'bg-green-500 text-white'
+                                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                                }`}
+                                                title={copiedMessageId === msg.id ? "✅ Copied" : "📋 Copy"}
+                                                onMouseLeave={() => setCopiedMessageId(null)}
+                                            >
+                                                {copiedMessageId === msg.id ? '✅ Copied' : '📋 Copy'}
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    // Clean text: remove emojis and symbols, keep only letters, numbers, and basic punctuation
+                                                    const cleanText = msg.text
+                                                        .replace(/[^\w\s.,!?;:'"-]/g, '') // Remove symbols and emojis
+                                                        .replace(/\s+/g, ' ') // Normalize spaces
+                                                        .trim();
+                                                    
+                                                    if (cleanText) {
+                                                        const utterance = new SpeechSynthesisUtterance(cleanText);
+                                                        
+                                                        // Female voice settings - sweet and clear
+                                                        utterance.rate = 0.85; // Slightly slower for clarity
+                                                        utterance.pitch = 1.2; // Higher pitch for female voice
+                                                        utterance.volume = 0.9; // Clear but not too loud
+                                                        
+                                                        // Get only female voices
+                                                        const voices = speechSynthesis.getVoices();
+                                                        const femaleVoice = voices.find(voice => 
+                                                            voice.name.toLowerCase().includes('female') ||
+                                                            voice.name.toLowerCase().includes('woman') ||
+                                                            voice.name.toLowerCase().includes('samantha') ||
+                                                            voice.name.toLowerCase().includes('karen') ||
+                                                            voice.name.toLowerCase().includes('siri') ||
+                                                            voice.name.toLowerCase().includes('alex') && voice.name.toLowerCase().includes('female') ||
+                                                            voice.lang.includes('en-US') && voice.name.toLowerCase().includes('female')
+                                                        ) || voices.find(voice => voice.name.toLowerCase().includes('female')) || voices[0]; // Fallback to first available
+                                                        
+                                                        utterance.voice = femaleVoice;
+                                                        
+                                                        // Add pauses for better clarity
+                                                        utterance.text = cleanText
+                                                            .replace(/\./g, '. ') // Add pause after periods
+                                                            .replace(/\?/g, '? ') // Add pause after questions
+                                                            .replace(/!/g, '! '); // Add pause after exclamations
+                                                        
+                                                        speechSynthesis.speak(utterance);
+                                                    }
+                                                }}
+                                                className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                                                title="🔊 Sweet Voice"
+                                            >
+                                                🔊 Speak
+                                            </button>
+                                        </motion.div>
+                                    )}
                                 </div>
                             </motion.div>
-                        )}
-
-                        {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {messages.map((msg, index) => (
-                                <motion.div
-                                    key={msg.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                                >
-                                    <div className={`max-w-[80%] ${msg.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                                        <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                                msg.sender === 'user' 
-                                                    ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white' 
-                                                    : 'bg-gradient-to-br from-green-500 to-emerald-600 text-white'
-                                            }`}>
-                                                {msg.sender === 'user' ? <User size={16} /> : <Bot size={16} />}
-                                            </div>
-                                            <div className={`px-4 py-3 md:text-sm text-[15px] shadow-sm relative ${
-                                                msg.sender === 'user'
-                                                    ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-[20px] rounded-br-[4px]'
-                                                    : msg.isConfirmation
-                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700 rounded-[20px] rounded-bl-[4px]'
-                                                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-[20px] rounded-bl-[4px]'
-                                            }`}>
-                                                {msg.text}
-                                                <span className={`block text-[10px] mt-1.5 opacity-60 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                                                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Confirmation buttons for correction messages */}
-                                        {msg.isConfirmation && (
-                                            <motion.div 
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="flex gap-2 mt-2"
-                                            >
-                                                <button
-                                                    onClick={() => handleCorrectionResponse(true, msg.correctionData)}
-                                                    className="flex-1 px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                    <span>✅</span> Yes, that's right
-                                                </button>
-                                                <button
-                                                    onClick={() => handleCorrectionResponse(false, msg.correctionData)}
-                                                    className="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                    <span>❌</span> No, I'll rephrase
-                                                </button>
-                                            </motion.div>
-                                        )}
-                                        
-                                        {/* Action buttons for bot messages */}
-                                        {msg.sender === 'bot' && !msg.isConfirmation && (
-                                            <motion.div 
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="flex gap-2 mt-2"
-                                            >
-                                                <button
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(msg.text);
-                                                        // Show toast notification
-                                                    }}
-                                                    className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                                                >
-                                                    📋 Copy
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        // Clean text: remove emojis and symbols, keep only letters, numbers, and basic punctuation
-                                                        const cleanText = msg.text
-                                                            .replace(/[^\w\s.,!?;:'"-]/g, '') // Remove symbols and emojis
-                                                            .replace(/\s+/g, ' ') // Normalize spaces
-                                                            .trim();
-                                                        
-                                                        if (cleanText) {
-                                                            const utterance = new SpeechSynthesisUtterance(cleanText);
-                                                            
-                                                            // Sweet voice settings
-                                                            utterance.rate = 0.85; // Slightly slower for clarity
-                                                            utterance.pitch = 1.1; // Slightly higher pitch (more sweet)
-                                                            utterance.volume = 0.9; // Clear but not too loud
-                                                            
-                                                            // Get sweet voice
-                                                            const voices = speechSynthesis.getVoices();
-                                                            const sweetVoice = voices.find(voice => 
-                                                                voice.name.includes('Samantha') || 
-                                                                voice.name.includes('Google') ||
-                                                                voice.name.includes('Female') ||
-                                                                voice.name.includes('Zira')
-                                                            ) || voices[0]; // Fallback to first voice
-                                                            
-                                                            utterance.voice = sweetVoice;
-                                                            
-                                                            // Add pauses for better clarity
-                                                            utterance.text = cleanText
-                                                                .replace(/\./g, '. ') // Add pause after periods
-                                                                .replace(/\?/g, '? ') // Add pause after questions
-                                                                .replace(/!/g, '! '); // Add pause after exclamations
-                                                            
-                                                            speechSynthesis.speak(utterance);
-                                                        }
-                                                    }}
-                                                    className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                                                    title="🔊 Sweet Voice"
-                                                >
-                                                    🔊 Speak
-                                                </button>
-                                            </motion.div>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            ))}
-                            
-                            {/* Typing Indicator */}
-                            {isTyping && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex justify-start"
-                                >
-                                    <div className="flex items-end gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center">
-                                            <Bot size={16} />
-                                        </div>
-                                        <div className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-[20px] rounded-bl-[4px] px-4 py-3 shadow-sm">
-                                            <div className="flex gap-1">
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.2, 1] }}
-                                                    transition={{ repeat: Infinity, duration: 1 }}
-                                                    className="w-2 h-2 bg-slate-400 rounded-full"
-                                                />
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.2, 1] }}
-                                                    transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-                                                    className="w-2 h-2 bg-slate-400 rounded-full"
-                                                />
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.2, 1] }}
-                                                    transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
-                                                    className="w-2 h-2 bg-slate-400 rounded-full"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                            
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Quick Replies */}
-                        {!isTyping && messages.length > 0 && messages[messages.length - 1].sender === 'bot' && (
-                            <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar snap-x px-4">
-                                {quickReplies.map((reply, index) => (
-                                    <motion.button
-                                        key={index}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        onClick={() => handleQuickReply(reply)}
-                                        type="button"
-                                        className="whitespace-nowrap snap-center px-4 py-1.5 bg-white dark:bg-slate-800 border border-indigo-100 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full shadow-sm hover:bg-indigo-50 dark:hover:bg-slate-700 hover:border-indigo-300 transition-all flex items-center gap-1.5"
-                                    >
-                                        {reply}
-                                    </motion.button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Smart Suggestions */}
-                        {showSuggestions && !isTyping && messages.length === 0 && (
+                        ))}
+                        
+                        {/* Typing Indicator */}
+                        {isTyping && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="px-4 pb-3"
+                                className="flex justify-start"
                             >
-                                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-3 border border-indigo-100 dark:border-indigo-700">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Lightbulb className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                                        <span className="text-xs font-medium text-indigo-800 dark:text-indigo-200">Try asking about:</span>
+                                <div className="flex items-end gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center">
+                                        <Bot size={16} />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {smartSuggestions.map((suggestion, index) => (
-                                            <motion.button
-                                                key={index}
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: index * 0.1 }}
-                                                onClick={() => handleSmartSuggestion(suggestion)}
-                                                className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg p-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-600"
-                                            >
-                                                <suggestion.icon className="w-3 h-3 text-indigo-500" />
-                                                <span className="truncate">{suggestion.text}</span>
-                                            </motion.button>
-                                        ))}
+                                    <div className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-[20px] rounded-bl-[4px] px-4 py-3 shadow-sm">
+                                        <div className="flex gap-1">
+                                            <motion.div
+                                                animate={{ scale: [1, 1.2, 1] }}
+                                                transition={{ repeat: Infinity, duration: 1 }}
+                                                className="w-2 h-2 bg-slate-400 rounded-full"
+                                            />
+                                            <motion.div
+                                                animate={{ scale: [1, 1.2, 1] }}
+                                                transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
+                                                className="w-2 h-2 bg-slate-400 rounded-full"
+                                            />
+                                            <motion.div
+                                                animate={{ scale: [1, 1.2, 1] }}
+                                                transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
+                                                className="w-2 h-2 bg-slate-400 rounded-full"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
                         )}
+                        
+                        <div ref={messagesEndRef} />
+                    </div>
 
-                        {/* Enhanced Input Form */}
-                        <form
-                            ref={formRef}
-                            onSubmit={handleSendMessage}
-                            className="relative flex items-center"
+                    {/* Quick Replies */}
+                    {!isTyping && messages.length > 0 && messages[messages.length - 1].sender === 'bot' && (
+                        <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar snap-x px-4">
+                            {quickReplies.map((reply, index) => (
+                                <motion.button
+                                    key={index}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    onClick={() => handleQuickReply(reply)}
+                                    type="button"
+                                    className="whitespace-nowrap snap-center px-4 py-1.5 bg-white dark:bg-slate-800 border border-indigo-100 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full shadow-sm hover:bg-indigo-50 dark:hover:bg-slate-700 hover:border-indigo-300 transition-all flex items-center gap-1.5"
+                                >
+                                    {reply}
+                                </motion.button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Smart Suggestions */}
+                    {showSuggestions && !isTyping && messages.length === 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="px-4 pb-3"
                         >
-                            <input
-                                id="chatbot-message"
-                                name="chatbot-message"
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Ask NewsBot..."
-                                className="w-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm rounded-full py-3.5 pl-5 pr-14 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-slate-200 dark:border-slate-700 focus:border-indigo-500/30 transition-all placeholder:text-slate-400 shadow-inner"
-                            />
-                            <button
-                                type="submit"
-                                disabled={!inputValue.trim()}
-                                className="absolute right-1 w-10 h-10 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-full flex items-center justify-center hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
-                            >
-                                <Send size={16} />
-                            </button>
-                        </form>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-3 border border-indigo-100 dark:border-indigo-700">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Lightbulb className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                    <span className="text-xs font-medium text-indigo-800 dark:text-indigo-200">Try asking about:</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {smartSuggestions.map((suggestion, index) => (
+                                        <motion.button
+                                            key={index}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            onClick={() => handleQuickReply(suggestion.text)}
+                                            className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg p-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-600"
+                                        >
+                                            <suggestion.icon className="w-3 h-3 text-indigo-500" />
+                                            <span className="truncate">{suggestion.text}</span>
+                                        </motion.button>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Enhanced Input Form */}
+                    <form
+                        ref={formRef}
+                        onSubmit={handleSendMessage}
+                        className="relative flex items-center p-4"
+                    >
+                        <input
+                            id="chatbot-message"
+                            name="chatbot-message"
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="Ask NewsBot..."
+                            className="w-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm rounded-full py-3.5 pl-5 pr-14 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border border-slate-200 dark:border-slate-700 focus:border-indigo-500/30 transition-all placeholder:text-slate-400 shadow-inner"
+                        />
+                        <button
+                            type="submit"
+                            disabled={!inputValue.trim()}
+                            className="absolute right-5 w-10 h-10 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-full flex items-center justify-center hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                        >
+                            <Send size={16} />
+                        </button>
+                    </form>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    </div>
     );
 };
 
