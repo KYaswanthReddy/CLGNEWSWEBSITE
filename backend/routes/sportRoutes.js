@@ -32,6 +32,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Category Management (Root)
+router.get('/', getSportTypes);
+
 // Sport Events
 router.get('/events', (req, res, next) => {
     req.query.type = 'sports';

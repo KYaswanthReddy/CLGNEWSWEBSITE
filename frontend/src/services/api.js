@@ -53,8 +53,8 @@ export const createSportAchievement = (data) => api.post('/sports/achievements',
 export const deleteSportAchievement = (id) => api.delete(`/sports/achievements/${id}`);
 
 // Backward compatibility aliases
-export const getClubs = getClubTypes;
-export const getSports = getSportEvents;
+export const getClubs = () => api.get('/clubs');
+export const getSports = () => api.get('/sports');
 export const createSports = createSportEvent;
 export const updateSports = updateSportEvent;
 export const deleteSports = deleteSportEvent;

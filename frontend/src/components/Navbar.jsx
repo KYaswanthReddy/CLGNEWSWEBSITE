@@ -3,7 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { Menu, X, User, LogOut, Search, Bell, ChevronDown, Mail, ShieldCheck, ChevronRight, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { getSportTypes, getClubTypes, getBranding } from '../services/api';
+import { getSports, getClubs, getBranding } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
@@ -33,14 +33,22 @@ const Navbar = () => {
 
     useEffect(() => {
         const fetchNavData = async () => {
+            const sportsFallback = ["Basketball", "Cricket", "Football", "Volleyball"];
+            const clubsFallback = ["Coding Club", "Dance Club", "Music Club", "Photography Club"];
+            
             try {
                 const [sportsRes, clubsRes, brandingRes] = await Promise.all([
-                    getSportTypes(),
-                    getClubTypes(),
+                    getSports(),
+                    getClubs(),
                     getBranding()
                 ]);
-                setSports(sportsRes.data);
-                setClubs(clubsRes.data);
+                
+                // Use DB data if available, otherwise fallback
+                const dbSports = sportsRes.data || [];
+                setSports(dbSports.length > 0 ? dbSports : sportsFallback);
+                
+                const dbClubs = clubsRes.data || [];
+                setClubs(dbClubs.length > 0 ? dbClubs : clubsFallback);
                 
                 const branding = brandingRes.data;
                 if (branding) {
@@ -50,8 +58,11 @@ const Navbar = () => {
                         setNavbarLogo(logo.startsWith('http') ? logo : `http://127.0.0.1:5000${logo}`);
                     }
                 }
+                console.log("Navbar API Data Loaded:", { sports: dbSports, clubs: dbClubs });
             } catch (error) {
-                console.error("Failed to fetch nav data", error);
+                console.error("Failed to fetch nav data, using fallbacks", error);
+                setSports(sportsFallback);
+                setClubs(clubsFallback);
             }
         };
         fetchNavData();
@@ -73,7 +84,7 @@ const Navbar = () => {
     const displayName = user?.name || user?.email?.split('@')[0] || 'Student';
 
     return (
-        <nav className="fixed w-full z-50 transition-all duration-300">
+        <nav className="fixed w-full z-[100] transition-all duration-300">
 
 
             {/* Main Navbar */}
@@ -129,15 +140,15 @@ const Navbar = () => {
                                                     <div className="bg-white rounded-[24px] shadow-2xl border border-slate-100 p-4 grid grid-cols-2 gap-2 min-w-[300px]">
                                                         {(link.name === 'Sports' ? sports : clubs).slice(0, 8).map(item => (
                                                             <Link 
-                                                                key={item._id} 
-                                                                to={`/${link.name.toLowerCase()}/${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                                                key={item._id || item} 
+                                                                to={`/${link.name.toLowerCase()}/${(item.name || item).toLowerCase().replace(/\s+/g, '-')}`}
                                                                 onClick={() => setHoveredMenu(null)}
                                                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group/item"
                                                             >
                                                                 <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover/item:bg-primary group-hover/item:text-white transition-colors">
-                                                                    <span className="font-bold text-xs">{item.name[0].toUpperCase()}</span>
+                                                                    <span className="font-bold text-xs">{(item.name || item)[0].toUpperCase()}</span>
                                                                 </div>
-                                                                <span className="font-semibold text-sm text-slate-700 group-hover/item:text-primary transition-colors">{item.name}</span>
+                                                                <span className="font-semibold text-sm text-slate-700 group-hover/item:text-primary transition-colors">{item.name || item}</span>
                                                             </Link>
                                                         ))}
                                                         <div className="col-span-2 pt-2 mt-2 border-t border-slate-100">
@@ -322,12 +333,12 @@ const Navbar = () => {
                                                 <div className="flex flex-col gap-2 pl-4 py-2 border-l-2 border-primary/20 ml-2 mb-2">
                                                     {(link.name === 'Sports' ? sports : clubs).slice(0, 5).map(item => (
                                                         <Link 
-                                                            key={item._id}
-                                                            to={`/${link.name.toLowerCase()}/${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                                            key={item._id || item}
+                                                            to={`/${link.name.toLowerCase()}/${(item.name || item).toLowerCase().replace(/\s+/g, '-')}`}
                                                             onClick={() => setIsOpen(false)}
                                                             className="text-sm font-semibold text-slate-600 hover:text-primary py-1"
                                                         >
-                                                            {item.name}
+                                                            {item.name || item}
                                                         </Link>
                                                     ))}
                                                     <Link 

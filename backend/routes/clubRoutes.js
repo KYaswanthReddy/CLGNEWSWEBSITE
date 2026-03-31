@@ -29,7 +29,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Club Categories (Types)
+// Category Management (Root)
+router.get('/', getClubTypes);
 router.route('/types')
     .get(getClubTypes)
     .post(upload.single('image'), createClubType);
