@@ -2,18 +2,33 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, GraduationCap, ChevronRight, Building, MapPin, Users, Target, Rocket, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getAchievements } from '../../services/api';
+import { getAchievements, getWebsiteStats } from '../../services/api';
 import { useState, useEffect } from 'react';
 
 const Placements = () => {
     const [achievements, setAchievements] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({ partnerCompanies: '150+', placedStudents: '1200+', placementRate: '94%', avgPackage: '6.5 LPA' });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const res = await getAchievements({ type: 'placements' });
                 setAchievements(res.data || []);
+                
+                try {
+                    const statsRes = await getWebsiteStats();
+                    if (statsRes.data?.placements) {
+                        setStats({
+                            partnerCompanies: `${statsRes.data.placements.partnerCompanies}+`,
+                            placedStudents: `${statsRes.data.placements.placedStudents}+`,
+                            placementRate: `${statsRes.data.placements.placementRate}`,
+                            avgPackage: `${statsRes.data.placements.avgPackage} LPA`
+                        });
+                    }
+                } catch (statErr) {
+                    console.error('Error fetching global stats:', statErr);
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -104,10 +119,10 @@ const Placements = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-16">
                     {[
-                        { icon: <Building size={20}/>, label: "Partner Companies", val: "150+" },
-                        { icon: <Users size={20}/>, label: "Placed Students", val: "1200+" },
-                        { icon: <Target size={20}/>, label: "Placement Rate", val: "94%" },
-                        { icon: <Rocket size={20}/>, label: "Avg Package", val: "6.5 LPA" }
+                        { icon: <Building size={20}/>, label: "Partner Companies", val: stats.partnerCompanies },
+                        { icon: <Users size={20}/>, label: "Placed Students", val: stats.placedStudents },
+                        { icon: <Target size={20}/>, label: "Placement Rate", val: stats.placementRate },
+                        { icon: <Rocket size={20}/>, label: "Avg Package", val: stats.avgPackage }
                     ].map((stat, i) => (
                         <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary">{stat.icon}</div>

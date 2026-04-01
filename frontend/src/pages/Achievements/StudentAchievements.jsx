@@ -52,6 +52,7 @@ const StudentAchievements = () => {
     };
 
     const categories = [
+        { title: 'Academic Excellence', count: achievements.filter(a => a.type === 'academic').length || '0', icon: GraduationCap, color: 'bg-amber-500' },
         { title: 'Sports Triumphs', count: achievements.filter(a => a.type === 'sports').length || '0', icon: Trophy, color: 'bg-orange-500' },
         { title: 'Club Milestones', count: achievements.filter(a => a.type === 'clubs').length || '0', icon: Users, color: 'bg-indigo-500' },
         { title: 'Stellar Placements', count: achievements.filter(a => a.type === 'placements').length || '0', icon: Zap, color: 'bg-emerald-500' },

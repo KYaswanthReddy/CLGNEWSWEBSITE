@@ -19,14 +19,46 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { getWebsiteStats } from '../../services/api';
 
 const AdminDashboard = () => {
+    const [statsData, setStatsData] = useState({
+        totalEvents: 24,
+        totalClubs: 12,
+        totalStudents: '4.2K',
+        totalPosts: 185,
+        placedStudents: '450+'
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await getWebsiteStats();
+                if (res.data) {
+                    setStatsData({
+                        totalEvents: res.data.clubs?.totalEvents || 24,
+                        totalClubs: res.data.clubs?.totalClubs || 12,
+                        totalStudents: res.data.clubs?.totalStudents 
+                            ? (res.data.clubs.totalStudents / 1000).toFixed(1) + 'K' 
+                            : '4.2K',
+                        totalPosts: res.data.global?.totalNews || 185,
+                        placedStudents: res.data.placements?.placedStudents || '450+'
+                    });
+                }
+            } catch (err) {
+                console.error('Error fetching admin stats:', err);
+            }
+        };
+        fetchStats();
+    }, []);
+
     const stats = [
-        { title: 'Total Events', count: '24', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
-        { title: 'Total Clubs', count: '12', icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-        { title: 'Total Students', count: '4.2K', icon: Users, color: 'text-amber-500', bg: 'bg-amber-50' },
-        { title: 'Total Posts', count: '185', icon: FileText, color: 'text-rose-500', bg: 'bg-rose-50' },
-        { title: 'Total Achievements', count: '48', icon: Award, color: 'text-amber-600', bg: 'bg-amber-100/50' },
+        { title: 'Total Events', count: statsData.totalEvents, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
+        { title: 'Total Clubs', count: statsData.totalClubs, icon: Trophy, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+        { title: 'Total Students', count: statsData.totalStudents, icon: Users, color: 'text-amber-500', bg: 'bg-amber-50' },
+        { title: 'Total Posts', count: statsData.totalPosts, icon: FileText, color: 'text-rose-500', bg: 'bg-rose-50' },
+        { title: 'Placed Students', count: statsData.placedStudents, icon: Award, color: 'text-amber-600', bg: 'bg-amber-100/50' },
     ];
 
     const adminActions = [
@@ -119,35 +151,7 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Detailed activity for admin visibility */}
-                <div className="bg-primary-dark rounded-[60px] p-20 text-white flex flex-col gap-12 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/10 blur-[100px] pointer-events-none" />
 
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-10 border-b border-white/5 pb-12">
-                        <div className="flex flex-col gap-4">
-                            <h3 className="text-4xl font-black leading-none tracking-tight">Post Analytics</h3>
-                            <p className="text-blue-100 font-medium">Tracking engagement across all departments.</p>
-                        </div>
-                        <div className="flex gap-4">
-                            <button className="bg-white/10 px-8 py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest border border-white/10 hover:bg-white hover:text-primary transition-all">Export Report</button>
-                            <button className="bg-white text-primary px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Live View</button>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex flex-col gap-6">
-                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${30 + (i * 15)}%` }} />
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-blue-200">Dept {i}</span>
-                                    <span className="text-lg font-black">{30 + (i * 15)}%</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </div>
     );

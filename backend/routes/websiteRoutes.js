@@ -1,5 +1,5 @@
 import express from 'express';
-import { getWebsiteContent, scrapeWebsite, getWebsiteNavigation } from '../controllers/websiteController.js';
+import { getWebsiteContent, scrapeWebsite, getWebsiteNavigation, getWebsiteStats } from '../controllers/websiteController.js';
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.get('/scrape-website', scrapeWebsite);
 
 // Get website navigation structure
 router.get('/website-navigation', getWebsiteNavigation);
+
+// Get global stats
+router.get('/stats', getWebsiteStats);
 
 export default router;

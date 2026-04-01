@@ -147,5 +147,8 @@ export const deleteSocialMedia = (id) => api.delete(`/social-media/${id}`);
 export const getBranding = () => api.get('/branding');
 export const updateBranding = (data) => api.put('/branding/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } });
 
+// Main Site Stats
+export const getWebsiteStats = () => api.get('/stats');
+
 export default api;
 

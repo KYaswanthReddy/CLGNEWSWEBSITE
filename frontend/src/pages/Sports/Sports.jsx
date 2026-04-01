@@ -17,7 +17,7 @@ import {
     ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getSportEvents, getSportTypes } from '../../services/api';
+import { getSportEvents, getSportTypes, getWebsiteStats } from '../../services/api';
 
 const Sports = () => {
     const [events, setEvents] = useState([]);
@@ -25,6 +25,7 @@ const Sports = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('ALL');
+    const [stats, setStats] = useState({ activeAthletes: 1500, championshipTitles: 42 });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,6 +42,15 @@ const Sports = () => {
             
             setEvents(validEvents);
                 setSportTypes(typeRes.data || []);
+                
+                try {
+                    const statsRes = await getWebsiteStats();
+                    if (statsRes.data?.sports) {
+                        setStats(statsRes.data.sports);
+                    }
+                } catch (statErr) {
+                    console.error('Error fetching global stats:', statErr);
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -268,7 +278,10 @@ const Sports = () => {
                                  <Users className="text-primary" size={40} />
                                  <div className="flex flex-col gap-1">
                                     <p className="text-[10px] font-bold text-blue-100/40 uppercase tracking-[0.3em]">Total Active Athletes</p>
-                                    <span className="text-6xl font-black tracking-tighter">1.5K<span className="text-primary text-3xl">+</span></span>
+                                    <span className="text-6xl font-black tracking-tighter">
+                                        {stats.activeAthletes >= 1000 ? (stats.activeAthletes/1000).toFixed(1) + 'K' : stats.activeAthletes}
+                                        <span className="text-primary text-3xl">+</span>
+                                    </span>
                                  </div>
                                  <p className="text-xs font-bold text-blue-100/60 leading-relaxed italic">Leading the way in collegiate sports dominance across the region.</p>
                              </div>
@@ -277,7 +290,10 @@ const Sports = () => {
                                  <Trophy className="text-emerald-500" size={40} />
                                  <div className="flex flex-col gap-1">
                                     <p className="text-[10px] font-bold text-blue-100/40 uppercase tracking-[0.3em]">Championship Titles</p>
-                                    <span className="text-6xl font-black tracking-tighter text-white">42<span className="text-emerald-500 text-3xl">+</span></span>
+                                    <span className="text-6xl font-black tracking-tighter text-white">
+                                        {stats.championshipTitles}
+                                        <span className="text-emerald-500 text-3xl">+</span>
+                                    </span>
                                  </div>
                              </div>
                          </div>
