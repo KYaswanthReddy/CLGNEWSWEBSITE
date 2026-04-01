@@ -116,6 +116,19 @@ const ScheduleTemplate = ({ year }) => {
 
     const reset = () => { setStep(1); setSel({ branch: '', semester: '', exam: '' }); };
 
+    const goBack = () => {
+        if (step === 4) {
+            setStep(3);
+            setSel(prev => ({ ...prev, exam: '' }));
+        } else if (step === 3) {
+            setStep(2);
+            setSel(prev => ({ ...prev, semester: '' }));
+        } else if (step === 2) {
+            setStep(1);
+            setSel(prev => ({ ...prev, branch: '' }));
+        }
+    };
+
     const filtered = schedules.find(s =>
         s.branch?.toLowerCase() === sel.branch?.toLowerCase() &&
         s.semester?.toLowerCase() === sel.semester?.toLowerCase() &&
@@ -153,8 +166,8 @@ const ScheduleTemplate = ({ year }) => {
 
                     {step > 1 && (
                         <div className="flex items-center gap-3 text-white/60 text-xs font-black uppercase tracking-widest">
-                            <button onClick={reset} className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-sm">
-                                <ChevronLeft size={14} /> Restart
+                            <button onClick={goBack} className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-sm">
+                                <ChevronLeft size={14} /> Back
                             </button>
                         </div>
                     )}
@@ -199,7 +212,7 @@ const ScheduleTemplate = ({ year }) => {
                             <motion.div key="s2" {...slide} className="flex flex-col gap-8">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-2xl font-black text-gray-800 px-4 border-l-4 border-primary uppercase">Select Semester</h2>
-                                    <button onClick={reset} className="text-gray-400 hover:text-primary font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-1">
+                                    <button onClick={goBack} className="text-gray-400 hover:text-primary font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-1">
                                         <ChevronLeft size={14} /> Back
                                     </button>
                                 </div>
@@ -228,7 +241,7 @@ const ScheduleTemplate = ({ year }) => {
                             <motion.div key="s3" {...slide} className="flex flex-col gap-8">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-2xl font-black text-gray-800 px-4 border-l-4 border-primary uppercase">Select Exam</h2>
-                                    <button onClick={() => setStep(2)} className="text-gray-400 hover:text-primary font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-1">
+                                    <button onClick={goBack} className="text-gray-400 hover:text-primary font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-1">
                                         <ChevronLeft size={14} /> Back
                                     </button>
                                 </div>
@@ -299,7 +312,9 @@ const ScheduleTemplate = ({ year }) => {
                                                         <BookOpen size={24} />
                                                     </div>
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subject</span>
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                            Subject {row.subjectCode && <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">{row.subjectCode}</span>}
+                                                        </span>
                                                         <h4 className={`text-lg font-black tracking-tight uppercase ${row.isUpdated ? 'text-emerald-700' : 'text-gray-800'}`}>{row.subjectName}</h4>
                                                     </div>
                                                 </div>

@@ -13,8 +13,8 @@ const achievementSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['sports', 'clubs', 'placements', 'academic'],
-        default: 'academic'
+        enum: ['sports', 'clubs', 'placements', 'others'],
+        default: 'sports'
     },
     subcategory: {
         type: String,

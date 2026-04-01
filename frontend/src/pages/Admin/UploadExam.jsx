@@ -14,7 +14,7 @@ const UploadExam = () => {
         semester: 'Sem 1',
         examType: 'Mid 1',
         mode: 'manual',
-        subjects: [{ subjectName: '', date: '', month: '', year: '', time: '' }],
+        subjects: [{ subjectCode: '', subjectName: '', date: '', month: '', year: '', time: '' }],
         image: null
     });
     const [editingId, setEditingId] = useState(null);
@@ -40,7 +40,7 @@ const UploadExam = () => {
     };
 
     const handleAddSubject = () => {
-        setFormData({ ...formData, subjects: [...formData.subjects, { subjectName: '', date: '', month: '', year: '', time: '' }] });
+        setFormData({ ...formData, subjects: [...formData.subjects, { subjectCode: '', subjectName: '', date: '', month: '', year: '', time: '' }] });
     };
 
     const handleRemoveSubject = (idx) => {
@@ -89,7 +89,7 @@ const UploadExam = () => {
             semester: 'Sem 1',
             examType: 'Mid 1',
             mode: 'manual',
-            subjects: [{ subjectName: '', date: '', month: '', year: '', time: '' }],
+            subjects: [{ subjectCode: '', subjectName: '', date: '', month: '', year: '', time: '' }],
             image: null
         });
         setEditingId(null);
@@ -112,7 +112,7 @@ const UploadExam = () => {
             semester: exam.semester,
             examType: exam.examType,
             mode: exam.mode,
-            subjects: exam.subjects?.length > 0 ? exam.subjects : [{ subjectName: '', date: '', month: '', year: '', time: '' }],
+            subjects: exam.subjects?.length > 0 ? exam.subjects : [{ subjectCode: '', subjectName: '', date: '', month: '', year: '', time: '' }],
             image: null
         });
         setShowModal('edit');
@@ -456,17 +456,26 @@ const UploadExam = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
+                                                        <div className="flex flex-col gap-2">
+                                                            <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Subject Code</label>
+                                                            <input
+                                                                value={sub.subjectCode || ''}
+                                                                onChange={(e) => handleSubjectChange(idx, 'subjectCode', e.target.value)}
+                                                                className="w-full bg-white p-4 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/30 transition-colors uppercase"
+                                                                placeholder="e.g. CS101"
+                                                            />
+                                                        </div>
                                                         <div className="flex flex-col gap-2">
                                                             <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Year</label>
                                                             <input
-                                                                value={sub.year}
+                                                                value={sub.year || ''}
                                                                 onChange={(e) => handleSubjectChange(idx, 'year', e.target.value)}
                                                                 className="w-full bg-white p-4 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/30 transition-colors"
                                                                 placeholder="2024"
                                                             />
                                                         </div>
-                                                        <div className="lg:col-span-2 invisible md:visible"></div>
+                                                        <div className="invisible md:visible"></div>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveSubject(idx)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Award, ChevronRight, GraduationCap, Trophy, Zap, Users, ChevronLeft } from 'lucide-react';
+import { Award, ChevronRight, Trophy, Zap, Users, ChevronLeft, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAchievements } from '../../services/api';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,8 @@ const StudentAchievements = () => {
     const [achievements, setAchievements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState('ALL');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -47,16 +49,24 @@ const StudentAchievements = () => {
             case 'sports': return 'bg-orange-100 text-orange-700 border-orange-200';
             case 'clubs': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
             case 'placements': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            default: return 'bg-amber-100 text-amber-700 border-amber-200';
+            case 'others': return 'bg-violet-100 text-violet-700 border-violet-200';
+            default: return 'bg-slate-100 text-slate-700 border-slate-200';
         }
     };
 
     const categories = [
-        { title: 'Academic Excellence', count: achievements.filter(a => a.type === 'academic').length || '0', icon: GraduationCap, color: 'bg-amber-500' },
         { title: 'Sports Triumphs', count: achievements.filter(a => a.type === 'sports').length || '0', icon: Trophy, color: 'bg-orange-500' },
         { title: 'Club Milestones', count: achievements.filter(a => a.type === 'clubs').length || '0', icon: Users, color: 'bg-indigo-500' },
         { title: 'Stellar Placements', count: achievements.filter(a => a.type === 'placements').length || '0', icon: Zap, color: 'bg-emerald-500' },
     ];
+
+    const filteredAchievements = achievements.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              (item.subcategory && item.subcategory.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesFilter = activeFilter === 'ALL' || item.type.toUpperCase() === activeFilter;
+        return matchesSearch && matchesFilter;
+    });
 
     return (
         <div className="flex flex-col gap-24 pb-32 bg-slate-50 min-h-screen">
@@ -83,7 +93,7 @@ const StudentAchievements = () => {
 
             {/* ── Category Stats ── */}
             <section className="max-w-7xl mx-auto px-6 w-full -mt-32 relative z-20">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {categories.map((cat, i) => (
                         <motion.div
                             key={i}
@@ -194,13 +204,41 @@ const StudentAchievements = () => {
                     <h2 className="text-4xl font-black text-slate-800 tracking-tight uppercase">Every Milestone</h2>
                 </div>
 
+                <div className="bg-white p-3 rounded-[32px] shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-4 mt-2">
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                        <input 
+                            type="text" 
+                            placeholder="Search achievements..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-50 border-none rounded-[24px] py-4 pl-14 pr-8 font-bold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                        />
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-[24px] border border-slate-100 w-full md:w-auto">
+                        <div className="px-4 py-2 border-r border-slate-200 shrink-0">
+                            <Filter size={16} className="text-slate-400" />
+                        </div>
+                        {['ALL', 'SPORTS', 'CLUBS', 'PLACEMENTS', 'OTHERS'].map(filter => (
+                            <button
+                                key={filter}
+                                onClick={() => setActiveFilter(filter)}
+                                className={`flex-1 min-w-[70px] px-3 py-2.5 rounded-xl font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all ${activeFilter === filter ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                {filter}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="flex justify-center p-32">
                         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {achievements.map((item, i) => (
+                        {filteredAchievements.map((item, i) => (
                             <motion.div
                                 key={item._id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -250,7 +288,7 @@ const StudentAchievements = () => {
                         ))}
                     </div>
                 )}
-                {achievements.length === 0 && !loading && (
+                {filteredAchievements.length === 0 && !loading && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-24 bg-white rounded-[64px] border-4 border-dashed border-slate-100 flex flex-col items-center gap-8 text-center shadow-xl shadow-slate-200/20">
                         <Trophy className="text-slate-200 w-24 h-24" />
                         <div>

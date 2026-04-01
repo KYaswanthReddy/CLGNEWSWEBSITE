@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit2, Trash2, X, Link as LinkIcon, Share2, Instagram, Linkedin, Twitter, Youtube, Facebook, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Link as LinkIcon, Share2, Instagram, Linkedin, Youtube, Facebook, Globe } from 'lucide-react';
 import { getSocialMedia, createSocialMedia, updateSocialMedia, deleteSocialMedia } from '../../services/api';
 import toast from 'react-hot-toast';
+import XIcon from '../../components/XIcon';
 
 // Map platform names to Lucide icon components
 const PLATFORM_OPTIONS = [
     { value: 'instagram', label: 'Instagram', Icon: Instagram, color: '#E1306C' },
     { value: 'facebook', label: 'Facebook', Icon: Facebook, color: '#1877F2' },
-    { value: 'twitter', label: 'Twitter / X', Icon: Twitter, color: '#1DA1F2' },
+    { value: 'twitter', label: 'X', Icon: XIcon, color: '#000000' },
     { value: 'linkedin', label: 'LinkedIn', Icon: Linkedin, color: '#0077B5' },
     { value: 'youtube', label: 'YouTube', Icon: Youtube, color: '#FF0000' },
     { value: 'website', label: 'Website', Icon: Globe, color: '#4A90E2' },

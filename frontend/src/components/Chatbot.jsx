@@ -3,6 +3,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, User, Send, X, Share2, Lightbulb, MessageCircle } from 'lucide-react';
 import axios from 'axios';
 
+const CustomBotIcon = ({ className }) => (
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="headGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ff6b6b" />
+                <stop offset="100%" stopColor="#c53030" />
+            </linearGradient>
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <path d="M50 35 L50 15" stroke="#94a3b8" strokeWidth="4" strokeLinecap="round"/>
+        <circle cx="50" cy="13" r="6" fill="#ff6b6b" filter="url(#glow)"/>
+        <path d="M40 7 Q50 -3 60 7" stroke="#ff6b6b" strokeWidth="2.5" strokeLinecap="round" opacity="0.6"/>
+        <rect x="18" y="42" width="8" height="18" rx="4" fill="#94a3b8" />
+        <rect x="74" y="42" width="8" height="18" rx="4" fill="#94a3b8" />
+        <rect x="25" y="30" width="50" height="48" rx="16" fill="url(#headGrad)" />
+        <rect x="32" y="40" width="36" height="24" rx="8" fill="#0f172a" />
+        <circle cx="41" cy="51" r="4.5" fill="#fde047" filter="url(#glow)"/>
+        <circle cx="59" cy="51" r="4.5" fill="#fde047" filter="url(#glow)"/>
+        <path d="M42 68 Q50 74 58 68" stroke="#fef08a" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+);
+
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -784,21 +812,20 @@ Did you mean this? Please confirm:
         loadUserPreferences();
     }, []);
 
-    // Render chatbot UI
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
             {/* Chat Button */}
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-24 h-24 rounded-full shadow-lg flex items-center justify-center transition-all ${
+                className={`w-16 h-16 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-all ${
                     isOpen 
-                        ? 'bg-red-500 hover:bg-red-600 text-white' 
-                        : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white'
+                        ? 'bg-white shadow-xl hover:bg-slate-50 text-slate-800' 
+                        : 'bg-transparent hover:scale-110 drop-shadow-2xl'
                 }`}
             >
-                {isOpen ? <X size={40} /> : <MessageCircle size={40} />}
+                {isOpen ? <X size={32} className="sm:w-10 sm:h-10 text-slate-400" /> : <CustomBotIcon className="w-[50px] h-[50px] sm:w-[80px] sm:h-[80px] drop-shadow-2xl" />}
             </motion.button>
 
             {/* Chat Window */}
@@ -809,13 +836,13 @@ Did you mean this? Please confirm:
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute bottom-16 right-0 w-96 h-[600px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden"
+                        className="absolute bottom-20 right-0 sm:bottom-28 w-[calc(100vw-2rem)] sm:w-96 h-[calc(100vh-8rem)] sm:h-[600px] max-h-[700px] bg-white dark:bg-slate-800 rounded-[28px] shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                    <Bot size={20} />
+                                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
+                                    <CustomBotIcon className="w-8 h-8" />
                                 </div>
                                 <div>
                                     <h3 className="font-semibold">NewsBot</h3>
@@ -848,12 +875,12 @@ Did you mean this? Please confirm:
                             >
                                 <div className={`max-w-[80%] ${msg.sender === 'user' ? 'order-2' : 'order-1'}`}>
                                     <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
                                             msg.sender === 'user' 
                                                 ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white' 
-                                                : 'bg-gradient-to-br from-green-500 to-emerald-600 text-white'
+                                                : 'bg-white text-white drop-shadow-sm border border-slate-100'
                                         }`}>
-                                            {msg.sender === 'user' ? <User size={16} /> : <Bot size={16} />}
+                                            {msg.sender === 'user' ? <User size={16} /> : <CustomBotIcon className="w-6 h-6" />}
                                         </div>
                                         <div className={`px-4 py-3 md:text-sm text-[15px] shadow-sm relative ${
                                             msg.sender === 'user'
@@ -968,8 +995,8 @@ Did you mean this? Please confirm:
                                 className="flex justify-start"
                             >
                                 <div className="flex items-end gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center">
-                                        <Bot size={16} />
+                                    <div className="w-8 h-8 rounded-full bg-white text-white flex items-center justify-center overflow-hidden border border-slate-100 drop-shadow-sm">
+                                        <CustomBotIcon className="w-6 h-6" />
                                     </div>
                                     <div className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-[20px] rounded-bl-[4px] px-4 py-3 shadow-sm">
                                         <div className="flex gap-1">
@@ -1070,6 +1097,9 @@ Did you mean this? Please confirm:
                             <Send size={16} />
                         </button>
                     </form>
+                    <div className="text-[8px] text-center text-slate-400 pb-2 bg-white dark:bg-slate-800">
+                        <a href="https://www.flaticon.com/free-icons/robot" title="robot icons" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 transition-colors">Robot icons created by Flat Icons - Flaticon</a>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>

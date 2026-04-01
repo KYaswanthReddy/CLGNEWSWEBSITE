@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Rocket, Instagram, Linkedin, Twitter, Youtube, Facebook, Globe } from 'lucide-react';
+import { Rocket, Instagram, Linkedin, Youtube, Facebook, Globe } from 'lucide-react';
 import { getFooter, getSocialMedia, getBranding } from '../services/api';
+import XIcon from './XIcon';
 
 const API_BASE = 'http://127.0.0.1:5000';
 
 const PLATFORM_MAP = {
     instagram: Instagram,
     facebook: Facebook,
-    twitter: Twitter,
-    x: Twitter,
+    twitter: XIcon,
+    x: XIcon,
     youtube: Youtube,
     linkedin: Linkedin,
     website: Globe,
@@ -129,13 +130,10 @@ const Footer = () => {
 
 
                 {/* Bottom copyright */}
-                <div className="flex flex-col md:flex-row justify-between items-center py-8 gap-4">
-                    <p className="text-xs text-blue-100/40 font-bold uppercase tracking-[0.2em]">
+                <div className="flex flex-col items-center justify-center py-8 text-center max-w-4xl mx-auto">
+                    <p className="text-xs text-blue-100/40 font-bold uppercase tracking-[0.2em] leading-relaxed">
                         {copyright}
                     </p>
-                    <div className="flex gap-6">
-                        <a href="https://rgukt.in" target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 font-bold uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Official Site</a>
-                    </div>
                 </div>
             </div>
         </footer>

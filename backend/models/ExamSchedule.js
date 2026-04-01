@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const subjectSchema = new mongoose.Schema({
+    subjectCode: {
+        type: String,
+        trim: true
+    },
     subjectName: {
         type: String,
         required: true

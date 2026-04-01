@@ -166,7 +166,7 @@ const AddAchievement = () => {
             setFormData(prev => ({ ...prev, subcategory: sportTypes[0].name.toLowerCase() }));
         } else if (formData.type === 'clubs' && clubTypes.length > 0 && !formData.subcategory) {
             setFormData(prev => ({ ...prev, subcategory: clubTypes[0].name.toLowerCase() }));
-        } else if (formData.type === 'academic' || formData.type === 'placements') {
+        } else if (formData.type === 'placements' || formData.type === 'others') {
             setFormData(prev => ({ ...prev, subcategory: '' }));
         }
     }, [formData.type, sportTypes, clubTypes]);
@@ -183,7 +183,8 @@ const AddAchievement = () => {
             case 'sports': return 'bg-orange-50 text-orange-600 border-orange-200';
             case 'clubs': return 'bg-indigo-50 text-indigo-600 border-indigo-200';
             case 'placements': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-            default: return 'bg-amber-50 text-amber-600 border-amber-200';
+            case 'others': return 'bg-violet-50 text-violet-600 border-violet-200';
+            default: return 'bg-slate-50 text-slate-600 border-slate-200';
         }
     };
 
@@ -222,11 +223,11 @@ const AddAchievement = () => {
                         <div className="px-4 py-2 border-r border-slate-200 shrink-0">
                             <Filter size={16} className="text-slate-400" />
                         </div>
-                        {['ALL', 'SPORTS', 'CLUBS', 'PLACEMENTS'].map(filter => (
+                        {['ALL', 'SPORTS', 'CLUBS', 'PLACEMENTS', 'OTHERS'].map(filter => (
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
-                                className={`flex-1 min-w-[80px] px-4 py-2.5 rounded-xl font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all ${activeFilter === filter ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`flex-1 min-w-[70px] px-2 py-2.5 rounded-xl font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all ${activeFilter === filter ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 {filter}
                             </button>
@@ -311,6 +312,7 @@ const AddAchievement = () => {
                                                     <option value="sports">Sports</option>
                                                     <option value="clubs">Clubs</option>
                                                     <option value="placements">Placements</option>
+                                                    <option value="others">Others</option>
                                                 </select>
                                             </div>
                                             <div className="flex flex-col gap-2">
@@ -320,7 +322,9 @@ const AddAchievement = () => {
                                         </div>
 
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-[10px] uppercase font-black text-primary tracking-widest px-1">Category (Subcategory)</label>
+                                            <label className="text-[10px] uppercase font-black text-primary tracking-widest px-1">
+                                                {formData.type === 'others' ? 'Custom Type Name' : 'Category (Subcategory)'}
+                                            </label>
                                             {(formData.type === 'sports' || formData.type === 'clubs') ? (
                                                 <>
                                                     <select value={formData.subcategory} onChange={e => setFormData({ ...formData, subcategory: e.target.value.toLowerCase() })} className="bg-primary/5 p-4 rounded-2xl border border-primary/20 font-bold text-primary outline-none cursor-pointer focus:border-primary/40 transition-colors" required>
@@ -330,8 +334,16 @@ const AddAchievement = () => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <input value={formData.subcategory} onChange={e => setFormData({ ...formData, subcategory: e.target.value.toLowerCase() })} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/30 transition-colors" placeholder={`e.g. IT Branch (Optional Classification)`} />
-                                                    <span className="text-[9px] font-bold text-slate-400 px-1 mt-1">Optional tag for {formData.type} achievements.</span>
+                                                    <input 
+                                                        value={formData.subcategory} 
+                                                        onChange={e => setFormData({ ...formData, subcategory: e.target.value })} 
+                                                        className="bg-slate-50 p-4 rounded-2xl border border-slate-100 font-bold outline-none focus:border-primary/30 transition-colors" 
+                                                        placeholder={formData.type === 'others' ? 'e.g. Cultural, NCC, Seminar' : 'e.g. IT Branch (Optional Classification)'} 
+                                                        required={formData.type === 'others'}
+                                                    />
+                                                    <span className="text-[9px] font-bold text-slate-400 px-1 mt-1">
+                                                        {formData.type === 'others' ? 'Specify the custom achievement type name.' : `Optional tag for ${formData.type} achievements.`}
+                                                    </span>
                                                 </>
                                             )}
                                         </div>
