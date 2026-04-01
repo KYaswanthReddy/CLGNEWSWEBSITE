@@ -13,13 +13,21 @@ const router = express.Router();
 
 router.route('/')
   .get(getEvents)
-  .post(upload.single('image'), createEvent);
+  .post(upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'eventImage', maxCount: 1 },
+    { name: 'images', maxCount: 10 }
+  ]), createEvent);
 
 router.get('/upcoming', getUpcomingEvents);
 
 router.route('/:id')
   .get(getEventById)
-  .put(upload.single('image'), updateEvent)
+  .put(upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'eventImage', maxCount: 1 },
+    { name: 'images', maxCount: 10 }
+  ]), updateEvent)
   .delete(deleteEvent);
 
 export default router;

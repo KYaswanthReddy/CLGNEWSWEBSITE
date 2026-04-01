@@ -32,6 +32,8 @@ const ManageClubs = () => {
         description: '',
         eventImage: null,
         images: [],
+        existingEventImage: '',
+        existingImages: [],
         activities: [{ name: '', description: '', time: '' }],
         achievements: [{ title: '', recipient: '', description: '' }],
         socialLinks: { instagram: '', twitter: '', website: '' }
@@ -112,6 +114,27 @@ const ManageClubs = () => {
         newAchievements[idx][field] = val;
         setEventForm({ ...eventForm, achievements: newAchievements });
     };
+    
+    // Image Removal
+    const removeNewImage = (type, index) => {
+        if (type === 'banner') {
+            setEventForm({ ...eventForm, eventImage: null });
+        } else {
+            const newFiles = Array.from(eventForm.images);
+            newFiles.splice(index, 1);
+            setEventForm({ ...eventForm, images: newFiles });
+        }
+    };
+
+    const removeExistingImage = (type, index) => {
+        if (type === 'banner') {
+            setEventForm({ ...eventForm, existingEventImage: '' });
+        } else {
+            const newExisting = [...eventForm.existingImages];
+            newExisting.splice(index, 1);
+            setEventForm({ ...eventForm, existingImages: newExisting });
+        }
+    };
 
     const handleEventSubmit = async (e) => {
         e.preventDefault();
@@ -125,6 +148,11 @@ const ManageClubs = () => {
         if (eventForm.eventImage) data.append('eventImage', eventForm.eventImage);
         if (eventForm.images && eventForm.images.length > 0) {
             Array.from(eventForm.images).forEach(img => data.append('images', img));
+        }
+
+        if (editingId) {
+            data.append('existingEventImage', eventForm.existingEventImage);
+            data.append('existingImages', JSON.stringify(eventForm.existingImages));
         }
         
         data.append('activities', JSON.stringify(eventForm.activities));
@@ -156,6 +184,8 @@ const ManageClubs = () => {
             description: '',
             eventImage: null,
             images: [],
+            existingEventImage: '',
+            existingImages: [],
             activities: [{ name: '', description: '', time: '' }],
             achievements: [{ title: '', recipient: '', description: '' }],
             socialLinks: { instagram: '', twitter: '', website: '' }
@@ -184,6 +214,8 @@ const ManageClubs = () => {
             description: ev.description,
             eventImage: null,
             images: [],
+            existingEventImage: ev.image || ev.eventImage || '',
+            existingImages: ev.images || [],
             activities: ev.activities || [{ name: '', description: '', time: '' }],
             achievements: ev.achievements || [{ title: '', recipient: '', description: '' }],
             socialLinks: ev.socialLinks || { instagram: '', twitter: '', website: '' }
@@ -757,11 +789,36 @@ const ManageClubs = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                 <div className="flex flex-col gap-3">
                                                     <label className="text-xs font-black text-slate-600 uppercase tracking-widest pl-2">Lead Promotion Banner</label>
-                                                    <label className="bg-slate-50 h-56 rounded-[40px] border-4 border-dashed border-slate-100 cursor-pointer flex flex-col items-center justify-center gap-4 hover:border-primary transition-colors hover:bg-slate-100 group">
-                                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
-                                                            <Upload size={32} className="text-primary" />
-                                                        </div>
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{eventForm.eventImage ? eventForm.eventImage.name.slice(0, 15) : 'Primary Visual'}</span>
+                                                    <label className="bg-slate-50 h-56 rounded-[40px] border-4 border-dashed border-slate-100 cursor-pointer flex flex-col items-center justify-center gap-4 hover:border-primary transition-colors hover:bg-slate-100 group overflow-hidden relative">
+                                                        {(eventForm.eventImage || eventForm.existingEventImage) ? (
+                                                            <div className="absolute inset-0">
+                                                                <img 
+                                                                    src={eventForm.eventImage ? URL.createObjectURL(eventForm.eventImage) : `http://localhost:5000${eventForm.existingEventImage}`} 
+                                                                    className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-700" 
+                                                                    alt="preview"
+                                                                />
+                                                                <div className="absolute inset-0 bg-white/40 flex flex-col items-center justify-center gap-2">
+                                                                    <div className="flex gap-2">
+                                                                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg"><Upload size={24} className="text-primary" /></div>
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); eventForm.eventImage ? removeNewImage('banner') : removeExistingImage('banner'); }}
+                                                                            className="w-12 h-12 bg-rose-500 rounded-xl flex items-center justify-center shadow-lg text-white hover:bg-rose-600 transition-all"
+                                                                        >
+                                                                            <X size={24} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Update Banner</span>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
+                                                                    <Upload size={32} className="text-primary" />
+                                                                </div>
+                                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Primary Visual</span>
+                                                            </>
+                                                        )}
                                                         <input type="file" className="hidden" onChange={e => setEventForm({ ...eventForm, eventImage: e.target.files[0] })} />
                                                     </label>
                                                 </div>
@@ -771,16 +828,39 @@ const ManageClubs = () => {
                                                         <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
                                                             <Layout size={32} className="text-indigo-500" />
                                                         </div>
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{eventForm.images.length > 0 ? `${eventForm.images.length} Selected` : 'Multi-Image Select'}</span>
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                            {eventForm.images.length > 0 ? `${eventForm.images.length} Selected` : (eventForm.existingImages.length > 0 ? `${eventForm.existingImages.length} Existing` : 'Multi-Image Select')}
+                                                        </span>
                                                         <input type="file" multiple className="hidden" onChange={e => setEventForm({ ...eventForm, images: e.target.files })} />
                                                     </label>
                                                 </div>
                                             </div>
-                                            {eventForm.images.length > 0 && (
-                                                <div className="flex gap-4 p-4 bg-slate-50 rounded-3xl overflow-x-auto border border-slate-100">
+                                            {(eventForm.images.length > 0 || eventForm.existingImages.length > 0) && (
+                                                <div className="flex gap-6 p-6 bg-slate-50 rounded-[40px] overflow-x-auto border border-slate-100 custom-scrollbar">
+                                                    {/* Existing Images */}
+                                                    {eventForm.existingImages.map((url, i) => (
+                                                        <div key={`exist-${i}`} className="w-24 h-24 rounded-3xl bg-white border-2 border-slate-200 overflow-hidden shrink-0 relative group">
+                                                            <img src={`http://localhost:5000${url}`} className="w-full h-full object-cover" alt="existing" />
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => { e.preventDefault(); removeExistingImage('gallery', i); }}
+                                                                className="absolute -top-1 -right-1 w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    {/* New Images */}
                                                     {Array.from(eventForm.images).map((file, i) => (
-                                                        <div key={i} className="w-20 h-20 rounded-2xl bg-white border border-slate-200 overflow-hidden shrink-0">
-                                                            <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="prev" />
+                                                        <div key={`new-${i}`} className="w-24 h-24 rounded-3xl bg-white border-2 border-primary/30 overflow-hidden shrink-0 relative group">
+                                                            <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="new" />
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => { e.preventDefault(); removeNewImage('gallery', i); }}
+                                                                className="absolute -top-1 -right-1 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>

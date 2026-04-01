@@ -31,12 +31,13 @@ const createEvent = asyncHandler(async (req, res) => {
     }
   });
 
-  // Handle file uploads
+  // Handle file uploads (compatible with both upload.single and upload.fields)
   if (req.file) {
-    // Single 'image' upload
     eventData.image = `/uploads/${req.file.filename}`;
   } else if (req.files) {
-    // Multiple fields (compatible with club/sport routes)
+    if (req.files.image) {
+      eventData.image = `/uploads/${req.files.image[0].filename}`;
+    }
     if (req.files.eventImage) {
       eventData.image = `/uploads/${req.files.eventImage[0].filename}`;
     }
@@ -115,17 +116,40 @@ const updateEvent = asyncHandler(async (req, res) => {
     }
   });
 
-  // Handle file uploads
+  // Handle file uploads (compatible with both upload.single and upload.fields)
   if (req.file) {
     updateData.image = `/uploads/${req.file.filename}`;
   } else if (req.files) {
+    if (req.files.image) {
+      updateData.image = `/uploads/${req.files.image[0].filename}`;
+    }
     if (req.files.eventImage) {
       updateData.image = `/uploads/${req.files.eventImage[0].filename}`;
+    } else if (updateData.existingEventImage === '') {
+      // Explicit removal of banner
+      updateData.image = '';
     }
+
+    // Handle Gallery Images (Merging existing + new)
+    let finalImages = [];
+    if (typeof updateData.existingImages === 'string') {
+      try {
+        finalImages = JSON.parse(updateData.existingImages);
+      } catch (e) {
+        finalImages = [];
+      }
+    } else if (Array.isArray(updateData.existingImages)) {
+      finalImages = updateData.existingImages;
+    }
+
     if (req.files.images) {
       const newImages = req.files.images.map(file => `/uploads/${file.filename}`);
-      updateData.images = [...(updateData.images || []), ...newImages];
+      finalImages = [...finalImages, ...newImages];
     }
+    updateData.images = finalImages;
+  } else if (updateData.existingEventImage === '') {
+    // Case where no files but banner was cleared
+    updateData.image = '';
   }
 
   Object.assign(event, updateData);

@@ -25,7 +25,7 @@ const UrgentMarquee = () => {
     const go = (ev) => {
         const sub = (ev.subcategory || '').toLowerCase().replace(/\s+/g, '-');
         if (ev.eventType === 'sports') navigate(`/sports/${sub}/${ev._id}`);
-        else if (ev.eventType === 'clubs') navigate(`/clubs/event/${ev._id}`);
+        else if (ev.eventType === 'clubs') navigate(`/clubs/${sub}/${ev._id}`);
         else navigate(`/events/${ev._id}`);
     };
 

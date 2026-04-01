@@ -120,12 +120,13 @@ const ManagePlacements = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this placement update?')) {
+        if (confirm('Are you sure you want to delete this placement update?')) {
             try {
                 await deletePlacement(id);
                 setPlacements(prev => prev.filter(p => p._id !== id));
             } catch (err) {
-                console.error(err);
+                console.error('Delete error:', err);
+                alert('Failed to delete placement: ' + (err.response?.data?.message || err.message));
             }
         }
     };

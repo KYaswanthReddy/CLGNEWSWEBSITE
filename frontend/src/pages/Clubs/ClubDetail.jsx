@@ -149,7 +149,7 @@ const ClubDetail = () => {
                             <div className="flex flex-col gap-8">
                                 {upcomingEvents.map((ev) => (
                                     <Link 
-                                        to={`/clubs/event/${ev._id}`} 
+                                        to={`/clubs/${clubName}/${ev._id}`} 
                                         key={ev._id} 
                                         className="bg-white p-10 rounded-[56px] border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row gap-10 group hover:-translate-y-2 transition-all duration-500"
                                     >
@@ -198,7 +198,7 @@ const ClubDetail = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {pastEvents.length > 0 ? pastEvents.map(ev => (
-                                <Link to={`/clubs/event/${ev._id}`} key={ev._id} className="bg-white p-8 rounded-[48px] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:shadow-2xl transition-all">
+                                <Link to={`/clubs/${clubName}/${ev._id}`} key={ev._id} className="bg-white p-8 rounded-[48px] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:shadow-2xl transition-all">
                                     <div className="h-56 rounded-[36px] overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700">
                                         <img 
                                             src={(ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`} 
