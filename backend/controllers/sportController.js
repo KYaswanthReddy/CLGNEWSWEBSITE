@@ -74,10 +74,10 @@ export const createSportEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                eventData.eventImage = `/uploads/sports/${req.files.eventImage[0].filename}`;
+                eventData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
             }
             if (req.files.images) {
-                eventData.images = req.files.images.map(file => `/uploads/sports/${file.filename}`);
+                eventData.images = req.files.images.map(file => `/uploads/${file.filename}`);
             }
         }
 
@@ -137,10 +137,10 @@ export const updateSportEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                updateData.eventImage = `/uploads/sports/${req.files.eventImage[0].filename}`;
+                updateData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
             }
             if (req.files.images) {
-                updateData.images = req.files.images.map(file => `/uploads/sports/${file.filename}`);
+                updateData.images = req.files.images.map(file => `/uploads/${file.filename}`);
             }
         }
 
@@ -214,7 +214,7 @@ export const createSportType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/sports/${req.file.filename}`;
+            typeData.image = `/uploads/${req.file.filename}`;
         }
         const type = await SportType.create(typeData);
         res.status(201).json(type);
@@ -227,7 +227,7 @@ export const updateSportType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/sports/${req.file.filename}`;
+            typeData.image = `/uploads/${req.file.filename}`;
         }
         const type = await SportType.findByIdAndUpdate(req.params.id, typeData, { new: true });
         if (!type) return res.status(404).json({ message: 'Sport type not found' });

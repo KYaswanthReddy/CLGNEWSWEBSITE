@@ -16,8 +16,15 @@ export const getImageUrl = (path) => {
     // Normalize: remove trailing slash, then remove /api if it exists at the end
     const backendUrl = apiUrl.replace(/\/$/, '').replace(/\/api$/, '');
 
-    // Ensure the path starts with a slash
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    // Handle legacy subfolder paths stored in the DB
+    let normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    
+    // If the path includes /uploads/sports/ or /uploads/clubs/, normalize it to /uploads/
+    if (normalizedPath.includes('/uploads/sports/')) {
+        normalizedPath = normalizedPath.replace('/uploads/sports/', '/uploads/');
+    } else if (normalizedPath.includes('/uploads/clubs/')) {
+        normalizedPath = normalizedPath.replace('/uploads/clubs/', '/uploads/');
+    }
 
     return `${backendUrl}${normalizedPath}`;
 };

@@ -73,10 +73,10 @@ export const createClubEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                eventData.eventImage = `/uploads/clubs/${req.files.eventImage[0].filename}`;
+                eventData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
             }
             if (req.files.images) {
-                eventData.images = req.files.images.map(file => `/uploads/clubs/${file.filename}`);
+                eventData.images = req.files.images.map(file => `/uploads/${file.filename}`);
             }
         }
 
@@ -128,10 +128,10 @@ export const updateClubEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                updateData.eventImage = `/uploads/clubs/${req.files.eventImage[0].filename}`;
+                updateData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
             }
             if (req.files.images) {
-                updateData.images = req.files.images.map(file => `/uploads/clubs/${file.filename}`);
+                updateData.images = req.files.images.map(file => `/uploads/${file.filename}`);
             }
         }
 
@@ -204,7 +204,7 @@ export const createClubType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/clubs/${req.file.filename}`;
+            typeData.image = `/uploads/${req.file.filename}`;
         }
         const type = await ClubType.create(typeData);
         res.status(201).json(type);
@@ -217,7 +217,7 @@ export const updateClubType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/clubs/${req.file.filename}`;
+            typeData.image = `/uploads/${req.file.filename}`;
         }
         const type = await ClubType.findByIdAndUpdate(req.params.id, typeData, { new: true });
         if (!type) return res.status(404).json({ message: 'Club type not found' });

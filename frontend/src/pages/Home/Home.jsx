@@ -93,12 +93,12 @@ const Home = () => {
                 // Achievements
                 const formattedAchievements = (achievementsRes.data.activities || achievementsRes.data || []).map(ach => ({
                     title: ach.title,
-                    date: new Date(ach.date || ach.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                    date: new Date(ach.year ? `${ach.year}-01-01` : (ach.createdAt || new Date())).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                    badge: ach.subcategory || ach.type,
                     author: ach.studentName || 'Student',
-                    image: getImageUrl(ach.image),
+                    image: getImageUrl(ach.cardImage || ach.image),
                     description: ach.description,
-                    id: ach._id,
-                    badge: ach.type || 'ACHIEVEMENT'
+                    id: ach._id
                 }));
                 setAchievements(formattedAchievements);
             } catch (err) {
