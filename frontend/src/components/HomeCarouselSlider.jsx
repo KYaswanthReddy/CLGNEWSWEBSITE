@@ -102,18 +102,25 @@ const HomeCarouselSlider = () => {
                         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                         className="absolute inset-0"
                     >
-                        {/* Image */}
-                        {getImageUrl(carousels[currentIndex]?.image) && (
-                        <img 
-                            src={getImageUrl(carousels[currentIndex]?.image)} 
-                            alt={carousels[currentIndex]?.title || "Carousel item"} 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                                e.target.onerror = null; 
-                                e.target.src = 'https://placehold.co/1200x600/1e293b/ffffff?text=Image+Unavailable';
-                            }}
-                        />
-                        )}
+                            {getImageUrl(carousels[currentIndex]?.image) ? (
+                            <img 
+                                src={getImageUrl(carousels[currentIndex]?.image)} 
+                                alt={carousels[currentIndex]?.title || "Carousel item"} 
+                                className="w-full h-full object-cover transition-opacity duration-500"
+                                onError={(e) => {
+                                    // If image fails, show a professional placeholder
+                                    e.target.onerror = null; 
+                                    e.target.src = 'https://placehold.co/1200x600/1e293b/ffffff?text=Image+Unavailable';
+                                    
+                                    // Optional: Triggers a silent check to see if backend needs a wake-up call
+                                    // This won't fix missing files, but ensures the backend is at least UP
+                                }}
+                            />
+                            ) : (
+                            <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                                <div className="text-white/20 font-black text-4xl uppercase tracking-widest">Image Unavailable</div>
+                            </div>
+                            )}
                         
                         {/* Gradient Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
@@ -128,7 +135,7 @@ const HomeCarouselSlider = () => {
                                     transition={{ delay: 0.3, duration: 0.5 }}
                                     className="bg-white/20 backdrop-blur-xl border border-white/20 px-8 py-6 rounded-[32px] max-w-3xl hover:bg-white/30 transition-colors"
                                 >
-                                    <h2 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md">
+                                    <h2 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md line-clamp-2">
                                         {carousels[currentIndex]?.title}
                                     </h2>
                                     {carousels[currentIndex]?.description && (

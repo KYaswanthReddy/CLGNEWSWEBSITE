@@ -3,9 +3,9 @@
  * Uses the VITE_API_URL environment variable to determine the backend base URL.
  */
 export const getImageUrl = (path) => {
-    if (!path) return null;
+    if (!path || typeof path !== 'string') return null;
     
-    // If it's already a full URL, just return it
+    // If it's already a full URL (http or https), just return it
     if (path.startsWith('http://') || path.startsWith('https://')) {
         return path;
     }
@@ -26,7 +26,11 @@ export const getImageUrl = (path) => {
         normalizedPath = normalizedPath.replace('/uploads/clubs/', '/uploads/');
     }
 
+    // Ensure we don't have multiple leading slashes
+    normalizedPath = normalizedPath.replace(/^\/+/, '/');
+
     return `${backendUrl}${normalizedPath}`;
 };
 
 export default getImageUrl;
+
