@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, User, Send, X, Share2, Lightbulb, MessageCircle } from 'lucide-react';
-import axios from 'axios';
+import api, { sendChatMessage as apiSendChatMessage } from '../services/api';
 
 const CustomBotIcon = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,23 +69,11 @@ const Chatbot = () => {
 
     
     
-    const sendChatMessage = async (message, history = []) => {
-        try {
-            const response = await axios.post('/api/chat', {
-                message,
-                history
-            });
-            return response;
-        } catch (error) {
-            console.error('Chat API error:', error);
-            throw error;
-        }
-    };
 
     const fetchWebsiteContent = async (query) => {
         try {
             // First try to get dynamic content from the current website
-            const websiteResponse = await axios.get('/api/website-content', {
+            const websiteResponse = await api.get('/website-content', {
                 params: { query }
             });
             
@@ -94,7 +82,7 @@ const Chatbot = () => {
             }
             
             // If no specific content found, scrape the entire website
-            const scrapeResponse = await axios.get('/api/scrape-website', {
+            const scrapeResponse = await api.get('/scrape-website', {
                 params: { 
                     url: window.location.origin,
                     query: query 
@@ -172,26 +160,30 @@ const Chatbot = () => {
         setLastInteraction(Date.now());
         setShowSuggestions(false);
 
-        // Check for general questions
-        const generalResponse = handleGeneralQuestions(messageText);
-        if (generalResponse) {
-            const newUserMessage = {
-                id: Date.now(),
-                sender: 'user',
-                text: messageText,
-                timestamp: new Date()
-            };
-            setMessages((prev) => [...prev, newUserMessage]);
+        // Determine if this is a static question or needs live data
+        const needsLiveData = /(placement|internship|job|drive|company|event|fest|workshop|seminar|club|sport|cricket|basketball|football|exam|schedule|timetable|achievement|award|hackathon)/i.test(messageText);
 
-            const botResponse = {
-                id: Date.now() + 1,
-                sender: 'bot',
-                text: generalResponse,
-                timestamp: new Date()
-            };
-            setMessages((prev) => [...prev, botResponse]);
-            setInputValue('');
-            return;
+        if (!needsLiveData) {
+            const generalResponse = handleGeneralQuestions(messageText);
+            if (generalResponse) {
+                const newUserMessage = {
+                    id: Date.now(),
+                    sender: 'user',
+                    text: messageText,
+                    timestamp: new Date()
+                };
+                setMessages((prev) => [...prev, newUserMessage]);
+
+                const botResponse = {
+                    id: Date.now() + 1,
+                    sender: 'bot',
+                    text: generalResponse,
+                    timestamp: new Date()
+                };
+                setMessages((prev) => [...prev, botResponse]);
+                setInputValue('');
+                return;
+            }
         }
 
         // Apply autocorrection
@@ -239,7 +231,7 @@ Did you mean this? Please confirm:
                     content: msg.text
                 }));
 
-            const response = await sendChatMessage(messageText, recentHistory);
+            const response = await apiSendChatMessage(messageText, recentHistory);
 
             const botResponse = {
                 id: Date.now() + 1,
@@ -302,7 +294,7 @@ Did you mean this? Please confirm:
             setInputValue('');
             setIsTyping(true);
 
-            sendChatMessage(messageText, messages
+            apiSendChatMessage(messageText, messages
                 .filter((msg) => msg.sender === 'user' || msg.sender === 'bot')
                 .slice(-8)
                 .map((msg) => ({
@@ -882,7 +874,7 @@ Did you mean this? Please confirm:
                                         }`}>
                                             {msg.sender === 'user' ? <User size={16} /> : <CustomBotIcon className="w-6 h-6" />}
                                         </div>
-                                        <div className={`px-4 py-3 md:text-sm text-[15px] shadow-sm relative ${
+                                        <div className={`px-4 py-3 md:text-sm text-[15px] shadow-sm relative whitespace-pre-wrap ${
                                             msg.sender === 'user'
                                                 ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-[20px] rounded-br-[4px]'
                                                 : msg.isConfirmation

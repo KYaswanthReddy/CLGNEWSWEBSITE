@@ -1,16 +1,36 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
+import fs from 'fs';
+import path from 'path';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { SITE_MAP_TEXT } from '../data/siteKnowledge.js';
 import { buildChatSiteContext } from '../utils/buildChatSiteContext.js';
 
 dotenv.config();
 
 const openAiKey = process.env.OPENAI_API_KEY;
-const isOpenAIKey = typeof openAiKey === 'string' && openAiKey.trim().startsWith('sk-');
+const geminiKey = process.env.GEMINI_API_KEY;
 
-const openAiClient = isOpenAIKey ? new OpenAI({ apiKey: openAiKey }) : null;
-const genAiClient = (!isOpenAIKey && openAiKey) ? new GoogleGenAI({ apiKey: openAiKey }) : null;
+const openAiClient = (openAiKey && openAiKey.trim().startsWith('sk-')) ? new OpenAI({ apiKey: openAiKey }) : null;
+const genAiClient = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
+
+// Ensure temporary and log directories exist
+const __dirname = path.resolve();
+const tmpDir = path.join(__dirname, 'backend', 'tmp');
+const logDir = path.join(__dirname, 'backend', 'logs');
+const logFile = path.join(logDir, 'chatbot.log');
+
+if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+
+/**
+ * Enhanced Logging for Chatbot
+ */
+const logChat = (details) => {
+    const timestamp = new Date().toISOString();
+    const logEntry = `[${timestamp}] ${JSON.stringify(details)}\n`;
+    fs.appendFileSync(logFile, logEntry);
+};
 
 const getBuiltinReply = (incoming) => {
     const text = (incoming || '').toLowerCase();
@@ -32,43 +52,39 @@ const getBuiltinReply = (incoming) => {
         timeGreeting = 'night';
     }
 
-    // Check for time-specific greetings
-    if (/(good morning|gm|morning)/i.test(text) && hour >= 5 && hour < 12) {
+    // Check for time-specific greetings (Reply to what they said, or use realistic time)
+    if (/(good morning|gm\b|morning)/i.test(text)) {
         const morningGreetings = [
-            `Good morning! 🌅 Rise and shine, campus fam! I'm NewsBot, your morning coffee for RGUKT Ongole updates. What's the plan today? Events, clubs, or placements? ☕`,
-            `Morning vibes! 🌞 Good morning! NewsBot here to start your day with some campus tea. What's popping? Need event deets or club info? 🚀`,
-            `GM! 🌅 Good morning, bestie! NewsBot checking in with fresh campus energy. What's on your agenda? Events, placements, or exam schedules? 💫`,
-            `Morning! 🌅 Hope your coffee's hitting different! NewsBot here with the latest campus vibes. What's the move today? Events or club hangouts? ⚡`
+            `Good morning! 🌅 Rise and shine, campus fam! What's the plan today? Events, clubs, or placements? ☕`,
+            `Morning vibes! 🌞 Hope you're having a great day! Need event deets or club info? 🚀`,
+            `GM! 🌅 Checking in with fresh campus energy. What's on your agenda? 💫`
         ];
         return morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
     }
 
-    if (/(good afternoon|afternoon)/i.test(text) && hour >= 12 && hour < 17) {
+    if (/(good afternoon|afternoon)/i.test(text)) {
         const afternoonGreetings = [
-            `Good afternoon! ☀️ Hope your day's been lit so far! I'm NewsBot, your afternoon boost for RGUKT Ongole. What's the vibe? Events or club updates? 🔥`,
-            `Afternoon check-in! 🌤️ Good afternoon! NewsBot here with that midday energy. What's good? Need placement info or sports updates? ⚡`,
-            `Hey! ☀️ Good afternoon, campus squad! NewsBot bringing the afternoon tea. What's up? Events, achievements, or exam schedules? 💫`,
-            `Afternoon! ☀️ Surviving the day? NewsBot here to keep you motivated! What's popping? Events, clubs, or placement vibes? 🚀`
+            `Good afternoon! ☀️ Hope your day's been lit so far! What's the vibe? Events or club updates? 🔥`,
+            `Afternoon check-in! 🌤️ Bringing that midday energy. What's good? Need placement info? ⚡`,
+            `Hey! ☀️ Good afternoon, campus squad! What's up? Events, achievements, or exam schedules? 💫`
         ];
         return afternoonGreetings[Math.floor(Math.random() * afternoonGreetings.length)];
     }
 
-    if (/(good evening|evening)/i.test(text) && hour >= 17 && hour < 21) {
+    if (/(good evening|evening)/i.test(text)) {
         const eveningGreetings = [
-            `Good evening! 🌆 Evening vibes activated! I'm NewsBot, your chill evening companion for RGUKT Ongole. What's the evening plan? Events or club hangouts? 🌙`,
-            `Evening check! 🌙 Good evening! NewsBot here as the sun sets on another campus day. What's popping tonight? Events, placements, or sports? ✨`,
-            `Sup! 🌆 Good evening, night owls! NewsBot bringing that evening energy. What's the move? Club activities or upcoming events? 🚀`,
-            `Evening! 🌆 Time to unwind? NewsBot here with the latest campus tea. What's good? Events, achievements, or placement updates? 💫`
+            `Good evening! 🌆 Evening vibes activated! What's the evening plan? Events or club hangouts? 🌙`,
+            `Evening check! 🌙 As the sun sets on another campus day, what's popping tonight? ✨`,
+            `Sup! 🌆 Good evening! Bringing that evening energy. What's the move? 🚀`
         ];
         return eveningGreetings[Math.floor(Math.random() * eveningGreetings.length)];
     }
 
-    if (/(good night|night|nite)/i.test(text) && (hour >= 21 || hour < 5)) {
+    if (/(good night|night|nite|gn\b)/i.test(text)) {
         const nightGreetings = [
-            `Good night! 🌙 Sweet dreams, campus fam! I'm NewsBot, your midnight snack for RGUKT Ongole info. Before you sleep, need any event reminders or placement tips? 😴`,
-            `Night time! 🌌 Good night! NewsBot wishing you peaceful vibes. Quick question before bed - anything about tomorrow's events or exam schedules? 🌟`,
-            `GN! 🌙 Good night, dream team! NewsBot here for that late-night curiosity. What's keeping you up? Campus events or achievement stories? 💫`,
-            `Night! 🌙 Sleep tight! NewsBot here if you need last-minute campus deets. What's on your mind before bed? Events or exam schedules? 😴`
+            `Good night! 🌙 Sweet dreams, campus fam! Before you sleep, need any event reminders? 😴`,
+            `Night time! 🌌 Wishing you peaceful vibes. Anything about tomorrow's events? 🌟`,
+            `GN! 🌙 Good night, dream team! What's keeping you up? 💫`
         ];
         return nightGreetings[Math.floor(Math.random() * nightGreetings.length)];
     }
@@ -290,14 +306,269 @@ const getBuiltinReply = (incoming) => {
         return weekendResponses[Math.floor(Math.random() * weekendResponses.length)];
     }
 
-    // Generic fallback with personality
+    // Generic fallback with better guidance
     const fallbacks = [
-        "Hmm, not sure about that one, but I got you! Try asking about Events, Clubs, Placements, or Exam Schedules. What's on your mind? 🤔",
-        "That's a new one! 🧐 I'm still learning, but I can definitely help with Events 🎉, Clubs 🎸, Placements 💼, Sports ⚽, and more. What's your question?",
-        "Interesting! 🤨 I'm your campus expert for RGUKT Ongole. For Events, Clubs, Placements, or Exam Schedules - I'm your guy. What's up?",
-        "Not ringing a bell, but no worries! 🎯 I specialize in campus vibes. Try Events, Clubs, Sports, or Placements. What's your vibe today?"
+        "Hmm, I couldn't find specific data for that request. 🧐 Try asking about **Events, Clubs, Placements, or Exams**. Which campus section would you like me to explore? 🤔",
+        "It sounds like you're looking for something specific! I specialize in campus vibes like **Events 🎉, Clubs 🎸, Placements 💼, and Achievements 🏆**. Could you tell me more about what you're looking for?",
+        "I'm not quite sure about that topic yet! 🧐 I'm tied directly to the campus database for **Placements, Events, and Clubs**. Would you like me to help you find one of those?",
+        "Not ringing a bell, but I'm ready to help! 🎯 I can pull live info for **Events, Sports, or Placements**. Which one should I check for you today?"
     ];
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+};
+
+/**
+ * Advanced "Intent-Aware" Search for Live Website Content
+ */
+const searchSiteContent = (message, context) => {
+    if (!context || !message) return null;
+    
+    const query = message.toLowerCase().trim();
+    const sections = context.split('###');
+    if (sections.length <= 1) return null;
+    
+    // 1. Comprehensive Intent Mapping for RGUKT Navbar & Subsections
+    const intentMap = {
+        placements: { keywords: ['placement', 'internship', 'job', 'drive', 'company', 'stipend', 'salary', 'off-campus', 'on-campus'], path: '/placements' },
+        events: { keywords: ['event', 'fest', 'workshop', 'seminar', 'celebration', 'gathering', 'organized', 'notice', 'fest'], path: '/events' },
+        clubs: { keywords: ['club', 'artix', 'kaladharani', 'litera', 'd-tech', 'creative', 'activity', 'societies'], path: '/clubs' },
+        sports: { keywords: ['sport', 'cricket', 'basketball', 'volleyball', 'badminton', 'kabaddi', 'kho', 'athletic', 'tournament', 'game'], path: '/sports' },
+        exams: { keywords: ['exam', 'schedule', 'timetable', 'mid', 'semester', 'e1', 'e2', 'e3', 'e4', 'puc1', 'puc2', 'results'], path: '/exams' },
+        achievements: { keywords: ['achievement', 'award', 'win', 'prize', 'hackathon', 'olympiad', 'rank', 'project', 'success', 'achve'], path: '/achievements' }
+    };
+
+    // 2. Identify the primary section and intent (Category vs Event)
+    let identifiedSectionKey = null;
+    let isEventIntent = /\b(event|tournament|fest|organized|activity|workshop|win|story|past|upcoming)\b/i.test(query);
+
+    for (const [key, meta] of Object.entries(intentMap)) {
+        if (meta.keywords.some(kw => query.includes(kw) || query === kw)) {
+            identifiedSectionKey = key;
+            break;
+        }
+    }
+
+    // 3. SPECIAL INTERACTIVE FLOWS (Question-First)
+    
+    // --- EXAMS ---
+    if (identifiedSectionKey === 'exams' && !/(e1|e2|e3|e4|puc|semester|sem|branch|mid|year|1|2|3|4)/i.test(query)) {
+        return `I can help you find your **Exam Schedule**! 📚📅\n\nTo fetch the correct details, please let me know:\n1. Your **Branch** (CSE, ECE, Civil, etc.)\n2. Your **Year** (E1, E2, PUC1, etc.)\n3. Your **Semester** (Sem 1, Sem 2)\n4. The **Exam Type** (Mid-1, Mid-2, Mid-3, or Sem Exam)\n\n📍 **Navigation**: [Go to Exams Page](/exams)`;
+    }
+
+    // --- EVENTS ---
+    if (identifiedSectionKey === 'events' && !/(past|recent|upcoming|tba|soon|future|next)/i.test(query)) {
+        return `I found some interesting campus **Events**! 📅🎉\n\nWould you like to see:\n- **Upcoming Events** (Fests, Workshops, etc.)\n- **Recent Past Events** (Recaps and Stories)\n\n📍 **Navigation**: [Go to Events Page](/events)`;
+    }
+
+    // 4. Strict Achievement Mapping (Sports vs Clubs)
+    let strictAchievementFilter = null;
+    if (query.includes('achievement') || query.includes('win') || query.includes('award')) {
+        if (query.includes('sport')) strictAchievementFilter = 'Sports achievements';
+        if (query.includes('club')) strictAchievementFilter = 'Club events';
+    }
+
+    const matches = [];
+    const keywords = query.split(/\s+/).filter(w => w.length > 2);
+    
+    for (let i = 1; i < sections.length; i++) {
+        const section = sections[i].trim();
+        if (!section) continue;
+
+        const lines = section.split('\n');
+        const title = lines[0].trim().toLowerCase();
+        
+        let score = 0;
+
+        // Strict Achievement Override
+        if (strictAchievementFilter) {
+            if (lines[0].toLowerCase().includes(strictAchievementFilter.toLowerCase())) {
+                score += 30; // Prioritize this section strongly 
+            } else {
+                continue; // Skip other achievement sections if strict filter is active
+            }
+        }
+
+        // Intent Scoring
+        if (identifiedSectionKey && title.includes(identifiedSectionKey)) {
+            score += 15;
+            // Distinguish between Category and Event intent
+            if (isEventIntent && (title.includes('event') || title.includes('tournament') || title.includes('past') || title.includes('upcoming'))) score += 10;
+            if (!isEventIntent && (title.includes('category') || title.includes('type'))) score += 10;
+        }
+
+        // Fuzzy Keyword Match in title and body
+        if (query.length > 2 && title.includes(query)) score += 15;
+        for (const kw of keywords) {
+            if (section.toLowerCase().includes(kw)) score += 3;
+        }
+        
+        if (score > 0) {
+            matches.push({ text: section, score, title: lines[0].trim() });
+        }
+    }
+
+    // 4. Intent Filter: If we have a clear Category vs Event distinction, prune the other
+    if (matches.length > 0) {
+        const hasCategoryMatch = matches.some(m => m.title.toLowerCase().includes('category') || m.title.toLowerCase().includes('type'));
+        const hasEventMatch = matches.some(m => m.title.toLowerCase().includes('event') || m.title.toLowerCase().includes('tournament'));
+
+        if (isEventIntent && hasEventMatch) {
+            // Prune categories
+            const filtered = matches.filter(m => !m.title.toLowerCase().includes('category') && !m.title.toLowerCase().includes('type'));
+            if (filtered.length > 0) matches.splice(0, matches.length, ...filtered);
+        } else if (!isEventIntent && hasCategoryMatch) {
+            // Prune events
+            const filtered = matches.filter(m => !m.title.toLowerCase().includes('event') && !m.title.toLowerCase().includes('tournament'));
+            if (filtered.length > 0) matches.splice(0, matches.length, ...filtered);
+        }
+    }
+
+    if (matches.length === 0) {
+        if (identifiedSectionKey) {
+            const sn = identifiedSectionKey.charAt(0).toUpperCase() + identifiedSectionKey.slice(1);
+            return `I see you're asking about **${sn}**! 🎓\n\nCurrently, no live data for that matches your exact request in our database. Check the **[${sn} Page](${intentMap[identifiedSectionKey].path})** for upcoming updates.\n\nWas there something specific in ${sn} you wanted to know? 😊`;
+        }
+        return null;
+    }
+
+    const topMatches = matches.sort((a,b) => b.score - a.score).slice(0, 2);
+
+    const result = topMatches.map(m => {
+        const lines = m.text.split('\n');
+        const title = lines[0].trim();
+        let contentLines = lines.slice(1).filter(line => line.trim().length > 0);
+
+        // --- STRICT EXAM ROW FILTERING ---
+        if (title.toLowerCase().includes('exam') && /(e1|e2|e3|e4|sem|mid|cse|ece|civil|mech|mme|chem)/i.test(query)) {
+            // Group lines into blocks (Header + Subjects)
+            const blocks = [];
+            let currentBlock = [];
+            for (const line of contentLines) {
+                if (!line.startsWith(' ') && !line.startsWith('\t') && line.includes('|')) {
+                    if (currentBlock.length > 0) blocks.push(currentBlock);
+                    currentBlock = [line];
+                } else {
+                    currentBlock.push(line);
+                }
+            }
+            if (currentBlock.length > 0) blocks.push(currentBlock);
+            
+            // Extract tokens to ensure exact matching
+            const qTokens = query.match(/\b(e1|e2|e3|e4|puc1|puc2|sem\s*\d|mid\s*\d|cse|ece|civil|mech|mme|chem)\b/gi) || [];
+            if (qTokens.length > 0) {
+                const filteredBlocks = blocks.filter(block => {
+                    const header = block[0].toLowerCase();
+                    return qTokens.every(token => {
+                        const t = token.replace(/\s+/g, '').replace('-', '');
+                        const h = header.replace(/\s+/g, '').replace('-', '');
+                        return h.includes(t) || h.includes(t.replace('sem', 'semester'));
+                    });
+                });
+                if (filteredBlocks.length > 0) {
+                    contentLines = filteredBlocks.flat();
+                } else {
+                    contentLines = ["  _No exact schedule matches your query. Please check the Exams Page._"];
+                }
+            }
+        }
+
+        const formattedLines = contentLines
+            .map(line => {
+                if (line.includes('(No') || line.includes('(NONE')) return `  _No entries published yet._`;
+                
+                // Formatting Placements Row
+                if (line.includes('[Placement]') || line.includes('[Internship]')) {
+                    const type = line.includes('Internship') ? '🎓 Internship' : '💼 Placement';
+                    const parts = line.split('|').map(p => p.trim());
+                    const info = parts[0].replace(/\[.*?\]/, '').trim();
+                    const loc = parts[1] || 'TBA';
+                    const stip = parts[2] || '';
+                    const mode = parts[3] ? `(Mode: ${parts[3].replace('mode: ', '').trim()})` : '';
+                    return `**${type}: ${info}**\n📍 Loc: ${loc} ${stip ? `| 💰 ${stip}` : ''} ${mode ? `\n⚡ ${mode}` : ''}`;
+                }
+                
+                // Formatting Events/Clubs/Sports Row
+                if (line.includes('type:') || line.includes('→')) {
+                    const parts = line.split('|').map(p => p.trim());
+                    
+                    // Extract Navigation Link if present (e.g., "Name → /path")
+                    const nameWithLink = parts[0] || '';
+                    let name = nameWithLink;
+                    let navPath = '';
+                    
+                    if (nameWithLink.includes('→')) {
+                        const linkParts = nameWithLink.split('→').map(lp => lp.trim());
+                        name = linkParts[0].replace(/"/g, '');
+                        navPath = linkParts[1];
+                    }
+
+                    const date = parts[1] || '';
+                    const info = parts[2] ? parts[2].split('→')[0].replace('type:', '').trim() : '';
+                    
+                    let icon = '📅';
+                    if (title.toLowerCase().includes('club')) icon = (title.toLowerCase().includes('event')) ? '🎸✨' : '🎸';
+                    if (title.toLowerCase().includes('sport')) icon = (title.toLowerCase().includes('event')) ? '⚽🔥' : '⚽';
+                    if (title.toLowerCase().includes('achievement')) icon = '🏆';
+
+                    let row = `${icon} **${name}**`;
+                    if (date) row += `\n🗓️ Date: ${date}`;
+                    if (info) row += `\n🏷️ ${info}`;
+                    if (navPath) row += `\n🔗 [View Details](${navPath})`;
+                    
+                    return row;
+                }
+
+                // Formatting Achievements
+                if (title.toLowerCase().includes('achievement')) {
+                    // Sports Achievements: [Sport, Year] Title -> /path
+                    if (line.startsWith('[')) {
+                        const parts = line.split(']');
+                        let meta = parts[0].replace('[', '').trim();
+                        let rest = parts[1] ? parts[1].trim() : '';
+                        
+                        let navPath = '';
+                        if (rest.includes('→')) {
+                            const linkParts = rest.split('→');
+                            rest = linkParts[0].trim();
+                            navPath = linkParts[1].trim();
+                        }
+                        
+                        let row = `🏆 **${rest}**\n🎗️ ${meta}`;
+                        if (navPath) row += `\n🔗 [View Details](${navPath})`;
+                        return row;
+                    }
+                    
+                    // Regular Achievements: Title (Year, Type) -> /path
+                    if (line.includes('(') && line.includes(')')) {
+                        let name = line.split('(')[0].trim();
+                        let info = line.match(/\((.*?)\)/)?.[1] || '';
+                        let restPart = line.split(')')[1] || '';
+                        
+                        let navPath = '';
+                        if (restPart.includes('→')) {
+                            navPath = restPart.split('→')[1].trim();
+                        }
+                        
+                        let row = `🏆 **${name}**\n🎗️ ${info}`;
+                        if (navPath) row += `\n🔗 [View Details](${navPath})`;
+                        return row;
+                    }
+                }
+
+                if (line.startsWith('>') || line.startsWith('  ')) return line;
+                return `> ${line.trim()}`;
+            })
+            .join('\n\n');
+            
+        return `### ${title}\n${formattedLines}`;
+    }).join('\n\n---\n\n');
+
+    // Contextual Navigation Guidance
+    let nav = "";
+    if (identifiedSectionKey) {
+        nav = `\n\n📍 **Navigation**: You can find more detail at: [Go to ${identifiedSectionKey.charAt(0).toUpperCase() + identifiedSectionKey.slice(1)} Page](${intentMap[identifiedSectionKey].path})`;
+    }
+
+    return `${result}${nav}\n\nHope this helps! Let me know if you need anything else. 😊`;
 };
 
 const sanitizeHistory = (history = []) => {
@@ -315,9 +586,38 @@ const sanitizeHistory = (history = []) => {
 
 export const handleChat = async (req, res) => {
     const { message, history = [] } = req.body;
+    const userRole = req.user?.role || 'public';
 
     if (!message) {
         return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // --- RBAC GUARD ---
+    const lowerMessage = message.toLowerCase();
+    
+    const restrictedForPublic = ['placement', 'exam', 'paper', 'mark', 'personal', 'dashboard', 'admin', 'statistics', 'record'];
+    const restrictedForStudent = ['admin', 'analytics', 'user management', 'system report'];
+    
+    let isAuthorized = true;
+    let denialReason = "";
+
+    if (userRole === 'public') {
+        const hits = restrictedForPublic.filter(kw => lowerMessage.includes(kw));
+        if (hits.length > 0) {
+            isAuthorized = false;
+            denialReason = "You are not authorized to access this information. Please login with appropriate credentials.";
+        }
+    } else if (userRole === 'student') {
+        const hits = restrictedForStudent.filter(kw => lowerMessage.includes(kw));
+        if (hits.length > 0) {
+            isAuthorized = false;
+            denialReason = "You are not authorized to access administrative data. This area is restricted to campus staff.";
+        }
+    }
+
+    if (!isAuthorized) {
+        logChat({ question: message, role: userRole, decision: 'DENIED', reason: denialReason });
+        return res.json({ reply: denialReason });
     }
 
     try {
@@ -325,7 +625,14 @@ export const handleChat = async (req, res) => {
 
         const systemPrompt = `You are a highly intelligent, friendly, and professional assistant for the College News Website (RGUKT Ongole portal).
 
+CURRENT USER ROLE: ${userRole.toUpperCase()}
+
 Your role is to behave like a human expert who knows what is published on this website and helps users with complete attention and care.
+
+STRICT ACCESS CONTROL:
+- Public users: Only general info, events, admission, contact.
+- Students: Access to courses, attendance, exams, results, fees.
+- Admins: Access to everything including reports and analytics.
 
 PRIMARY OBJECTIVE:
 Never ignore any user message. Always respond helpfully, even when website information is incomplete.
@@ -340,6 +647,7 @@ STRICT RULES:
 5. NEVER stop at only "I don't know." Always add a next step, a relevant page to check, or a polite clarifying question.
 6. Do NOT use the word "context" in your reply to the user.
 7. Stay relevant to the website and its content — do not change the subject to unrelated topics when they asked something specific. If a section is empty or says NONE, stay on that topic: explain honestly that nothing is listed yet, where it will appear when uploaded, and how to watch announcements.
+8. ${userRole === 'public' ? 'NEVER reveal placement statistics or exam papers to public users.' : ''}
 
 ANSWER-FIRST CONTRACT (MANDATORY):
 1. First line must directly address the user's exact question/topic.
@@ -360,27 +668,9 @@ RESPONSE STRATEGY (for every question):
 2. If partial info exists → explain what is known + suggest the next step or the right page.
 3. If nothing exists for that topic → explain that clearly, stay on topic, and point to the relevant section (news / events / clubs / placements / exams / sports / announcements) for future updates.
 
-SPECIAL CASES:
-• Latest updates → highlight recent items from the website data (events, placements, carousel, etc.).
-• "How to" → clear step-by-step guidance using real routes from SITE NAVIGATION.
-• Multiple questions in one message → address each part clearly (bullets help).
-• Short or unclear message → offer your best good-faith help and ask one polite clarifying question if needed.
-
-TONE & STYLE:
-• Simple, clear English
-• Friendly and supportive
-• Not robotic or overly formal
-• Use bullet points when they improve clarity
-
-RESPONSE FORMAT:
-• Concise but always valuable — no vague filler
-• Bullet points when listing multiple items
-
-FAIL-SAFE:
-If no direct answer exists in the website data, you MUST still: suggest where to look on this site, or how to follow announcements, or ask one short clarifying question — so the user never feels ignored.
-
-GOAL:
-The user should always feel: "I got a helpful answer" — never ignored, never left confused.
+FALLBACK:
+If no information is found in the database, do NOT give an empty response. Return:
+"I couldn't find the exact information in the database. Please try rephrasing your question or contact support."
 
 SITE NAVIGATION (use these paths when guiding users):
 ${SITE_MAP_TEXT}
@@ -411,27 +701,34 @@ End of website data.`;
             const historyBlock = safeHistory
                 .map((item) => `${item.role === 'assistant' ? 'Assistant' : 'User'}: ${item.content}`)
                 .join('\n');
-            const response = await genAiClient.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: `${systemPrompt}\n\nConversation history:\n${historyBlock || '(none)'}\n\n${userPayload}`,
-                config: {
-                    temperature: 0.5,
-                }
-            });
-            botReply = response.text;
+            const model = genAiClient.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            const result = await model.generateContent(`${systemPrompt}\n\nConversation history:\n${historyBlock || '(none)'}\n\n${userPayload}`);
+            const response = await result.response;
+            botReply = response.text();
         } else {
-            botReply = getBuiltinReply(message);
+            // No AI key provided - use Data-Driven Fallback search
+            botReply = searchSiteContent(message, liveSiteContext) || getBuiltinReply(message);
         }
 
         if (!botReply) {
-            botReply = getBuiltinReply(message);
+            botReply = searchSiteContent(message, liveSiteContext) || getBuiltinReply(message);
         }
+
+        logChat({
+            question: message,
+            role: userRole,
+            decision: 'ALLOWED',
+            response: botReply
+        });
 
         res.json({ reply: botReply });
     } catch (error) {
         console.error("Chat API Error:", error);
 
         const errorMessage = error?.message || (error?.response?.data && JSON.stringify(error.response.data)) || String(error);
+        
+        logChat({ error: errorMessage, question: message, role: userRole });
+
         const quotaExceeded = /quota|resource_exhausted|429/i.test(errorMessage);
 
         // If the AI service is unavailable (quota or rate limits), fall back to built-in replies.
@@ -447,7 +744,7 @@ End of website data.`;
         return res.json({
             error: "Failed to generate a response from the AI.",
             details: errorMessage,
-            reply: `${fallback} \n\n(⚠️ Note: the AI backend returned an error.)`
+            reply: `I couldn't find the exact information in the database. Please try rephrasing your question or contact support.`
         });
     }
 };

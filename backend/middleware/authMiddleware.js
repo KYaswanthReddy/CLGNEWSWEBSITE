@@ -43,4 +43,35 @@ const studentOrAdmin = (req, res, next) => {
   }
 };
 
-export { protect, admin, studentOrAdmin };
+const populateUser = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+      console.log('--- PopulateUser Debug ---');
+      console.log('Token found:', token.substring(0, 10) + '...');
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Decoded ID:', decoded.id);
+      
+      req.user = await User.findById(decoded.id).select('-password');
+      if (req.user) {
+        console.log('User found:', req.user.name, 'Role:', req.user.role);
+      } else {
+        console.log('User not found in DB for ID:', decoded.id);
+      }
+    } catch (error) {
+      console.error('Token verification in populateUser failed:', error.message);
+    }
+  } else {
+    console.log('--- PopulateUser Debug ---');
+    console.log('No Bearer token found in headers');
+  }
+  next();
+};
+
+export { protect, admin, studentOrAdmin, populateUser };

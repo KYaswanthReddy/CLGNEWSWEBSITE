@@ -1,9 +1,10 @@
 import express from 'express';
 import { handleChat } from '../controllers/chatController.js';
+import { populateUser } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Allow anyone to access the chatbot route, or you can add authMiddleware here if needed
-router.post('/', handleChat);
+// Use populateUser to identify logged-in users while keeping the route public
+router.post('/', populateUser, handleChat);
 
 export default router;
