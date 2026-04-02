@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { Lock, ArrowRight, ShieldCheck, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, ArrowRight, ShieldCheck, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { resetPassword } from '../../services/api';
 import { motion } from 'framer-motion';
 
@@ -14,6 +14,8 @@ const ResetPassword = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -54,7 +56,7 @@ const ResetPassword = () => {
         }
     };
 
-    const inputClass = "w-full bg-slate-50 border-2 border-slate-100 py-4 pl-16 pr-8 rounded-xl outline-none focus:border-primary/40 focus:bg-white transition-all text-sm font-semibold placeholder:text-slate-300";
+    const inputClass = "w-full bg-slate-50 border-2 border-slate-100 py-4 pl-16 pr-12 rounded-xl outline-none focus:border-primary/40 focus:bg-white transition-all text-sm font-semibold text-slate-900 placeholder:text-slate-300";
 
     return (
         <div className="min-h-[80vh] flex items-center justify-center py-20 px-4 relative overflow-hidden bg-slate-50">
@@ -103,13 +105,20 @@ const ResetPassword = () => {
                             <div className="group relative">
                                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     placeholder="Min. 6 characters"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className={inputClass}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
                         </div>
 
@@ -118,13 +127,20 @@ const ResetPassword = () => {
                             <div className="group relative">
                                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                                 <input
-                                    type="password"
+                                    type={showConfirmPassword ? "text" : "password"}
                                     placeholder="Re-enter password"
                                     required
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     className={inputClass}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors focus:outline-none"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
                         </div>
 

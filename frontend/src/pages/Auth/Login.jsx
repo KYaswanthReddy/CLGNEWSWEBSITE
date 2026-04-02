@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Mail, Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Rocket, Mail, Lock, User, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { login as loginApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -15,6 +15,7 @@ const Login = () => {
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -107,7 +108,7 @@ const Login = () => {
                                         placeholder="student@college.edu"
                                         required
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-100 py-5 pl-16 pr-8 rounded-2xl outline-none focus:border-primary/30 focus:bg-white transition-all text-sm font-semibold"
+                                        className="w-full bg-slate-50 border-2 border-slate-100 py-5 pl-16 pr-8 rounded-2xl outline-none focus:border-primary/30 focus:bg-white transition-all text-sm font-semibold text-slate-900"
                                     />
                                 </div>
                             </div>
@@ -120,12 +121,19 @@ const Login = () => {
                                 <div className="group relative">
                                     <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="••••••••"
                                         required
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-100 py-5 pl-16 pr-8 rounded-2xl outline-none focus:border-primary/30 focus:bg-white transition-all text-sm font-semibold"
+                                        className="w-full bg-slate-50 border-2 border-slate-100 py-5 pl-16 pr-12 rounded-2xl outline-none focus:border-primary/30 focus:bg-white transition-all text-sm font-semibold text-slate-900"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors focus:outline-none"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
 
