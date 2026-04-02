@@ -50,7 +50,8 @@ const Home = () => {
     const [socialLinks, setSocialLinks] = useState([]);
 
     useEffect(() => {
-        const fetchHomeData = async () => {
+        let retryTimeout;
+        const fetchHomeData = async (isRetry = false) => {
             try {
                 setLoading(true);
                 const [sportsRes, eventsRes, clubsRes, achievementsRes, brandingRes, socialRes] = await Promise.all([
@@ -103,11 +104,16 @@ const Home = () => {
                 setAchievements(formattedAchievements);
             } catch (err) {
                 console.error('Error fetching home data:', err);
+                // Auto-retry once after 7 seconds (Render cold start)
+                if (!isRetry) {
+                    retryTimeout = setTimeout(() => fetchHomeData(true), 7000);
+                }
             } finally {
                 setLoading(false);
             }
         };
         fetchHomeData();
+        return () => clearTimeout(retryTimeout);
     }, []);
 
     const categoryCards = [

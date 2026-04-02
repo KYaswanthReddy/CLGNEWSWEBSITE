@@ -13,17 +13,28 @@ const HomeCarouselSlider = () => {
 
 
     useEffect(() => {
-        const fetchCarousels = async () => {
+        let retryTimeout;
+        const fetchCarousels = async (isRetry = false) => {
             try {
                 const response = await getHomeCarousels();
-                setCarousels(response.data);
+                const data = response.data || [];
+                setCarousels(data);
+                // If empty on first try, backend might be waking up — retry once after 6s
+                if (data.length === 0 && !isRetry) {
+                    retryTimeout = setTimeout(() => fetchCarousels(true), 6000);
+                }
             } catch (error) {
                 console.error('Failed to fetch carousels:', error);
+                // Auto-retry once after 6 seconds (Render cold start)
+                if (!isRetry) {
+                    retryTimeout = setTimeout(() => fetchCarousels(true), 6000);
+                }
             } finally {
                 setIsLoading(false);
             }
         };
         fetchCarousels();
+        return () => clearTimeout(retryTimeout);
     }, []);
 
     useEffect(() => {
@@ -92,6 +103,7 @@ const HomeCarouselSlider = () => {
                         className="absolute inset-0"
                     >
                         {/* Image */}
+                        {getImageUrl(carousels[currentIndex]?.image) && (
                         <img 
                             src={getImageUrl(carousels[currentIndex]?.image)} 
                             alt={carousels[currentIndex]?.title || "Carousel item"} 
@@ -101,6 +113,7 @@ const HomeCarouselSlider = () => {
                                 e.target.src = 'https://placehold.co/1200x600/1e293b/ffffff?text=Image+Unavailable';
                             }}
                         />
+                        )}
                         
                         {/* Gradient Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
