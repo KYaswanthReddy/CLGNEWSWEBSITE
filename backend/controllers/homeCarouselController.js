@@ -1,4 +1,5 @@
 import HomeCarousel from '../models/HomeCarousel.js';
+import { fileToBase64 } from '../utils/fileUtils.js';
 
 // Get all carousel items
 export const getCarousels = async (req, res) => {
@@ -18,7 +19,8 @@ export const createCarousel = async (req, res) => {
     let image = req.body.image;
 
     if (req.file) {
-      image = `/uploads/${req.file.filename}`;
+      // Use the Base64 conversion utility
+      image = await fileToBase64(req.file.path);
     }
 
     if (!image || !link) {

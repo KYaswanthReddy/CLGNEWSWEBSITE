@@ -33,11 +33,21 @@ const Card = ({
             >
                 {image ? (
                     <>
-                        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { e.target.onerror = null; e.target.style.display='none'; }} />
+                        <img 
+                            src={image} 
+                            alt={title} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                            onError={(e) => { 
+                                e.target.onerror = null; 
+                                e.target.src = 'https://placehold.co/800x600/1e293b/ffffff?text=Image+Unavailable'; 
+                            }} 
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent group-hover:via-primary/40 transition-colors duration-500" />
                     </>
                 ) : (
-                    <div className="absolute inset-0 bg-primary" />
+                    <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
+                         <div className="text-white/10 font-black text-2xl uppercase tracking-widest">No Image</div>
+                    </div>
                 )}
 
                 <div className="absolute inset-0 p-8 flex flex-col justify-end gap-3 z-10 text-left">
@@ -98,10 +108,13 @@ const Card = ({
         >
             <div className="relative overflow-hidden aspect-video">
                 <img 
-                    src={image || 'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=800&auto=format&fit=crop'} 
+                    src={image || 'https://placehold.co/800x450/1e293b/ffffff?text=Image+Unavailable'} 
                     alt={title} 
                     className="w-full h-full object-cover transform scale-100 group-hover:scale-125 transition-transform duration-[2000ms] ease-out" 
-                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=800&auto=format&fit=crop'; }} 
+                    onError={(e) => { 
+                        e.target.onerror = null; 
+                        e.target.src = 'https://placehold.co/800x450/1e293b/ffffff?text=Image+Unavailable'; 
+                    }} 
                 />
                 <div className="absolute top-4 left-4 z-10">
                     <span className="bg-primary text-white text-[10px] font-black px-4 py-2 rounded-lg shadow-2xl tracking-widest uppercase">

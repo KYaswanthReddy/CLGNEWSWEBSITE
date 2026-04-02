@@ -419,6 +419,10 @@ const ManageSports = () => {
                                                     src={getImageUrl(type.image)} 
                                                     alt={type.name} 
                                                     className="w-full h-full object-cover brightness-[0.7] group-hover:scale-110 group-hover:brightness-50 transition-all duration-700"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'https://placehold.co/400x400/1e293b/ffffff?text=Icon+Missing';
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
@@ -559,10 +563,13 @@ const ManageSports = () => {
                                         </div>
                                         <div className="h-40 rounded-2xl overflow-hidden bg-slate-100 relative">
                                             <img 
-                                                src={getImageUrl(ach.cardImage)} 
+                                                src={getImageUrl(ach.cardImage) || 'https://placehold.co/400x300/1e293b/ffffff?text=Award+Missing'} 
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                                 alt="Trophy" 
-                                                onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2736&auto=format&fit=crop'}
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = 'https://placehold.co/400x300/1e293b/ffffff?text=Award+Missing';
+                                                }}
                                             />
                                         </div>
                                         <p className="text-slate-400 text-[10px] font-bold leading-relaxed line-clamp-2 italic">"{ach.description}"</p>

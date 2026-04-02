@@ -5,6 +5,11 @@
 export const getImageUrl = (path) => {
     if (!path || typeof path !== 'string') return null;
     
+    // If it's already a Data URI (Base64), return it directly
+    if (path.startsWith('data:image/')) {
+        return path;
+    }
+    
     // If it's already a full URL (http or https), just return it
     if (path.startsWith('http://') || path.startsWith('https://')) {
         return path;

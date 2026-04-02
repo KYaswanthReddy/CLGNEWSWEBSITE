@@ -68,8 +68,17 @@ const eventSchema = mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  referenceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    index: true
   }
-});
+}, { timestamps: true });
+
+// Add indexes for performance optimization
+eventSchema.index({ eventType: 1 });
+eventSchema.index({ subcategory: 1 });
+eventSchema.index({ eventDate: -1 });
 
 const Event = mongoose.model('Event', eventSchema);
 

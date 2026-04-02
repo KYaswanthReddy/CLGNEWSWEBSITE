@@ -2,6 +2,7 @@ import ClubEvent from '../models/ClubEvent.js';
 import ClubType from '../models/ClubType.js';
 import Event from '../models/Event.js';
 import asyncHandler from 'express-async-handler';
+import { fileToBase64, filesToBase64 } from '../utils/fileUtils.js';
 
 // Helper to calculate status on the fly
 const getStatus = (date) => {
@@ -73,10 +74,10 @@ export const createClubEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                eventData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
+                eventData.eventImage = await fileToBase64(req.files.eventImage[0].path);
             }
             if (req.files.images) {
-                eventData.images = req.files.images.map(file => `/uploads/${file.filename}`);
+                eventData.images = await filesToBase64(req.files.images);
             }
         }
 
@@ -128,10 +129,10 @@ export const updateClubEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                updateData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
+                updateData.eventImage = await fileToBase64(req.files.eventImage[0].path);
             }
             if (req.files.images) {
-                updateData.images = req.files.images.map(file => `/uploads/${file.filename}`);
+                updateData.images = await filesToBase64(req.files.images);
             }
         }
 
@@ -204,7 +205,7 @@ export const createClubType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/${req.file.filename}`;
+            typeData.image = await fileToBase64(req.file.path);
         }
         const type = await ClubType.create(typeData);
         res.status(201).json(type);
@@ -217,7 +218,7 @@ export const updateClubType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/${req.file.filename}`;
+            typeData.image = await fileToBase64(req.file.path);
         }
         const type = await ClubType.findByIdAndUpdate(req.params.id, typeData, { new: true });
         if (!type) return res.status(404).json({ message: 'Club type not found' });

@@ -44,7 +44,11 @@ const sportEventSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
-});
+}, { timestamps: true });
+
+// Add indexes for performance optimization
+sportEventSchema.index({ sportType: 1 });
+sportEventSchema.index({ eventDate: -1 });
 
 const SportEvent = mongoose.model('SportEvent', sportEventSchema);
 export default SportEvent;

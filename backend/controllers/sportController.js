@@ -2,6 +2,7 @@ import SportEvent from '../models/SportEvent.js';
 import SportType from '../models/SportType.js';
 import SportAchievement from '../models/SportAchievement.js';
 import Event from '../models/Event.js';
+import { fileToBase64, filesToBase64 } from '../utils/fileUtils.js';
 
 import asyncHandler from 'express-async-handler';
 
@@ -29,6 +30,7 @@ export const getSportEvents = asyncHandler(async (req, res) => {
     const skip = (page - 1) * limit;
     const total = await SportEvent.countDocuments(query);
     const events = await SportEvent.find(query)
+        .select('-images') // Exclude heavy gallery images from list
         .sort({ eventDate: -1 })
         .skip(skip)
         .limit(parseInt(limit))
@@ -74,10 +76,10 @@ export const createSportEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                eventData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
+                eventData.eventImage = await fileToBase64(req.files.eventImage[0].path);
             }
             if (req.files.images) {
-                eventData.images = req.files.images.map(file => `/uploads/${file.filename}`);
+                eventData.images = await filesToBase64(req.files.images);
             }
         }
 
@@ -137,10 +139,10 @@ export const updateSportEvent = async (req, res) => {
         // Handle images
         if (req.files) {
             if (req.files.eventImage) {
-                updateData.eventImage = `/uploads/${req.files.eventImage[0].filename}`;
+                updateData.eventImage = await fileToBase64(req.files.eventImage[0].path);
             }
             if (req.files.images) {
-                updateData.images = req.files.images.map(file => `/uploads/${file.filename}`);
+                updateData.images = await filesToBase64(req.files.images);
             }
         }
 
@@ -214,7 +216,7 @@ export const createSportType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/${req.file.filename}`;
+            typeData.image = await fileToBase64(req.file.path);
         }
         const type = await SportType.create(typeData);
         res.status(201).json(type);
@@ -227,7 +229,7 @@ export const updateSportType = async (req, res) => {
     try {
         const typeData = { ...req.body };
         if (req.file) {
-            typeData.image = `/uploads/${req.file.filename}`;
+            typeData.image = await fileToBase64(req.file.path);
         }
         const type = await SportType.findByIdAndUpdate(req.params.id, typeData, { new: true });
         if (!type) return res.status(404).json({ message: 'Sport type not found' });

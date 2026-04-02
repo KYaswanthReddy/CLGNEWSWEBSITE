@@ -364,10 +364,10 @@ const Home = () => {
                                 className="group relative rounded-3xl overflow-hidden bg-slate-900 aspect-[4/5] shadow-xl"
                             >
                                 <img 
-                                    src={getImageUrl(ach.image) || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1000&auto=format&fit=crop'} 
+                                    src={getImageUrl(ach.image) || 'https://placehold.co/400x500/1e293b/ffffff?text=Achievement'} 
                                     alt={ach.title}
                                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-500 group-hover:scale-110"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1000&auto=format&fit=crop'; }}
+                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x500/1e293b/ffffff?text=Achievement'; }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-6">
                                     <span className="text-[10px] bg-amber-500 text-white font-black uppercase tracking-widest px-2 py-1 rounded w-fit mb-3">

@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
+import compression from 'compression';
 import connectDB from './config/db.js';
 import path from 'path';
 import authRoutes from './routes/authRoutes.js';
@@ -37,7 +38,9 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(cors());
-app.use(express.json());
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const __dirname = path.resolve();
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
@@ -76,6 +79,7 @@ app.delete('/api/club-types/:id', deleteClubType);
 
 // Branding Upload Helper
 import { updateBranding } from './controllers/brandingController.js';
+import { fileToBase64 } from './utils/fileUtils.js';
 app.put('/api/branding/upload', upload.fields([
   { name: 'logo', maxCount: 1 },
   { name: 'navbarLogo', maxCount: 1 },
@@ -83,9 +87,9 @@ app.put('/api/branding/upload', upload.fields([
 ]), async (req, res) => {
   try {
     const updateData = {};
-    if (req.files['logo']) updateData.logo = `/uploads/${req.files['logo'][0].filename}`;
-    if (req.files['navbarLogo']) updateData.navbarLogo = `/uploads/${req.files['navbarLogo'][0].filename}`;
-    if (req.files['heroLogo']) updateData.heroLogo = `/uploads/${req.files['heroLogo'][0].filename}`;
+    if (req.files['logo']) updateData.logo = await fileToBase64(req.files['logo'][0].path);
+    if (req.files['navbarLogo']) updateData.navbarLogo = await fileToBase64(req.files['navbarLogo'][0].path);
+    if (req.files['heroLogo']) updateData.heroLogo = await fileToBase64(req.files['heroLogo'][0].path);
     
     req.body = { ...req.body, ...updateData };
     return updateBranding(req, res);

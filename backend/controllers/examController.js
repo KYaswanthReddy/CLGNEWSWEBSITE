@@ -1,6 +1,5 @@
 import ExamSchedule from '../models/ExamSchedule.js';
-import path from 'path';
-import fs from 'fs';
+import { fileToBase64 } from '../utils/fileUtils.js';
 
 // @desc    Get all exam schedules
 // @route   GET /api/exams
@@ -55,7 +54,7 @@ export const createExam = async (req, res) => {
 
         if (mode === 'image') {
             if (req.file) {
-                examData.imageUrl = `/uploads/${req.file.filename}`;
+                examData.imageUrl = await fileToBase64(req.file.path);
             } else {
                 return res.status(400).json({ message: 'Image is required for image mode' });
             }
@@ -92,12 +91,7 @@ export const updateExam = async (req, res) => {
 
         if (exam.mode === 'image') {
             if (req.file) {
-                // Delete old image if exists
-                if (exam.imageUrl) {
-                    const oldPath = path.join(path.resolve(), exam.imageUrl);
-                    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-                }
-                exam.imageUrl = `/uploads/${req.file.filename}`;
+                exam.imageUrl = await fileToBase64(req.file.path);
                 exam.subjects = []; // Clear subjects if switched to image mode
             }
         } else if (subjects) {
@@ -152,10 +146,6 @@ export const deleteExam = async (req, res) => {
         const exam = await ExamSchedule.findById(req.params.id);
 
         if (exam) {
-            if (exam.imageUrl) {
-                const imgPath = path.join(path.resolve(), exam.imageUrl);
-                if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-            }
             await exam.deleteOne();
             res.json({ message: 'Exam schedule removed' });
         } else {

@@ -2,6 +2,7 @@ import Event from '../models/Event.js';
 import SportEvent from '../models/SportEvent.js';
 import ClubEvent from '../models/ClubEvent.js';
 import asyncHandler from 'express-async-handler';
+import { fileToBase64, filesToBase64 } from '../utils/fileUtils.js';
 
 // @desc    Create a new event
 // @route   POST /api/events
@@ -33,16 +34,16 @@ const createEvent = asyncHandler(async (req, res) => {
 
   // Handle file uploads (compatible with both upload.single and upload.fields)
   if (req.file) {
-    eventData.image = `/uploads/${req.file.filename}`;
+    eventData.image = await fileToBase64(req.file.path);
   } else if (req.files) {
     if (req.files.image) {
-      eventData.image = `/uploads/${req.files.image[0].filename}`;
+      eventData.image = await fileToBase64(req.files.image[0].path);
     }
     if (req.files.eventImage) {
-      eventData.image = `/uploads/${req.files.eventImage[0].filename}`;
+      eventData.image = await fileToBase64(req.files.eventImage[0].path);
     }
     if (req.files.images) {
-      const newImages = req.files.images.map(file => `/uploads/${file.filename}`);
+      const newImages = await filesToBase64(req.files.images);
       eventData.images = [...(eventData.images || []), ...newImages];
     }
   }
@@ -71,6 +72,7 @@ const getEvents = asyncHandler(async (req, res) => {
   const total = await Event.countDocuments(filter);
   
   const events = await Event.find(filter)
+    .select('-images') // Exclude gallery from list
     .sort({ eventDate: 1 })
     .skip(skip)
     .limit(parseInt(limit));
@@ -118,13 +120,13 @@ const updateEvent = asyncHandler(async (req, res) => {
 
   // Handle file uploads (compatible with both upload.single and upload.fields)
   if (req.file) {
-    updateData.image = `/uploads/${req.file.filename}`;
+    updateData.image = await fileToBase64(req.file.path);
   } else if (req.files) {
     if (req.files.image) {
-      updateData.image = `/uploads/${req.files.image[0].filename}`;
+      updateData.image = await fileToBase64(req.files.image[0].path);
     }
     if (req.files.eventImage) {
-      updateData.image = `/uploads/${req.files.eventImage[0].filename}`;
+      updateData.image = await fileToBase64(req.files.eventImage[0].path);
     } else if (updateData.existingEventImage === '') {
       // Explicit removal of banner
       updateData.image = '';
@@ -143,7 +145,7 @@ const updateEvent = asyncHandler(async (req, res) => {
     }
 
     if (req.files.images) {
-      const newImages = req.files.images.map(file => `/uploads/${file.filename}`);
+      const newImages = await filesToBase64(req.files.images);
       finalImages = [...finalImages, ...newImages];
     }
     updateData.images = finalImages;

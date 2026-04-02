@@ -1,5 +1,6 @@
 import Placement from '../models/Placement.js';
 import asyncHandler from 'express-async-handler';
+import { fileToBase64 } from '../utils/fileUtils.js';
 
 // @desc    Create a new placement/internship
 // @route   POST /api/placements
@@ -51,7 +52,7 @@ const createPlacement = asyncHandler(async (req, res) => {
     eligibleBatches: parsedBatches,
     eligibleBranches: parsedBranches,
     processDescription,
-    logo: req.file ? `/uploads/${req.file.filename}` : null
+    logo: req.file ? await fileToBase64(req.file.path) : null
   });
 
   const createdPlacement = await placement.save();
@@ -157,7 +158,7 @@ const updatePlacement = asyncHandler(async (req, res) => {
     }
 
     if (req.file) {
-      placement.logo = `/uploads/${req.file.filename}`;
+      placement.logo = await fileToBase64(req.file.path);
     }
 
     const updatedPlacement = await placement.save();

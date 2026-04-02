@@ -44,6 +44,10 @@ const achievementSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Add indexes for performance optimization
+achievementSchema.index({ type: 1 });
+achievementSchema.index({ subcategory: 1 });
+
 const Achievement = mongoose.model('Achievement', achievementSchema);
 
 export default Achievement;

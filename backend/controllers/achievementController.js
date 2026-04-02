@@ -1,7 +1,6 @@
 import Achievement from '../models/Achievement.js';
 import asyncHandler from 'express-async-handler';
-import path from 'path';
-import fs from 'fs';
+import { fileToBase64 } from '../utils/fileUtils.js';
 
 // @desc    Get all achievements (with optional filtering by type/subcategory and limit for carousel)
 // @route   GET /api/achievements
@@ -60,10 +59,10 @@ export const createAchievement = asyncHandler(async (req, res) => {
     // Handle uploaded files
     if (req.files) {
         if (req.files.cardImage && req.files.cardImage.length > 0) {
-            achievementData.cardImage = `/uploads/${req.files.cardImage[0].filename}`;
+            achievementData.cardImage = await fileToBase64(req.files.cardImage[0].path);
         }
         if (req.files.detailImage && req.files.detailImage.length > 0) {
-            achievementData.detailImage = `/uploads/${req.files.detailImage[0].filename}`;
+            achievementData.detailImage = await fileToBase64(req.files.detailImage[0].path);
         }
     }
 
@@ -102,21 +101,11 @@ export const updateAchievement = asyncHandler(async (req, res) => {
 
         if (req.files) {
             if (req.files.cardImage && req.files.cardImage.length > 0) {
-                // Delete old cardImage
-                if (achievement.cardImage) {
-                    const oldPath = path.join(path.resolve(), achievement.cardImage);
-                    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-                }
-                achievement.cardImage = `/uploads/${req.files.cardImage[0].filename}`;
+                achievement.cardImage = await fileToBase64(req.files.cardImage[0].path);
             }
 
             if (req.files.detailImage && req.files.detailImage.length > 0) {
-                // Delete old detailImage
-                if (achievement.detailImage) {
-                    const oldPath = path.join(path.resolve(), achievement.detailImage);
-                    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-                }
-                achievement.detailImage = `/uploads/${req.files.detailImage[0].filename}`;
+                achievement.detailImage = await fileToBase64(req.files.detailImage[0].path);
             }
         }
 
@@ -135,16 +124,6 @@ export const deleteAchievement = asyncHandler(async (req, res) => {
     const achievement = await Achievement.findById(req.params.id);
 
     if (achievement) {
-        // Delete images from uploads folder
-        if (achievement.cardImage) {
-            const cardImagePath = path.join(path.resolve(), achievement.cardImage);
-            if (fs.existsSync(cardImagePath)) fs.unlinkSync(cardImagePath);
-        }
-        if (achievement.detailImage) {
-            const detailImagePath = path.join(path.resolve(), achievement.detailImage);
-            if (fs.existsSync(detailImagePath)) fs.unlinkSync(detailImagePath);
-        }
-
         await achievement.deleteOne();
         res.json({ message: 'Achievement removed' });
     } else {
