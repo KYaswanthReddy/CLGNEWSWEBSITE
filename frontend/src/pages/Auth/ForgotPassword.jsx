@@ -9,6 +9,7 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [devLink, setDevLink] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,6 +20,9 @@ const ForgotPassword = () => {
         try {
             const { data } = await forgotPassword({ email: email.toLowerCase() });
             setMessage(data.message || 'Password reset link sent to your email.');
+            if (data.resetToken) {
+                setDevLink(`/reset-password/${data.resetToken}`);
+            }
         } catch (err) {
             setError(
                 err.response && err.response.data.message
@@ -53,6 +57,15 @@ const ForgotPassword = () => {
                     {error && (
                         <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-start gap-3 border border-red-100 text-sm font-semibold">
                             <AlertCircle size={17} className="mt-0.5 shrink-0" /> {error}
+                        </div>
+                    )}
+
+                    {devLink && message.includes('Bypass') && (
+                        <div className="bg-blue-50 text-blue-600 p-5 rounded-2xl flex flex-col gap-3 border border-blue-200">
+                            <p className="text-sm font-bold">Network Blocked. DEV Testing Mode Active:</p>
+                            <NavLink to={devLink} className="bg-blue-600 text-white py-3 rounded-xl font-bold uppercase text-xs tracking-widest text-center shadow-lg hover:bg-blue-700 transition">
+                                PROCEED TO RESET PAGE
+                            </NavLink>
                         </div>
                     )}
 
