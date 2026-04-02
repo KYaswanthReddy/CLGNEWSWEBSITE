@@ -841,7 +841,7 @@ const ManageClubs = () => {
                                                     {/* Existing Images */}
                                                     {eventForm.existingImages.map((url, i) => (
                                                         <div key={`exist-${i}`} className="w-24 h-24 rounded-3xl bg-white border-2 border-slate-200 overflow-hidden shrink-0 relative group">
-                                                            <img src={`http://localhost:5000${url}`} className="w-full h-full object-cover" alt="existing" />
+                                                            <img src={getImageUrl(url)} className="w-full h-full object-cover" alt="existing" />
                                                             <button 
                                                                 type="button"
                                                                 onClick={(e) => { e.preventDefault(); removeExistingImage('gallery', i); }}

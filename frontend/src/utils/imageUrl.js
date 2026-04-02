@@ -13,11 +13,8 @@ export const getImageUrl = (path) => {
     // Get the base API URL (e.g., https://your-backend.onrender.com/api)
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
-    // The backend serves static files from the root `/uploads` directory.
-    // We need the backend core URL (without the /api suffix).
-    const backendUrl = apiUrl.endsWith('/api') 
-        ? apiUrl.slice(0, -4) 
-        : apiUrl;
+    // Normalize: remove trailing slash, then remove /api if it exists at the end
+    const backendUrl = apiUrl.replace(/\/$/, '').replace(/\/api$/, '');
 
     // Ensure the path starts with a slash
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;

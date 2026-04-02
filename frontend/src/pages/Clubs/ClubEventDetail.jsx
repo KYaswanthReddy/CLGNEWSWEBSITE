@@ -7,6 +7,7 @@ import {
     CheckCircle2, AlertCircle, Users, Star
 } from 'lucide-react';
 import { getClubEvent } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ClubEventDetail = () => {
     const { id } = useParams();
@@ -71,17 +72,6 @@ const ClubEventDetail = () => {
         } catch (e) { return false; }
     };
 
-    const getSafeImageUrl = (path) => {
-        if (!path) return 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2670&auto=format&fit=crop';
-        try {
-            if (path.startsWith('http')) return path;
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-            const baseUrl = apiUrl.replace(/\/api$/, '');
-            return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
-        } catch (e) {
-            return 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2670&auto=format&fit=crop';
-        }
-    };
 
     const subcategoryValue = event.subcategory || 'Club';
     const subcategorySlug = (subcategoryValue || '').toString().toLowerCase().replace(/\s+/g, '-');
@@ -94,7 +84,7 @@ const ClubEventDetail = () => {
                 <section className="h-[70vh] relative overflow-hidden bg-slate-900 border-b-8 border-primary">
                     <div className="absolute inset-0">
                         <img 
-                            src={getSafeImageUrl(event.image)} 
+                            src={getImageUrl(event.image)} 
                             alt={event.eventTitle || 'Event'} 
                             className="w-full h-full object-cover opacity-60 scale-105" 
                             onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1523580494863-6f3031224c94'; }}
@@ -200,7 +190,7 @@ const ClubEventDetail = () => {
                                                 whileHover={{ scale: 1.02 }}
                                                 className="aspect-[4/3] rounded-[48px] overflow-hidden shadow-2xl border-4 border-white"
                                             >
-                                                <img src={getSafeImageUrl(img)} className="w-full h-full object-cover" alt="Gallery" />
+                                                <img src={getImageUrl(img)} className="w-full h-full object-cover" alt="Gallery" />
                                             </motion.div>
                                         ))
                                     ) : (
