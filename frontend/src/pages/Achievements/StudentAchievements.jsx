@@ -3,6 +3,7 @@ import { Award, ChevronRight, Trophy, Zap, Users, ChevronLeft, Search, Filter } 
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAchievements } from '../../services/api';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const StudentAchievements = () => {
     const [achievements, setAchievements] = useState([]);
@@ -141,7 +142,7 @@ const StudentAchievements = () => {
                                 }}
                             >
                                 <img 
-                                    src={`http://localhost:5000${topAchievements[currentSlide].detailImage || topAchievements[currentSlide].cardImage}`} 
+                                    src={getImageUrl(topAchievements[currentSlide].detailImage || topAchievements[currentSlide].cardImage)} 
                                     className="w-full h-full object-cover opacity-60 mix-blend-overlay"
                                     alt="Spotlight"
                                 />
@@ -250,7 +251,7 @@ const StudentAchievements = () => {
                                 <div className="w-full h-56 overflow-hidden relative bg-slate-100">
                                     {item.cardImage && (
                                         <img
-                                            src={`http://localhost:5000${item.cardImage}`}
+                                            src={getImageUrl(item.cardImage)}
                                             alt={item.title}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                         />

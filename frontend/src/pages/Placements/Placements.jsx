@@ -4,6 +4,7 @@ import { Briefcase, GraduationCap, ChevronRight, Building, MapPin, Users, Target
 import { Link } from 'react-router-dom';
 import { getAchievements, getWebsiteStats } from '../../services/api';
 import { useState, useEffect } from 'react';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Placements = () => {
     const [achievements, setAchievements] = useState([]);
@@ -149,7 +150,7 @@ const Placements = () => {
                                 <Link to={`/achievements/${ach._id}`} key={ach._id} className="bg-white p-6 rounded-[48px] shadow-xl shadow-slate-200/20 border border-slate-100 flex flex-col gap-6 group hover:-translate-y-2 transition-all duration-500">
                                     <div className="h-48 rounded-[40px] overflow-hidden relative">
                                         {ach.cardImage ? (
-                                            <img src={`http://localhost:5000${ach.cardImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="Victory" />
+                                            <img src={getImageUrl(ach.cardImage)} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="Victory" />
                                         ) : (
                                             <div className="w-full h-full bg-slate-50 flex items-center justify-center">
                                                 <Award size={48} className="text-slate-200" />

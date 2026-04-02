@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getAchievementById } from '../../services/api';
 import { ArrowLeft, Award, Calendar, Share2, Instagram, Linkedin, Globe, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const AchievementDetail = () => {
     const { id } = useParams();
@@ -45,7 +46,7 @@ const AchievementDetail = () => {
             {/* Hero Image / Banner */}
             <div className="w-full h-[50vh] min-h-[400px] bg-slate-900 relative">
                 {bannerImage ? (
-                    <img src={`http://localhost:5000${bannerImage}`} className="w-full h-full object-cover opacity-50 mix-blend-overlay" alt={achievement.title} />
+                    <img src={getImageUrl(bannerImage)} className="w-full h-full object-cover opacity-50 mix-blend-overlay" alt={achievement.title} />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-4 opacity-20">
                         <ImageIcon size={64} className="text-white" />

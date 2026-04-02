@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Calendar, Star, ArrowRight, ChevronLeft, ExternalLink } from 'lucide-react';
 import { getEvents } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 /**
  * Shared template for every club detail page.
@@ -56,7 +57,7 @@ const ClubTemplate = ({
             {/* ── Hero Banner ── */}
             <section className="relative h-[55vh] overflow-hidden flex items-end pb-12">
                 <div className="absolute inset-0 z-0">
-                    <img src={heroImage} alt={name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(heroImage)} alt={name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                     <div className={`absolute inset-0 bg-gradient-to-r ${color} opacity-40`} />
                 </div>
@@ -152,7 +153,7 @@ const ClubTemplate = ({
                                         className={`rounded-[20px] overflow-hidden shadow-md border-4 border-white group relative ${i === 0 ? 'col-span-2 row-span-1' : ''}`}
                                         style={{ height: i === 0 ? '220px' : '160px' }}
                                     >
-                                        <img src={img} alt={`Gallery ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                        <img src={getImageUrl(img)} alt={`Gallery ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <ExternalLink size={20} className="text-white" />
                                         </div>

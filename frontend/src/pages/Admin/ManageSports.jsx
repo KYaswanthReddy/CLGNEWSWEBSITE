@@ -4,6 +4,7 @@ import {
     getSportTypes, createSportType, updateSportType, deleteSportType,
     createAchievement, getAchievements, deleteAchievement
 } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 import { 
     Plus, Trash2, Edit2, Trophy, Upload, Calendar, 
     Instagram, Twitter, Globe, Users, Award, Facebook, Linkedin, Image as ImageIcon,
@@ -409,7 +410,7 @@ const ManageSports = () => {
                                         <div className="absolute inset-0 z-0 bg-slate-100">
                                             {type.image ? (
                                                 <img 
-                                                    src={`http://localhost:5000${type.image}`} 
+                                                    src={getImageUrl(type.image)} 
                                                     alt={type.name} 
                                                     className="w-full h-full object-cover brightness-[0.7] group-hover:scale-110 group-hover:brightness-50 transition-all duration-700"
                                                 />
@@ -552,7 +553,7 @@ const ManageSports = () => {
                                         </div>
                                         <div className="h-40 rounded-2xl overflow-hidden bg-slate-100 relative">
                                             <img 
-                                                src={`http://localhost:5000${ach.cardImage}`} 
+                                                src={getImageUrl(ach.cardImage)} 
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                                                 alt="Trophy" 
                                                 onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2736&auto=format&fit=crop'}

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSportEvents, getSportTypes, getWebsiteStats } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Sports = () => {
     const [events, setEvents] = useState([]);
@@ -168,7 +169,7 @@ const Sports = () => {
                                 <div className="absolute inset-0 z-0 bg-slate-100">
                                     {sport.image ? (
                                         <img 
-                                            src={`http://localhost:5000${sport.image}`} 
+                                            src={getImageUrl(sport.image)} 
                                             alt={sport.name} 
                                             className="w-full h-full object-cover brightness-[0.7] group-hover:scale-110 group-hover:brightness-50 transition-all duration-700"
                                         />
@@ -227,7 +228,7 @@ const Sports = () => {
                                 <Link to={`/sports/${(ev.subcategory || ev.sportType)?.toLowerCase()?.replace(/\s+/g, '-')}/${ev._id}`} className="bg-white rounded-[48px] border border-slate-100 shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative">
                                     <div className="h-64 relative overflow-hidden">
                                         <img 
-                                            src={ev.image?.startsWith('http') ? ev.image : (ev.eventImage?.startsWith('http') ? ev.eventImage : `http://localhost:5000${ev.image || ev.eventImage}`)} 
+                                            src={getImageUrl(ev.image || ev.eventImage)} 
                                             alt={ev.eventTitle} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms]" 
                                         />

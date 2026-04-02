@@ -3,6 +3,7 @@ import { getPlacements } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Building, Calendar, DollarSign, ChevronRight, Filter, Laptop, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Internships = () => {
     const [internships, setInternships] = useState([]);
@@ -135,7 +136,7 @@ const Internships = () => {
                                                     <div className="flex justify-between items-start mb-6">
                                                         <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center p-3 border border-slate-100 group-hover:border-emerald-500/20 transition-colors bg-white shadow-sm overflow-hidden">
                                                             {item.logo ? (
-                                                                <img src={`http://localhost:5000${item.logo}`} className="w-full h-full object-contain" alt={item.companyName} />
+                                                                <img src={getImageUrl(item.logo)} className="w-full h-full object-contain" alt={item.companyName} />
                                                             ) : (
                                                                 <Building size={24} className="text-slate-300" />
                                                             )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../utils/imageUrl';
 
 const SLIDE_DURATION = 3000; // ms per slide
 
@@ -75,7 +76,7 @@ const Carousel = ({ items = [] }) => {
                 >
                     {/* Background image */}
                     <img
-                        src={item.image}
+                        src={getImageUrl(item.image)}
                         alt={item.title}
                         className="absolute inset-0 w-full h-full object-cover"
                     />

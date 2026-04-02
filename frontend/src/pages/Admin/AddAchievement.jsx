@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getAchievements, createAchievement, updateAchievement, deleteAchievement, getSportTypes, getClubTypes } from '../../services/api';
 import { Plus, Trash2, Edit2, Award, Upload, ExternalLink, ChevronRight, Filter, Search, Globe, Instagram, Linkedin, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const AddAchievement = () => {
     const [achievements, setAchievements] = useState([]);
@@ -252,7 +253,7 @@ const AddAchievement = () => {
                                     
                                     <div className="w-full h-48 rounded-3xl overflow-hidden mt-2 border border-slate-100 bg-slate-50 flex items-center justify-center">
                                         {item.cardImage ? (
-                                            <img src={`http://localhost:5000${item.cardImage}`} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            <img src={getImageUrl(item.cardImage)} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                         ) : (
                                             <ImageIcon size={32} className="text-slate-300" />
                                         )}

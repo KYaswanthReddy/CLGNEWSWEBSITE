@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUrl';
 
 const SportCarousel = ({ items = [] }) => {
     const [current, setCurrent] = useState(0);
@@ -35,7 +36,7 @@ const SportCarousel = ({ items = [] }) => {
                     }}
                 >
                     <img
-                        src={items[current].image.startsWith('http') ? items[current].image : `http://localhost:5000${items[current].image}`}
+                        src={getImageUrl(items[current].image)}
                         className="w-full h-full object-cover"
                         alt={items[current].title}
                     />

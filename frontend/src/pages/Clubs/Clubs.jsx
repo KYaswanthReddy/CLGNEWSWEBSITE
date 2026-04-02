@@ -5,6 +5,7 @@ import {
     Users, ChevronRight, Search, Layout, Filter, AlertCircle, Rocket
 } from 'lucide-react';
 import { getClubTypes } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Clubs = () => {
     const [clubs, setClubs] = useState([]);
@@ -97,7 +98,7 @@ const Clubs = () => {
                                         <div className="absolute inset-0 z-0">
                                             {club.image ? (
                                                 <img 
-                                                    src={`http://localhost:5000${club.image}`} 
+                                                    src={getImageUrl(club.image)} 
                                                     alt={club.name} 
                                                     className="w-full h-full object-cover brightness-[0.6] group-hover:scale-110 group-hover:brightness-50 transition-all duration-1000"
                                                 />

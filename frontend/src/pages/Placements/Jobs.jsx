@@ -3,6 +3,7 @@ import { getPlacements } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Building, Calendar, DollarSign, ChevronRight, Filter, Target, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const Jobs = () => {
     const [jobs, setJobs] = useState([]);
@@ -132,7 +133,7 @@ const Jobs = () => {
                                                     <div className="flex justify-between items-start mb-6">
                                                         <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center p-4 border border-slate-100 group-hover:border-primary/20 shadow-sm transition-all overflow-hidden">
                                                             {item.logo ? (
-                                                                <img src={`http://localhost:5000${item.logo}`} className="w-full h-full object-contain" alt={item.companyName} />
+                                                                <img src={getImageUrl(item.logo)} className="w-full h-full object-contain" alt={item.companyName} />
                                                             ) : (
                                                                 <Building size={32} className="text-slate-300" />
                                                             )}

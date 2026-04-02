@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getEvents, deleteEvent } from '../../services/api';
 import { Plus, Trash2, Edit2, Calendar, Layout, Info, Tag, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ManageEvents = () => {
     const [events, setEvents] = useState([]);
@@ -123,7 +124,7 @@ const ManageEvents = () => {
                                 {/* Event Image */}
                                 <div className="h-64 w-full overflow-hidden relative">
                                     <img
-                                        src={event.image ? (event.image.startsWith('http') ? event.image : `http://localhost:5000${event.image}`) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2670&auto=format&fit=crop'}
+                                        src={getImageUrl(event.image)}
                                         alt={event.eventTitle || event.eventName}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                                     />

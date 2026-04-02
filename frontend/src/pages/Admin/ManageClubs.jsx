@@ -10,6 +10,7 @@ import {
     CheckCircle2, AlertCircle, X, Save, Search, ChevronRight, Layout, Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ManageClubs = () => {
     const [events, setEvents] = useState([]);
@@ -456,7 +457,7 @@ const ManageClubs = () => {
                                         <div className="absolute inset-0 z-0 bg-slate-100">
                                             {type.image ? (
                                                 <img 
-                                                    src={`http://localhost:5000${type.image}`} 
+                                                    src={getImageUrl(type.image)} 
                                                     alt={type.name} 
                                                     className="w-full h-full object-cover brightness-[0.7] group-hover:scale-110 group-hover:brightness-50 transition-all duration-700"
                                                 />
@@ -595,7 +596,7 @@ const ManageClubs = () => {
                                             </div>
                                         </div>
                                     <div className="h-40 rounded-[24px] overflow-hidden bg-slate-100 relative">
-                                        {ach.cardImage ? <img src={`http://localhost:5000${ach.cardImage}`} alt="card" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" /> : <div className="w-full h-full flex items-center justify-center"><Award className="text-slate-200 w-12 h-12" /></div>}
+                                        {ach.cardImage ? <img src={getImageUrl(ach.cardImage)} alt="card" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" /> : <div className="w-full h-full flex items-center justify-center"><Award className="text-slate-200 w-12 h-12" /></div>}
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <span className="text-slate-300 font-black text-sm">{ach.year}</span>
@@ -793,7 +794,7 @@ const ManageClubs = () => {
                                                         {(eventForm.eventImage || eventForm.existingEventImage) ? (
                                                             <div className="absolute inset-0">
                                                                 <img 
-                                                                    src={eventForm.eventImage ? URL.createObjectURL(eventForm.eventImage) : `http://localhost:5000${eventForm.existingEventImage}`} 
+                                                                    src={eventForm.eventImage ? URL.createObjectURL(eventForm.eventImage) : getImageUrl(eventForm.existingEventImage)} 
                                                                     className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-700" 
                                                                     alt="preview"
                                                                 />

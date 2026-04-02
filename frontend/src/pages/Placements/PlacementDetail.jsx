@@ -3,12 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { getSinglePlacement } from '../../services/api';
 import { motion } from 'framer-motion';
 import { 
-    MapPin, Building, Calendar, DollarSign, ChevronLeft, 
-    Linkedin, Twitter, Globe, Instagram, Briefcase, 
-    Clock, GraduationCap, CheckCircle2, ChevronRight, 
-    ExternalLink, Share2, Bookmark, Info, Rocket, 
     Laptop, Users, Award, Layers
 } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const PlacementDetail = () => {
     const { id } = useParams();
@@ -66,7 +63,7 @@ const PlacementDetail = () => {
                             <div className="flex items-center gap-4">
                                 <div className="w-24 h-24 bg-white rounded-[32px] p-5 shadow-2xl flex items-center justify-center border-4 border-white/10 shrink-0 overflow-hidden">
                                     {placement.logo ? (
-                                        <img src={`http://localhost:5000${placement.logo}`} className="w-full h-full object-contain" alt={placement.companyName} />
+                                        <img src={getImageUrl(placement.logo)} className="w-full h-full object-contain" alt={placement.companyName} />
                                     ) : (
                                         <Building size={32} className="text-slate-300" />
                                     )}
@@ -217,7 +214,7 @@ const PlacementDetail = () => {
                                 <div className="flex flex-col gap-6">
                                     <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center p-4 border border-white/10 shadow-xl overflow-hidden">
                                         {placement.logo ? (
-                                            <img src={`http://localhost:5000${placement.logo}`} className="w-full h-full object-contain" alt={placement.companyName} />
+                                            <img src={getImageUrl(placement.logo)} className="w-full h-full object-contain" alt={placement.companyName} />
                                         ) : (
                                             <Building size={32} className="text-slate-900" />
                                         )}

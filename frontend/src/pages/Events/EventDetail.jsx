@@ -7,6 +7,7 @@ import {
     ExternalLink, Users, Bell
 } from 'lucide-react';
 import { getEventById } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const EventDetail = () => {
     const { id } = useParams();
@@ -56,7 +57,7 @@ const EventDetail = () => {
             {/* Hero Section */}
             <div className="relative h-[60vh] overflow-hidden">
                 <img 
-                    src={event.image ? (event.image.startsWith('http') ? event.image : `http://localhost:5000${event.image}`) : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2670&auto=format&fit=crop'} 
+                    src={getImageUrl(event.image)} 
                     className="w-full h-full object-cover" 
                     alt={event.eventTitle} 
                 />

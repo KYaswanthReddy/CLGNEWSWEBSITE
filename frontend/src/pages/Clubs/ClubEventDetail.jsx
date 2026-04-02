@@ -75,7 +75,9 @@ const ClubEventDetail = () => {
         if (!path) return 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2670&auto=format&fit=crop';
         try {
             if (path.startsWith('http')) return path;
-            return `http://localhost:5000${path}`;
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const baseUrl = apiUrl.replace(/\/api$/, '');
+            return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
         } catch (e) {
             return 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2670&auto=format&fit=crop';
         }

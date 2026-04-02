@@ -5,6 +5,7 @@ import Card from '../../components/Card';
 
 import { NavLink, Link } from 'react-router-dom';
 import { getSportEvents, getEvents, getClubTypes, getAchievements, getBranding, getSocialMedia } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 import {
     Trophy,
     Briefcase,
@@ -68,7 +69,7 @@ const Home = () => {
                     title: ev.eventTitle,
                     date: new Date(ev.eventDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
                     author: 'Sports Dept',
-                    image: (ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`,
+                    image: getImageUrl(ev.image || ev.eventImage),
                     description: ev.description || ev.eventDescription,
                     id: ev._id,
                     subcategory: ev.subcategory || ev.sportType
@@ -94,7 +95,7 @@ const Home = () => {
                     title: ach.title,
                     date: new Date(ach.date || ach.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
                     author: ach.studentName || 'Student',
-                    image: ach.image?.startsWith('http') ? ach.image : `http://localhost:5000${ach.image}`,
+                    image: getImageUrl(ach.image),
                     description: ach.description,
                     id: ach._id,
                     badge: ach.type || 'ACHIEVEMENT'
@@ -132,7 +133,7 @@ const Home = () => {
                         <div className="flex flex-row items-center gap-5">
                             <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border-4 border-red-100 bg-white shrink-0">
                                 <img
-                                    src={branding?.logo ? (branding.logo.startsWith('http') ? branding.logo : `http://127.0.0.1:5000${branding.logo}`) : '/rgukt-logo.png'}
+                                    src={getImageUrl(branding?.logo)}
                                     alt="Logo"
                                     className="w-full h-full object-contain"
                                     onError={(e) => { e.target.src = '/rgukt-logo.png'; }}
@@ -156,7 +157,7 @@ const Home = () => {
                         <div className="flex items-center gap-3 shrink-0">
                             {socialLinks.length > 0 ? (
                                 socialLinks.map(s => {
-                                    const iconUrl = s.icon?.startsWith('http') ? s.icon : `http://127.0.0.1:5000${s.icon}`;
+                                    const iconUrl = getImageUrl(s.icon);
                                     const SocialIcon = PLATFORM_MAP[s.name?.toLowerCase()];
                                     return (
                                         <a
@@ -357,7 +358,7 @@ const Home = () => {
                                 className="group relative rounded-3xl overflow-hidden bg-slate-900 aspect-[4/5] shadow-xl"
                             >
                                 <img 
-                                    src={ach.image || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1000&auto=format&fit=crop'} 
+                                    src={getImageUrl(ach.image)} 
                                     alt={ach.title}
                                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-500 group-hover:scale-110"
                                     onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1000&auto=format&fit=crop'; }}

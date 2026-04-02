@@ -15,6 +15,7 @@ import {
     Star,
     CheckCircle
 } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const UpcomingEvents = () => {
     const [date, setDate] = useState(new Date());
@@ -139,7 +140,7 @@ const UpcomingEvents = () => {
                                     <div className="relative z-10 flex flex-col gap-6">
                                         {(selectedEvent.image || selectedEvent.eventImage) && (
                                             <div className="w-full h-40 rounded-3xl overflow-hidden mb-4 shadow-xl">
-                                                <img src={(selectedEvent.image || selectedEvent.eventImage).startsWith('http') ? (selectedEvent.image || selectedEvent.eventImage) : `http://localhost:5000${selectedEvent.image || selectedEvent.eventImage}`} alt={selectedEvent.eventTitle} className="w-full h-full object-cover" />
+                                                <img src={getImageUrl(selectedEvent.image || selectedEvent.eventImage)} alt={selectedEvent.eventTitle} className="w-full h-full object-cover" />
                                             </div>
                                         )}
                                         <span className={`text-[10px] font-black tracking-widest bg-white/10 px-4 py-2 rounded-lg border border-white/10 mb-2 inline-block uppercase w-fit ${selectedEvent.eventType === 'clubs' ? 'text-emerald-400' : selectedEvent.eventType === 'sports' ? 'text-amber-400' : 'text-primary'}`}>

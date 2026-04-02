@@ -3,6 +3,7 @@ import { Calendar, ChevronRight, ChevronLeft, FileText, Layers, Zap, BookOpen, C
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getExams } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 // ── Year selector cards shown at /exams (no year prop passed)
 const YEARS = [
@@ -137,7 +138,7 @@ const ScheduleTemplate = ({ year }) => {
 
     const subjects = filtered?.subjects || [];
     const scheduleMode = filtered?.mode || 'manual';
-    const scheduleImageUrl = filtered?.imageUrl ? `http://localhost:5000${filtered.imageUrl}` : null;
+    const scheduleImageUrl = getImageUrl(filtered?.imageUrl);
 
     // Breadcrumb label
     const crumb = [

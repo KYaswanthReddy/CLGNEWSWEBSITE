@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getPlacements, createPlacement, updatePlacement, deletePlacement } from '../../services/api';
 import { Plus, Trash2, Edit2, Briefcase, Building, Upload, ExternalLink, Globe, Linkedin, Twitter, Instagram, MapPin, Clock, DollarSign, Award, BookOpen, Layers, CheckCircle, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ManagePlacements = () => {
     const [placements, setPlacements] = useState([]);
@@ -233,7 +234,7 @@ const ManagePlacements = () => {
                                     <div className="flex flex-col md:flex-row items-center gap-8 w-full md:w-3/4">
                                         <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center border-2 border-slate-100 overflow-hidden shrink-0 group-hover:border-primary/20 transition-colors">
                                             {item.logo ? (
-                                                <img src={`http://localhost:5000${item.logo}`} className="w-full h-full object-contain p-4" alt={item.companyName} />
+                                                <img src={getImageUrl(item.logo)} className="w-full h-full object-contain p-4" alt={item.companyName} />
                                             ) : (
                                                 <Building size={32} className="text-slate-300 group-hover:text-primary transition-colors" />
                                             )}

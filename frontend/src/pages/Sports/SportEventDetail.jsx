@@ -7,6 +7,7 @@ import {
     Award, CheckCircle2, Clock 
 } from 'lucide-react';
 import { getSportEvent } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const SportEventDetail = () => {
     const { id } = useParams();
@@ -82,7 +83,7 @@ const SportEventDetail = () => {
 
                     <div className="w-full lg:w-[450px] flex flex-col gap-8">
                         <div className="overflow-hidden rounded-[48px] shadow-2xl shadow-primary/20 aspect-[4/5]">
-                            <img src={`http://localhost:5000${event.eventImage}`} className="w-full h-full object-cover" alt="" />
+                            <img src={getImageUrl(event.eventImage)} className="w-full h-full object-cover" alt="" />
                         </div>
                     </div>
                 </div>
@@ -150,7 +151,7 @@ const SportEventDetail = () => {
                                 <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Event Highlights</h3>
                                 <div className="columns-2 gap-4">
                                     {event.images.map((img, i) => (
-                                        <img key={i} src={`http://localhost:5000${img}`} className="w-full rounded-3xl mb-4 shadow-xl border-4 border-white" alt="" />
+                                        <img key={i} src={getImageUrl(img)} className="w-full rounded-3xl mb-4 shadow-xl border-4 border-white" alt="" />
                                     ))}
                                 </div>
                             </div>

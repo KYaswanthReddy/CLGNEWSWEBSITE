@@ -7,6 +7,7 @@ import {
     ArrowLeft, Layout, CheckCircle2, Zap
 } from 'lucide-react';
 import { getClubEvents, getClubTypes, getAchievements } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ClubDetail = () => {
     const { clubName } = useParams();
@@ -73,7 +74,7 @@ const ClubDetail = () => {
             <section className="h-[65vh] bg-slate-900 relative overflow-hidden">
                 <div className="absolute inset-0">
                     <img 
-                        src={mainBanner.startsWith('http') ? mainBanner : `http://localhost:5000${mainBanner}`} 
+                        src={getImageUrl(mainBanner)} 
                         alt={formattedName} 
                         className="w-full h-full object-cover opacity-40 scale-105" 
                     />
@@ -155,7 +156,7 @@ const ClubDetail = () => {
                                     >
                                         <div className="w-full md:w-72 h-72 rounded-[40px] overflow-hidden shrink-0 relative">
                                             <img 
-                                                src={(ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`} 
+                                                src={getImageUrl(ev.image || ev.eventImage)} 
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000" 
                                                 alt={ev.eventTitle} 
                                             />
@@ -201,7 +202,7 @@ const ClubDetail = () => {
                                 <Link to={`/clubs/${clubName}/${ev._id}`} key={ev._id} className="bg-white p-8 rounded-[48px] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:shadow-2xl transition-all">
                                     <div className="h-56 rounded-[36px] overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-700">
                                         <img 
-                                            src={(ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`} 
+                                            src={getImageUrl(ev.image || ev.eventImage)} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-all" 
                                             alt="" 
                                         />
@@ -264,7 +265,7 @@ const ClubDetail = () => {
                                     whileHover={{ scale: 1.05, rotate: i % 2 === 0 ? 2 : -2 }}
                                     className="aspect-square rounded-[32px] overflow-hidden border-4 border-white shadow-xl"
                                 >
-                                    <img src={`http://localhost:5000${img}`} className="w-full h-full object-cover" alt="Gallery" />
+                                    <img src={getImageUrl(img)} className="w-full h-full object-cover" alt="Gallery" />
                                 </motion.div>
                             )) : (
                                 <div className="col-span-2 aspect-video bg-slate-100 rounded-[40px] flex items-center justify-center text-slate-300 font-black uppercase text-[10px] tracking-widest border-2 border-dashed border-slate-200">
@@ -290,7 +291,7 @@ const ClubDetail = () => {
                                     <Link to={`/achievements/${ach._id}`} key={ach._id} className="bg-white p-6 rounded-[48px] shadow-xl shadow-slate-200/20 border border-slate-100 flex flex-col gap-6 group hover:-translate-y-2 transition-all duration-500">
                                         <div className="h-56 rounded-[40px] overflow-hidden relative">
                                             {ach.cardImage ? (
-                                                <img src={`http://localhost:5000${ach.cardImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="Victory" />
+                                                <img src={getImageUrl(ach.cardImage)} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="Victory" />
                                             ) : (
                                                 <div className="w-full h-full bg-slate-100 flex items-center justify-center">
                                                     <Award size={64} className="text-slate-200" />

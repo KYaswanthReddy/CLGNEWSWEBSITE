@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getSports, createSports, updateSports, deleteSports } from '../../services/api';
 import { Plus, Trash2, Edit2, Trophy, Upload, Calendar, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const AddSports = () => {
     const [news, setNews] = useState([]);
@@ -95,7 +96,7 @@ const AddSports = () => {
                                         <Calendar size={12} /> {item.date} {item.month}, {item.year}
                                     </p>
                                     {item.pictures?.[0] && (
-                                        <img src={`http://localhost:5000${item.pictures[0]}`} className="w-full h-40 object-cover rounded-3xl" />
+                                        <img src={getImageUrl(item.pictures[0])} className="w-full h-40 object-cover rounded-3xl" />
                                     )}
                                 </div>
                                 <div className="flex items-center gap-4 mt-8 pt-8 border-t border-slate-50">

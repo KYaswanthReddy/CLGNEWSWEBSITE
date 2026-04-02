@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, Link as LinkIcon, Type, FileText, Upload } from 'lucide-react';
 import { getHomeCarousels, createHomeCarousel, updateHomeCarousel, deleteHomeCarousel } from '../../services/api';
+import { getImageUrl } from '../../utils/imageUrl';
 import toast from 'react-hot-toast';
 
 const ManageHomeCarousel = () => {
@@ -36,11 +37,6 @@ const ManageHomeCarousel = () => {
         }
     };
 
-    const getImageUrl = (imgUrl) => {
-        if (!imgUrl) return '';
-        if (imgUrl.startsWith('http')) return imgUrl;
-        return `http://127.0.0.1:5000${imgUrl}`;
-    };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, History, Users, Target, Calendar, ChevronRight, Clock, Star, Instagram, Twitter, Globe, Info, Award } from 'lucide-react';
 import { getSportEvents, getAchievements } from '../../services/api';
 import SportCarousel from '../../components/SportCarousel';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const SportDetail = () => {
     const { sportType } = useParams();
@@ -64,7 +65,7 @@ const SportDetail = () => {
             <section className="h-[60vh] bg-slate-900 relative overflow-hidden">
                 <div className="absolute inset-0">
                     <img 
-                        src={mainBanner.startsWith('http') ? mainBanner : `http://localhost:5000${mainBanner}`} 
+                        src={getImageUrl(mainBanner)} 
                         alt={sportName} 
                         className="w-full h-full object-cover opacity-30" 
                     />
@@ -101,7 +102,7 @@ const SportDetail = () => {
                                 {upcomingEvents.map(ev => (
                                     <Link to={`/sports/${sportType?.toLowerCase()}/${ev._id}`} key={ev._id} className="bg-white p-6 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/20 flex flex-col gap-6 group hover:-translate-y-2 transition-all">
                                         <div className="h-56 rounded-[40px] overflow-hidden relative">
-                                            <img src={(ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="" />
+                                            <img src={getImageUrl(ev.image || ev.eventImage)} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" alt="" />
                                             <div className="absolute top-4 right-4 bg-amber-500 text-white px-4 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Upcoming</div>
                                         </div>
                                         <div className="px-4 pb-4">
@@ -150,7 +151,7 @@ const SportDetail = () => {
                             {pastEvents.length > 0 ? pastEvents.slice(0, 4).map(ev => (
                                 <Link to={`/sports/${sportType?.toLowerCase()}/${ev._id}`} key={ev._id} className="bg-white p-6 rounded-[48px] border border-slate-100 flex items-center gap-6 group hover:shadow-xl transition-all">
                                     <div className="w-24 h-24 rounded-3xl overflow-hidden shrink-0">
-                                        <img src={(ev.image || ev.eventImage)?.startsWith('http') ? (ev.image || ev.eventImage) : `http://localhost:5000${ev.image || ev.eventImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-all" alt="" />
+                                        <img src={getImageUrl(ev.image || ev.eventImage)} className="w-full h-full object-cover group-hover:scale-110 transition-all" alt="" />
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{new Date(ev.eventDate).getFullYear()}</span>
