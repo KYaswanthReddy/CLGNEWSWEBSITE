@@ -262,7 +262,9 @@ const forgotPassword = async (req, res) => {
       user.otp = undefined;
       user.otpExpiry = undefined;
       await user.save();
-      return res.status(500).json({ message: 'Email could not be sent. Please check server logs.' });
+      return res.status(500).json({ 
+        message: `Email sending failed: ${emailError.message || 'Unknown error'}. Check your EMAIL_USER and EMAIL_PASS environment variables.` 
+      });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server error in forgot password' });
