@@ -8,7 +8,7 @@ const AddSports = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(null);
-    const [formData, setFormData] = useState({ sportName: 'Cricket', eventName: '', date: '', month: '', year: '', teamDetails: '', description: '', pictures: [] });
+    const [formData, setFormData] = useState({ sportName: 'Cricket', eventName: '', date: '', month: '', year: '', teamDetails: '', description: '', pictures: [], existingPictures: [] });
     const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
@@ -46,7 +46,7 @@ const AddSports = () => {
             }
             setShowModal(null);
             fetchSportsNews();
-            setFormData({ sportName: 'Cricket', eventName: '', date: '', month: '', year: '', teamDetails: '', description: '', pictures: [] });
+            setFormData({ sportName: 'Cricket', eventName: '', date: '', month: '', year: '', teamDetails: '', description: '', pictures: [], existingPictures: [] });
         } catch (err) {
             console.error(err);
         }
@@ -61,7 +61,17 @@ const AddSports = () => {
 
     const openEdit = (item) => {
         setEditingId(item._id);
-        setFormData({ sportName: item.sportName, eventName: item.eventName, date: item.date, month: item.month, year: item.year, teamDetails: item.teamDetails || '', description: item.description || '', pictures: [] });
+        setFormData({ 
+            sportName: item.sportName, 
+            eventName: item.eventName, 
+            date: item.date, 
+            month: item.month, 
+            year: item.year, 
+            teamDetails: item.teamDetails || '', 
+            description: item.description || '', 
+            pictures: [],
+            existingPictures: item.pictures || []
+        });
         setShowModal('edit');
     };
 
@@ -142,12 +152,25 @@ const AddSports = () => {
                                     <textarea rows="3" value={formData.teamDetails} onChange={e => setFormData({ ...formData, teamDetails: e.target.value })} className="bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold outline-none resize-none" placeholder="e.g. Beat MIT Pune by 4 wickets..." />
                                 </div>
                                 <div className="flex flex-col gap-3">
-                                    <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Upload Pictures</label>
-                                    <label className="bg-slate-50 p-5 rounded-2xl border-2 border-dashed border-slate-200 cursor-pointer flex flex-col items-center justify-center gap-3">
-                                        <Upload size={32} className="text-primary" />
-                                        <span className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Gallery Upload</span>
+                                    <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest">Update Pictures (Replaces current)</label>
+                                    <label className="bg-slate-50 h-32 rounded-2xl border-2 border-dashed border-slate-200 cursor-pointer flex flex-col items-center justify-center gap-2 group transition-colors hover:border-primary">
+                                        <Upload size={24} className="text-primary" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            {formData.pictures.length > 0 ? `${formData.pictures.length} New Selected` : (formData.existingPictures.length > 0 ? `${formData.existingPictures.length} Existing (Stored)` : 'Replace / Add Photos')}
+                                        </span>
                                         <input type="file" multiple className="hidden" onChange={e => setFormData({ ...formData, pictures: e.target.files })} />
                                     </label>
+                                    
+                                    {/* Existing Pictures Strip */}
+                                    {formData.pictures.length === 0 && formData.existingPictures.length > 0 && (
+                                        <div className="flex gap-3 overflow-x-auto p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                            {formData.existingPictures.map((url, i) => (
+                                                <div key={i} className="w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                                                    <img src={getImageUrl(url)} className="w-full h-full object-cover" alt="prev" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <button type="submit" className="bg-primary text-white py-6 rounded-2xl font-black uppercase text-sm tracking-widest shadow-2xl hover:scale-[1.02] transition-all sticky bottom-0">
                                     Publish Sports News

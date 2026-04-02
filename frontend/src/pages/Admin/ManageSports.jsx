@@ -33,6 +33,8 @@ const ManageSports = () => {
         description: '',
         eventImage: null,
         images: [],
+        existingEventImage: null,
+        existingImages: [],
         matches: [{ teamA: '', teamB: '', matchDate: '' }],
         socialLinks: { instagram: '', twitter: '' }
     });
@@ -140,6 +142,8 @@ const ManageSports = () => {
             description: '',
             eventImage: null,
             images: [],
+            existingEventImage: null,
+            existingImages: [],
             matches: [{ teamA: '', teamB: '', matchDate: '' }],
             socialLinks: { instagram: '', twitter: '' }
         });
@@ -166,8 +170,10 @@ const ManageSports = () => {
             eventTitle: ev.eventTitle,
             eventDate: ev.eventDate ? new Date(ev.eventDate).toISOString().split('T')[0] : '',
             description: ev.description,
-            eventImage: null, // Keep nulled unless user changes
+            eventImage: null, // Keep nulled for new uploads
             images: [],
+            existingEventImage: ev.eventImage || null,
+            existingImages: ev.images || [],
             matches: ev.matches || [{ teamA: '', teamB: '', matchDate: '' }],
             socialLinks: ev.socialLinks || { instagram: '', twitter: '' }
         });
@@ -770,8 +776,17 @@ const ManageSports = () => {
                                                                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
                                                                     <Upload size={32} className="text-primary" />
                                                                 </div>
-                                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{eventForm.eventImage ? eventForm.eventImage.name.slice(0, 15) + '...' : 'Choose Lead Image'}</span>
+                                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                                    {eventForm.eventImage ? eventForm.eventImage.name.slice(0, 15) + '...' : (eventForm.existingEventImage ? 'Current Image Active' : 'Choose Lead Image')}
+                                                                </span>
                                                                 <input type="file" className="hidden" onChange={e => setEventForm({ ...eventForm, eventImage: e.target.files[0] })} />
+                                                                
+                                                                {/* Existing Image Preview */}
+                                                                {!eventForm.eventImage && eventForm.existingEventImage && (
+                                                                    <div className="absolute inset-0 p-2 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
+                                                                        <img src={getImageUrl(eventForm.existingEventImage)} className="w-full h-full object-cover rounded-[32px]" alt="current" />
+                                                                    </div>
+                                                                )}
                                                             </label>
                                                         </div>
                                                         <div className="flex flex-col gap-3">
@@ -780,8 +795,19 @@ const ManageSports = () => {
                                                                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
                                                                     <Layout size={32} className="text-emerald-500" />
                                                                 </div>
-                                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{eventForm.images.length > 0 ? `${eventForm.images.length} Photos Selected` : 'Select 3+ Action Shots'}</span>
+                                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                                    {eventForm.images.length > 0 ? `${eventForm.images.length} Photos Selected` : (eventForm.existingImages?.length > 0 ? `${eventForm.existingImages.length} Existing Photos` : 'Select 3+ Action Shots')}
+                                                                </span>
                                                                 <input type="file" multiple className="hidden" onChange={e => setEventForm({ ...eventForm, images: e.target.files })} />
+
+                                                                {/* Existing Images Fade */}
+                                                                {eventForm.images.length === 0 && eventForm.existingImages?.length > 0 && (
+                                                                    <div className="absolute inset-0 p-4 pointer-events-none opacity-10 group-hover:opacity-30 transition-opacity flex gap-2 overflow-hidden">
+                                                                        {eventForm.existingImages.slice(0, 3).map((img, i) => (
+                                                                            <img key={i} src={getImageUrl(img)} className="h-full aspect-square object-cover rounded-xl" alt="existing" />
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </label>
                                                         </div>
                                                     </div>
