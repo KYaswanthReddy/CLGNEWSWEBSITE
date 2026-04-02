@@ -14,6 +14,7 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [devOtp, setDevOtp] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -55,6 +56,7 @@ const Register = () => {
                 password: formData.password,
             });
             setMessage(data.message || 'OTP sent successfully!');
+            if (data.devOtp) setDevOtp(data.devOtp);
             setStep(2);
         } catch (err) {
             setError(
@@ -156,6 +158,13 @@ const Register = () => {
                         {message && (
                             <div className="bg-green-50 text-green-600 px-4 py-3 rounded-2xl flex items-start gap-3 border border-green-100 text-sm font-semibold mb-4">
                                 <CheckCircle size={17} className="mt-0.5 shrink-0" /> {message}
+                            </div>
+                        )}
+
+                        {devOtp && (
+                            <div className="bg-blue-50 text-blue-700 px-4 py-4 rounded-2xl flex flex-col gap-2 border border-blue-200 text-sm mb-2">
+                                <p className="font-black uppercase tracking-widest text-xs">Email blocked by server. Use this OTP:</p>
+                                <p className="text-3xl font-black tracking-[0.4em] text-blue-800">{devOtp}</p>
                             </div>
                         )}
 
