@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { getSinglePlacement } from '../../services/api';
 import { motion } from 'framer-motion';
 import { 
-    Laptop, Users, Award, Layers
+    Laptop, Users, Award, Layers, ChevronLeft, Building, Briefcase, MapPin, 
+    Share2, Bookmark, DollarSign, Clock, GraduationCap, Calendar, Info, 
+    Rocket, CheckCircle2, ExternalLink, Linkedin, Twitter, Globe, Instagram 
 } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageUrl';
 
