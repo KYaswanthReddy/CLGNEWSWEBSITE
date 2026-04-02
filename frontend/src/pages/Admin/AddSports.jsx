@@ -96,7 +96,11 @@ const AddSports = () => {
                                         <Calendar size={12} /> {item.date} {item.month}, {item.year}
                                     </p>
                                     {item.pictures?.[0] && (
-                                        <img src={getImageUrl(item.pictures[0])} className="w-full h-40 object-cover rounded-3xl" />
+                                        <img 
+                                            src={getImageUrl(item.pictures[0])} 
+                                            className="w-full h-40 object-cover rounded-3xl" 
+                                            onError={(e) => { e.target.onerror = null; e.target.style.display='none'; }}
+                                        />
                                     )}
                                 </div>
                                 <div className="flex items-center gap-4 mt-8 pt-8 border-t border-slate-50">

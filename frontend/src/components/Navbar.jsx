@@ -95,7 +95,7 @@ const Navbar = () => {
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-2.5 group min-w-0">
                             <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl overflow-hidden flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform duration-300 bg-white border border-red-100">
-                                <img src={navbarLogo} alt="RGUKT Logo" className="w-full h-full object-contain p-1" />
+                                <img src={navbarLogo} alt="RGUKT Logo" className="w-full h-full object-contain p-1" onError={(e) => { e.target.onerror = null; e.target.src = '/rgukt-logo.png'; }} />
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <span className="text-xs sm:text-sm font-black text-red-700 tracking-tight leading-tight truncate">{collegeName}</span>

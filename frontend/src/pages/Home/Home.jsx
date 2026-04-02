@@ -69,7 +69,7 @@ const Home = () => {
                     title: ev.eventTitle,
                     date: new Date(ev.eventDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
                     author: 'Sports Dept',
-                    image: getImageUrl(ev.image || ev.eventImage),
+                    image: getImageUrl(ev.eventImage || ev.image),
                     description: ev.description || ev.eventDescription,
                     id: ev._id,
                     subcategory: ev.subcategory || ev.sportType
@@ -133,10 +133,10 @@ const Home = () => {
                         <div className="flex flex-row items-center gap-5">
                             <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border-4 border-red-100 bg-white shrink-0">
                                 <img
-                                    src={getImageUrl(branding?.logo)}
+                                    src={branding?.logo ? getImageUrl(branding.logo) : '/rgukt-logo.png'}
                                     alt="Logo"
                                     className="w-full h-full object-contain"
-                                    onError={(e) => { e.target.src = '/rgukt-logo.png'; }}
+                                    onError={(e) => { e.target.onerror = null; e.target.src = '/rgukt-logo.png'; }}
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
