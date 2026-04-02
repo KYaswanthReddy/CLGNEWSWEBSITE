@@ -4,6 +4,7 @@ import { Menu, X, User, LogOut, Search, Bell, ChevronDown, Mail, ShieldCheck, Ch
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getSports, getClubs, getBranding } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
@@ -55,7 +56,7 @@ const Navbar = () => {
                     if (branding.collegeName) setCollegeName(branding.collegeName);
                     const logo = branding.navbarLogo || branding.logo;
                     if (logo) {
-                        setNavbarLogo(logo.startsWith('http') ? logo : `http://127.0.0.1:5000${logo}`);
+                        setNavbarLogo(getImageUrl(logo));
                     }
                 }
                 console.log("Navbar API Data Loaded:", { sports: dbSports, clubs: dbClubs });

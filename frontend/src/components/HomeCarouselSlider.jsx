@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Link as LinkIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getHomeCarousels } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
 const HomeCarouselSlider = () => {
     const [carousels, setCarousels] = useState([]);
@@ -10,11 +11,6 @@ const HomeCarouselSlider = () => {
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
-    const getImageUrl = (imgUrl) => {
-        if (!imgUrl) return '';
-        if (imgUrl.startsWith('http')) return imgUrl;
-        return `http://127.0.0.1:5000${imgUrl}`;
-    };
 
     useEffect(() => {
         const fetchCarousels = async () => {

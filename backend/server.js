@@ -30,8 +30,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "http://localhost:5000"],
-      connectSrc: ["'self'", "http://localhost:5000"],
+      imgSrc: ["'self'", "data:", "https://*", "http://*", "blob:"],
+      connectSrc: ["'self'", "https://*", "http://*"],
     },
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }

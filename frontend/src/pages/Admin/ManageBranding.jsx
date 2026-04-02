@@ -7,7 +7,7 @@ import {
     Type, AlignLeft, Link as LinkIcon, MousePointer
 } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:5000';
+import { getImageUrl } from '../../utils/imageUrl';
 
 const ImageUploadBox = ({ label, field, preview, onFileChange, icon: Icon }) => {
     const inputRef = useRef();
@@ -79,7 +79,7 @@ const ManageBranding = () => {
                     ctaText: data.ctaText || '',
                     ctaLink: data.ctaLink || '',
                 });
-                const makeUrl = (p) => p ? (p.startsWith('http') ? p : `${API_BASE}${p}`) : '';
+                const makeUrl = (p) => getImageUrl(p);
                 setPreviews({ logo: makeUrl(data.logo), navbarLogo: makeUrl(data.navbarLogo), heroLogo: makeUrl(data.heroLogo) });
             } catch {
                 toast.error('Failed to load branding');

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Rocket, Instagram, Linkedin, Youtube, Facebook, Globe } from 'lucide-react';
 import { getFooter, getSocialMedia, getBranding } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 import XIcon from './XIcon';
 
-const API_BASE = 'http://127.0.0.1:5000';
 
 const PLATFORM_MAP = {
     instagram: Instagram,
@@ -44,12 +44,7 @@ const Footer = () => {
         fetchFooterData();
     }, []);
 
-    const logoUrl = branding
-        ? (() => {
-            const l = branding.logo || branding.navbarLogo;
-            return l ? (l.startsWith('http') ? l : `${API_BASE}${l}`) : null;
-        })()
-        : null;
+    const logoUrl = branding ? getImageUrl(branding.logo || branding.navbarLogo) : null;
 
     const collegeName = branding?.collegeName || 'College News';
     const description = footer?.description || 'Empowering students with real-time news, academic updates, and campus achievements.';
