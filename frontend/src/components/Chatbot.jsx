@@ -7,27 +7,90 @@ const CustomBotIcon = ({ className }) => (
     <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <linearGradient id="headGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff6b6b" />
-                <stop offset="100%" stopColor="#c53030" />
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="50%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#ec4899" />
             </linearGradient>
+            <linearGradient id="antennaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <radialGradient id="eyeGrad">
+                <stop offset="0%" stopColor="#fbbf24" />
+                <stop offset="100%" stopColor="#f59e0b" />
+            </radialGradient>
+            <linearGradient id="mouthGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            
             <filter id="glow">
-                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                 <feMerge>
                     <feMergeNode in="coloredBlur"/>
                     <feMergeNode in="SourceGraphic"/>
                 </feMerge>
             </filter>
+            <filter id="softGlow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+            <filter id="shadow">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2"/>
+            </filter>
         </defs>
-        <path d="M50 35 L50 15" stroke="#94a3b8" strokeWidth="4" strokeLinecap="round"/>
-        <circle cx="50" cy="13" r="6" fill="#ff6b6b" filter="url(#glow)"/>
-        <path d="M40 7 Q50 -3 60 7" stroke="#ff6b6b" strokeWidth="2.5" strokeLinecap="round" opacity="0.6"/>
-        <rect x="18" y="42" width="8" height="18" rx="4" fill="#94a3b8" />
-        <rect x="74" y="42" width="8" height="18" rx="4" fill="#94a3b8" />
-        <rect x="25" y="30" width="50" height="48" rx="16" fill="url(#headGrad)" />
-        <rect x="32" y="40" width="36" height="24" rx="8" fill="#0f172a" />
-        <circle cx="41" cy="51" r="4.5" fill="#fde047" filter="url(#glow)"/>
-        <circle cx="59" cy="51" r="4.5" fill="#fde047" filter="url(#glow)"/>
-        <path d="M42 68 Q50 74 58 68" stroke="#fef08a" strokeWidth="3" strokeLinecap="round" />
+        
+        <g className="animate-pulse">
+            <path d="M50 35 L50 15" stroke="url(#antennaGrad)" strokeWidth="3" strokeLinecap="round" opacity="0.8"/>
+            <circle cx="50" cy="13" r="8" fill="url(#antennaGrad)" filter="url(#glow)">
+                <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="50" cy="13" r="12" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.4">
+                <animate attributeName="r" values="12;18;12" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="50" cy="13" r="16" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.3">
+                <animate attributeName="r" values="16;22;16" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+            </circle>
+        </g>
+        
+        <g className="animate-pulse" style={{animationDelay: '0.5s'}}>
+            <rect x="20" y="42" width="6" height="16" rx="3" fill="#94a3b8" opacity="0.9"/>
+            <circle cx="23" cy="42" r="3" fill="#64748b"/>
+            <circle cx="23" cy="58" r="3" fill="#64748b"/>
+            
+            <rect x="74" y="42" width="6" height="16" rx="3" fill="#94a3b8" opacity="0.9"/>
+            <circle cx="77" cy="42" r="3" fill="#64748b"/>
+            <circle cx="77" cy="58" r="3" fill="#64748b"/>
+        </g>
+        
+        <rect x="25" y="30" width="50" height="48" rx="18" fill="url(#headGrad)" filter="url(#shadow)"/>
+        
+        <rect x="32" y="40" width="36" height="24" rx="10" fill="#0f172a" opacity="0.95"/>
+        
+        <g className="animate-pulse" style={{animationDelay: '1s'}}>
+            <circle cx="41" cy="51" r="5" fill="url(#eyeGrad)" filter="url(#softGlow)">
+                <animate attributeName="r" values="5;6;5" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="41" cy="51" r="2" fill="#0f172a" opacity="0.8"/>
+            
+            <circle cx="59" cy="51" r="5" fill="url(#eyeGrad)" filter="url(#softGlow)">
+                <animate attributeName="r" values="5;6;5" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="59" cy="51" r="2" fill="#0f172a" opacity="0.8"/>
+        </g>
+        
+        <path d="M42 68 Q50 74 58 68" stroke="url(#mouthGrad)" strokeWidth="3" strokeLinecap="round" filter="url(#softGlow)">
+            <animate attributeName="d" values="M42 68 Q50 74 58 68;M42 68 Q50 76 58 68;M42 68 Q50 74 58 68" dur="4s" repeatCount="indefinite"/>
+        </path>
+        
+        <circle cx="30" cy="35" r="2" fill="#10b981" opacity="0.6" className="animate-pulse"/>
+        <circle cx="70" cy="35" r="2" fill="#10b981" opacity="0.6" className="animate-pulse" style={{animationDelay: '0.3s'}}/>
     </svg>
 );
 
@@ -415,22 +478,22 @@ Did you mean this? Please confirm:
 
         // About RGUKT questions
         if (lowerText.includes('about rgukt ongole') || lowerText.includes('tell me about rgukt ongole') || lowerText.includes('what is rgukt ongole') || lowerText.includes('rgukt ongole')) {
-            return "RGUKT Ongole is part of Rajiv Gandhi University of Knowledge Technologies, a premier institution focused on providing quality technical education to students from rural areas. 🏛️ We offer undergraduate programs in CSE, ECE, EEE, MECH, and CHEM with a focus on holistic development, research, and innovation. The campus is known for its vibrant student life, excellent faculty, and strong placement records! 🎓✨";
+            return "RGUKT Ongole is part of Rajiv Gandhi University of Knowledge Technologies, a premier institution focused on providing quality technical education to students from rural areas. 🏛️ We offer undergraduate programs in CSE, ECE, EEE, MECH, and CHEM,Civil  with a focus on holistic development, research, and innovation. The campus is known for its vibrant student life, excellent faculty, and strong placement records! 🎓✨";
         }
 
         // College timing questions
         if (lowerText.includes('college timing') || lowerText.includes('college hours') || lowerText.includes('working hours') || lowerText.includes('office timing') || lowerText.includes('class timing')) {
-            return "⏰ **RGUKT Ongole College Timings** ⏰\n\n📅 **Regular Classes:**\n• Monday - Friday: 8:30 AM to 4:30 PM\n• Saturday: 8:30 AM to 1:30 PM\n• Sunday: Closed\n\n🏢 **Office Hours:**\n• Administrative Office: 9:00 AM to 5:00 PM\n• Library: 8:00 AM to 8:00 PM (Mon-Fri)\n• Labs: 9:00 AM to 5:00 PM\n• Hostel: 24/7 (with security)\n\n🍽️ **Mess Timings:**\n• Breakfast: 7:00 AM - 9:00 AM\n• Lunch: 12:00 PM - 2:00 PM\n• Dinner: 7:00 PM - 9:00 PM\n\n⚠️ **Note:** Timings may vary during exams, holidays, or special events. Check notice boards for updates!";
+            return "⏰ **RGUKT Ongole College Timings** ⏰\n\n📅 **Regular Classes:**\n•  Sunday: Closed\n\n🏢 **Office Hours:**\n• Administrative Office: 9:30 AM to 4:30 PM\n• Hostel: 24/7 (with security)\n\n🍽️ **Mess Timings:**\n• Breakfast: 7:00 AM - 9:00 AM\n• Lunch: 12:00 PM - 2:00 PM\n• Dinner: 7:00 PM - 9:00 PM\n\n⚠️ **Note:** Timings may vary during exams, holidays, or special events. Check notice boards for updates!";
         }
 
         // College location questions
         if (lowerText.includes('where is the college located') || lowerText.includes('college location') || lowerText.includes('college address') || lowerText.includes('how to reach college') || lowerText.includes('college situated')) {
-            return "📍 **RGUKT Ongole Campus Location** 📍\n\n🏛️ **Full Address:**\nRGUKT Ongole Campus,\nNuzvid Road, Ongole,\nPrakasam District,\nAndhra Pradesh - 523001\n\n🚗 **How to Reach:**\n• **By Train:** Ongole Railway Station (5 km away)\n• **By Bus:** Ongole APSRTC Bus Stand (3 km away)\n• **By Air:** Vijayawada Airport (120 km away)\n\n🚕 **Local Transport:**\n• Auto-rickshaws available from station/bus stand\n• College buses from major points in Ongole\n• Campus has ample parking for private vehicles\n\n📱 **Google Maps:** Search 'RGUKT Ongole Campus' for exact directions!\n\nNeed help with transportation? I can assist! 🚌";
+            return "📍 **RGUKT Ongole Campus Location** 📍\n\n🏛️ **Full Address:**\nRGUKT Ongole Campus,\nKurnool Road, Santhanuthalapadu(V&M),\nPrakasam District,\nAndhra Pradesh - 523225\n\n ";
         }
 
         // Courses offered questions
         if (lowerText.includes('what courses are offered') || lowerText.includes('courses offered') || lowerText.includes('programs offered') || lowerText.includes('what programs') || lowerText.includes('available courses') || lowerText.includes('academic programs')) {
-            return "🎓 **Courses Offered at RGUKT Ongole** 🎓\n\n📚 **Undergraduate Programs (B.Tech):**\n\n💻 **Computer Science and Engineering (CSE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: AI, ML, Data Science\n\n📡 **Electronics and Communication Engineering (ECE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: VLSI, Embedded Systems\n\n⚡ **Electrical and Electronics Engineering (EEE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: Power Systems, Renewable Energy\n\n🔧 **Mechanical Engineering (MECH)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: Thermal, CAD/CAM\n\n🧪 **Chemical Engineering (CHEM)**\n• Duration: 4 years\n• Seats: 60\n• Specializations: Process Engineering, Environmental\n\n🎯 **Admission:** Through RGUKT CET (Common Entrance Test)\n💰 **Fee Structure:** As per government norms (scholarships available)\n\nWant details about any specific branch? 📖";
+            return "🎓 **Courses Offered at RGUKT Ongole** 🎓\n\n📚 **Undergraduate Programs (B.Tech):**\n\n💻 **Computer Science and Engineering (CSE)**\n• Duration: 4 years\n• Seats: 360\n• 📡 **Electronics and Communication Engineering (ECE)**\n• Duration: 4 years\n• Seats: 360\n•  ⚡ **Electrical and Electronics Engineering (EEE)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: Power Systems, Renewable Energy\n\n🔧 **Mechanical Engineering (MECH)**\n• Duration: 4 years\n• Seats: 120\n• Specializations: Thermal, CAD/CAM\n\n🧪 **Chemical Engineering (CHEM)**\n• Duration: 4 years\n• Seats: 60\n• Specializations: Process Engineering, Environmental\n\n🎯 **Admission:** Through RGUKT CET (Common Entrance Test)\n💰 **Fee Structure:** As per government norms (scholarships available)\n\nWant details about any specific branch? 📖";
         }
 
         // Principal/Director questions
@@ -440,7 +503,7 @@ Did you mean this? Please confirm:
 
         // Departments questions
         if (lowerText.includes('what are the departments') || lowerText.includes('departments in college') || lowerText.includes('available departments') || lowerText.includes('college departments') || lowerText.includes('academic departments')) {
-            return "🏛️ **Departments at RGUKT Ongole** 🏛️\n\n📚 **Academic Departments:**\n\n💻 **Computer Science & Engineering (CSE)**\n• HOD: Dr. P. Venkata Subba Reddy\n• Location: Academic Block A, 2nd Floor\n\n📡 **Electronics & Communication (ECE)**\n• HOD: Dr. K. Srinivasa Rao\n• Location: Academic Block B, 3rd Floor\n\n⚡ **Electrical & Electronics (EEE)**\n• HOD: Dr. M. Chandra Mohan\n• Location: Academic Block B, 1st Floor\n\n🔧 **Mechanical Engineering (MECH)**\n• HOD: Dr. T. Ramesh Babu\n• Location: Workshop Block, Ground Floor\n\n🧪 **Chemical Engineering (CHEM)**\n• HOD: Dr. L. Sujatha\n• Location: Academic Block C, 2nd Floor\n\n🔬 **Basic Sciences:**\n• Physics Department\n• Chemistry Department\n• Mathematics Department\n• English Department\n\n🏢 **Administrative Departments:**\n• Administrative Office\n• Academic Section\n• Examination Branch\n• Library & Information Center\n• Student Affairs\n• Placement Cell\n• Sports Department\n• Hostel Management\n\nNeed contact details for any department? 📞";
+            return "🏛️ **Departments at RGUKT Ongole** 🏛️\n\n📚 **Academic Departments:**\n\n💻 **Computer Science & Engineering (CSE)**\n•\n\n📡 **Electronics & Communication (ECE)**\n•⚡ **Electrical & Electronics (EEE)**\n•🔧 **Mechanical Engineering (MECH)**\n•  **Civil Engineering (CE)**\n• 🏢 **Administrative Departments:**\n• Administrative Office\n• Academic Section\n• Examination Branch\n• Library & Information Center\n• Student Affairs\n• Placement Cell\n• Sports Department\n• Hostel Management\n\nNeed contact details for any department? 📞";
         }
 
         // Contact college office questions
@@ -456,21 +519,21 @@ Did you mean this? Please confirm:
         // HOD questions
         if (lowerText.includes('hod') || lowerText.includes('head of department') || lowerText.includes('department head')) {
             if (lowerText.includes('cse')) {
-                return "The Head of Department for Computer Science and Engineering (CSE) at RGUKT Ongole is Dr. P. Venkata Subba Reddy. 👨‍🏫 He has over 15 years of experience in computer science and research, specializing in Artificial Intelligence and Machine Learning. He leads the department with focus on innovation, industry collaborations, and student research projects. You can reach him at cse.hod@rgukt.ac.in or visit the CSE department office on 2nd floor of Academic Block A! 💻📧";
+                return "The Head of Department for Computer Science and Engineering (CSE) at RGUKT Ongole is Mrs. P. Sindhu...Designation: HOD – ...Also serves as Assistant Professor...Email: hodcse@rguktong.ac.in";
             }
             if (lowerText.includes('ece')) {
-                return "The Head of Department for Electronics and Communication Engineering (ECE) at RGUKT Ongole is Dr. K. Srinivasa Rao. 👨‍🏫 He brings 18+ years of expertise in electronics and communication engineering, with research focus on VLSI design and embedded systems. He has published 50+ research papers and guides the department with emphasis on practical learning and industry partnerships. Contact: ece.hod@rgukt.ac.in, 3rd floor Academic Block B! 📡📧";
+                return "The Head of Department for Electronics and Communication Engineering (ECE) at RGUKT Ongole is Mr. M. Vijayabhaskar...Designation: HOD – ECE...Qualification: M.Tech...Position: Assistant Professor...Email: hodece@rguktong.ac.in";
             }
             if (lowerText.includes('eee')) {
-                return "The Head of Department for Electrical and Electronics Engineering (EEE) at RGUKT Ongole is Dr. M. Chandra Mohan. 👨‍🏫 He has extensive experience in electrical engineering with 12+ years of teaching and research, specializing in power systems and renewable energy. He leads the department with focus on practical learning, research, and industry collaborations. Office: 1st floor Academic Block B, Contact: eee.hod@rgukt.ac.in! ⚡📧";
+                return "The Head of Department for Electrical and Electronics Engineering (EEE) at RGUKT Ongole is Dr. M. Sriramulu Naik...Designation: HOD – EEE, Assistant Professor...Qualification: B.Tech, M.Tech, Ph.D...Email: hodeee@rguktong.ac.in";
             }
             if (lowerText.includes('mech') || lowerText.includes('mechanical')) {
-                return "The Head of Department for Mechanical Engineering (MECH) at RGUKT Ongole is Dr. T. Ramesh Babu. 👨‍🏫 He specializes in mechanical engineering with 20+ years of teaching and research experience, focusing on thermal engineering and CAD/CAM. The MECH department emphasizes practical engineering skills, workshop training, and industry projects. Office: Ground Floor Workshop Block, Contact: mech.hod@rgukt.ac.in! 🔧📧";
+                return "The Head of Department for Mechanical Engineering (MECH) at RGUKT Ongole is Ms. C. B. Priya...Designation: HOD – Mechanical Engineering (ME)...Qualification: M.Tech (Ph.D)...Email: hodmech@rguktong.ac.in";
             }
-            if (lowerText.includes('chem') || lowerText.includes('chemical')) {
-                return "The Head of Department for Chemical Engineering (CHEM) at RGUKT Ongole is Dr. L. Sujatha. 👩‍🏫 She leads the department with 16+ years of expertise in chemical engineering and research, specializing in process optimization and environmental engineering. The CHEM department emphasizes both theoretical knowledge and practical applications with modern lab facilities. Office: 2nd floor Academic Block C, Contact: chem.hod@rgukt.ac.in! 🧪📧";
+            if (lowerText.includes('civil') || lowerText.includes('ce')) {
+                return "The Head of Department for Civil Engineering (CE) at RGUKT Ongole is Dr. Ragathara GurrappaGari Rohith Kiran...Designation: Assistant Professor & HOD, Civil Engineering...Qualification: B.Tech, M.Tech, Ph.D., Postdoc...Email: hodcivil@rguktong.ac.in";
             }
-            return "I can help you with information about HODs! Could you specify which department you're interested in? We have CSE, ECE, EEE, MECH, and CHEM departments. Just let me know which one! 🏢";
+            return "I can help you with information about HODs! Could you specify which department you're interested in? We have CSE, ECE, EEE, MECH, and CE departments. Just let me know which one! 🏢";
         }
 
         // What can you do questions
@@ -491,7 +554,7 @@ Did you mean this? Please confirm:
             let contextualResponse = "Here's what's happening right now! 🕐\n\n";
             
             if (currentHour >= 8 && currentHour <= 16 && currentDay >= 1 && currentDay <= 5) {
-                contextualResponse += "📚 **Academic Hours:** Classes are in progress (8:30 AM - 4:30 PM)\n";
+                contextualResponse += "📚 **Academic Hours:** Classes are in progress (9:30 AM - 4:30 PM)\n";
                 contextualResponse += "🏢 **Offices Open:** Administrative offices available for assistance\n";
                 contextualResponse += "📖 **Library Access:** Study spaces and resources available\n";
                 contextualResponse += "🍽️ **Next Meal:** " + (currentHour < 12 ? "Lunch at 12:00 PM" : currentHour < 19 ? "Dinner at 7:00 PM" : "Breakfast tomorrow at 7:00 AM") + "\n";
@@ -499,7 +562,6 @@ Did you mean this? Please confirm:
                 contextualResponse += "🌅 **Evening Time:** Perfect for extracurricular activities!\n";
                 contextualResponse += "🎸 **Club Hours:** Many student clubs meet now\n";
                 contextualResponse += "⚽ **Sports:** Grounds open for practice and games\n";
-                contextualResponse += "📚 **Study Time:** Library open until 8:00 PM\n";
             } else {
                 contextualResponse += "🌙 **Off Hours:** Campus is quieter now\n";
                 contextualResponse += "🏠 **Hostel Life:** Common areas available for socializing\n";
@@ -507,7 +569,7 @@ Did you mean this? Please confirm:
                 contextualResponse += "🛡️ **Security:** 24/7 security available for assistance\n";
             }
             
-            contextualResponse += "\n💡 **Want specific info?** Ask me about:\n• 'Today's schedule'\n• 'Upcoming events'\n• 'Study spaces'\n• 'Food options'";
+            contextualResponse += "\n💡 **Want specific info?** Ask me about:\n• 'Today's schedule'\n• 'Upcoming events'\n• 'Study spaces'\n•";
             
             return contextualResponse;
         }
@@ -529,7 +591,7 @@ Did you mean this? Please confirm:
 
         // Campus life and social queries
         if (lowerText.includes('campus life') || lowerText.includes('social') || lowerText.includes('friends') || lowerText.includes('activities') || lowerText.includes('fun')) {
-            return "Welcome to vibrant campus life! 🎉\n\n🌟 **Social Life at RGUKT:**\n\n🎸 **Student Clubs (15+ Active Clubs):**\n• **Technical:** Coding, robotics, electronics clubs\n• **Cultural:** Music, dance, drama, photography\n• **Sports:** Cricket, football, badminton, volleyball\n• **Literary:** Debate, writing, quiz clubs\n• **Social:** NSS, environmental, community service\n\n🎪 **Regular Events:**\n• **Tech Fest:** Annual technical festival\n• **Cultural Fest:** Music, dance, drama performances\n• **Sports Meet:** Inter-branch competitions\n• **Workshops:** Skill development sessions\n• **Guest Lectures:** Industry expert talks\n\n🍽️ **Social Spaces:**\n• **Canteen:** Hangout spot with friends\n• **Garden:** Relaxing outdoor area\n• **Common Rooms:** Indoor social spaces\n• **Sports Complex:** Active recreation\n\n📱 **Digital Community:**\n• **Student Portal:** Connect with peers\n• **WhatsApp Groups:** Branch and activity groups\n• **Social Media:** Campus updates and events\n• **Mobile App:** Campus services on the go\n\n🎯 **Making Friends:**\n• **Orientation Programs:** Meet fellow freshers\n• **Club Activities:** Find people with similar interests\n• **Study Groups:** Academic bonding\n• **Sports Teams:** Build team spirit\n• **Events Participation:** Social interaction opportunities\n\n🏆 **Personal Growth:**\n• **Leadership Roles:** Club positions and responsibilities\n• **Event Management:** Organizational skills\n• **Public Speaking:** Confidence building\n• **Networking:** Professional connections\n\n💡 **Pro Tips:**\n• Join at least one club that interests you\n• Attend campus events regularly\n• Participate in sports for fitness and friends\n• Balance academics with social activities\n\nReady to explore campus life? What interests you most? 🚀";
+            return "Welcome to vibrant campus life! 🎉\n\n🌟 **Social Life at RGUKT:**\n\n🎸 **Student Clubs :**\n• **Technical:** Coding, robotics, electronics clubs\n• **Cultural:** Music, dance, drama, photography\n• **Sports:** Cricket, football, badminton, volleyball\n• **Literary:** Debate, writing, quiz clubs\n• **Social:** NSS, environmental, community service\n\n🎪 **Regular Events:**\n• **Tech Fest:** Annual technical festival\n• **Cultural Fest:** Music, dance, drama performances\n• **Sports Meet:** Inter-branch competitions\n• **Workshops:** Skill development sessions\n• **Guest Lectures:** Industry expert talks\n\n🍽️ **Social Spaces:**\n• **Canteen:** Hangout spot with friends\n• **Garden:** Relaxing outdoor area\n• **Common Rooms:** Indoor social spaces\n• **Sports Complex:** Active recreation\n\n📱 **Digital Community:**\n• **Student Portal:** Connect with peers\n• **WhatsApp Groups:** Branch and activity groups\n• **Social Media:** Campus updates and events\n• **Mobile App:** Campus services on the go\n\n🎯 **Making Friends:**\n• **Orientation Programs:** Meet fellow freshers\n• **Club Activities:** Find people with similar interests\n• **Study Groups:** Academic bonding\n• **Sports Teams:** Build team spirit\n• **Events Participation:** Social interaction opportunities\n\n🏆 **Personal Growth:**\n• **Leadership Roles:** Club positions and responsibilities\n• **Event Management:** Organizational skills\n• **Public Speaking:** Confidence building\n• **Networking:** Professional connections\n\n💡 **Pro Tips:**\n• Join at least one club that interests you\n• Attend campus events regularly\n• Participate in sports for fitness and friends\n• Balance academics with social activities\n\nReady to explore campus life? What interests you most? 🚀";
         }
 
         // Website help and navigation queries
@@ -811,13 +873,13 @@ Did you mean this? Please confirm:
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-16 h-16 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-all ${
+                className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full flex items-center justify-center transition-all ${
                     isOpen 
                         ? 'bg-white shadow-xl hover:bg-slate-50 text-slate-800' 
                         : 'bg-transparent hover:scale-110 drop-shadow-2xl'
                 }`}
             >
-                {isOpen ? <X size={32} className="sm:w-10 sm:h-10 text-slate-400" /> : <CustomBotIcon className="w-[50px] h-[50px] sm:w-[80px] sm:h-[80px] drop-shadow-2xl" />}
+                {isOpen ? <X size={32} className="sm:w-10 sm:h-10 text-slate-400" /> : <CustomBotIcon className="w-[70px] h-[70px] sm:w-[100px] sm:h-[100px] drop-shadow-2xl" />}
             </motion.button>
 
             {/* Chat Window */}

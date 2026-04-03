@@ -4,8 +4,12 @@ import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
-import connectDB from './config/db.js';
 import path from 'path';
+
+// Configure dotenv before importing other modules
+dotenv.config();
+
+import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import placementRoutes from './routes/placementRoutes.js';
@@ -20,8 +24,6 @@ import socialMediaRoutes from './routes/socialMediaRoutes.js';
 import brandingRoutes from './routes/brandingRoutes.js';
 import websiteRoutes from './routes/websiteRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-
-dotenv.config();
 
 const app = express();
 
