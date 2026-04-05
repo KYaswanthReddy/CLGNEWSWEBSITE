@@ -71,10 +71,15 @@ export const createAchievement = asyncHandler(async (req, res) => {
         throw new Error('Card image is required');
     }
 
-    const achievement = new Achievement(achievementData);
-    const createdAchievement = await achievement.save();
-    
-    res.status(201).json(createdAchievement);
+    try {
+        const achievement = new Achievement(achievementData);
+        const createdAchievement = await achievement.save();
+        res.status(201).json(createdAchievement);
+    } catch (error) {
+        console.error("Achievement Creation Error:", error);
+        res.status(400);
+        throw new Error(error.message || 'Error creating achievement');
+    }
 });
 
 // @desc    Update achievement
@@ -109,8 +114,14 @@ export const updateAchievement = asyncHandler(async (req, res) => {
             }
         }
 
-        const updatedAchievement = await achievement.save();
-        res.json(updatedAchievement);
+        try {
+            const updatedAchievement = await achievement.save();
+            res.json(updatedAchievement);
+        } catch (error) {
+            console.error("Achievement Update Error:", error);
+            res.status(400);
+            throw new Error(error.message || 'Error updating achievement');
+        }
     } else {
         res.status(404);
         throw new Error('Achievement not found');

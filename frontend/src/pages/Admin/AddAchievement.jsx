@@ -95,7 +95,8 @@ const AddAchievement = () => {
             resetForm();
         } catch (err) {
             console.error(err);
-            alert('Error saving achievement. Ensure all required fields (like card image) are provided.');
+            const errorMessage = err.response?.data?.message || err.message || 'Error saving achievement';
+            alert('Error saving achievement: ' + errorMessage);
         }
     };
 
