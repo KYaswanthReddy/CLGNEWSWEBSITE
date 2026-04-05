@@ -23,6 +23,7 @@ import footerRoutes from './routes/footerRoutes.js';
 import socialMediaRoutes from './routes/socialMediaRoutes.js';
 import brandingRoutes from './routes/brandingRoutes.js';
 import websiteRoutes from './routes/websiteRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
@@ -58,6 +59,7 @@ app.use('/api/exams', examRoutes);
 app.use('/api/sports', sportRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/admins', adminRoutes);
 app.use('/api/home-carousel', homeCarouselRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/social-media', socialMediaRoutes);

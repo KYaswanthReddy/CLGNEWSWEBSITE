@@ -149,6 +149,10 @@ export const updateBranding = (data) => api.put('/branding/upload', data, { head
 
 // Main Site Stats
 export const getWebsiteStats = () => api.get('/stats');
+export const getAdmins = () => api.get('/admins');
+export const createAdmin = (data) => api.post('/admins', data);
+export const updateAdmin = (id, data) => api.put(`/admins/${id}`, data);
+export const deleteAdmin = (id) => api.delete(`/admins/${id}`);
 
 export default api;
 
