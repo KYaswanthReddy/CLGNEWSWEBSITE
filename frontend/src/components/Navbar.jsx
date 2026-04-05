@@ -36,21 +36,21 @@ const Navbar = () => {
         const fetchNavData = async () => {
             const sportsFallback = ["Basketball", "Cricket", "Football", "Volleyball"];
             const clubsFallback = ["Coding Club", "Dance Club", "Music Club", "Photography Club"];
-            
+
             try {
                 const [sportsRes, clubsRes, brandingRes] = await Promise.all([
                     getSports(),
                     getClubs(),
                     getBranding()
                 ]);
-                
+
                 // Use DB data if available, otherwise fallback
                 const dbSports = sportsRes.data || [];
                 setSports(dbSports.length > 0 ? dbSports : sportsFallback);
-                
+
                 const dbClubs = clubsRes.data || [];
                 setClubs(dbClubs.length > 0 ? dbClubs : clubsFallback);
-                
+
                 const branding = brandingRes.data;
                 if (branding) {
                     if (branding.collegeName) setCollegeName(branding.collegeName);
@@ -93,21 +93,21 @@ const Navbar = () => {
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     <div className="flex justify-between items-center h-20">
                         {/* Logo */}
-                        <Link to="/" className="flex items-center gap-2.5 group min-w-0">
-                            <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl overflow-hidden flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform duration-300 bg-white border border-red-100">
+                        <Link to="/" className="flex items-center gap-2 group min-w-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform duration-300 bg-white border border-red-100">
                                 <img src={navbarLogo} alt="RGUKT Logo" className="w-full h-full object-contain p-1" onError={(e) => { e.target.onerror = null; e.target.src = '/rgukt-logo.png'; }} />
                             </div>
                             <div className="flex flex-col min-w-0">
-                                <span className="text-xs sm:text-sm font-black text-red-700 tracking-tight leading-tight truncate">{collegeName}</span>
-                                <span className="text-[8px] sm:text-[9px] text-gray-400 font-semibold tracking-wide uppercase leading-tight">Gifted Rural Youth</span>
+                                <span className="text-sm sm:text-base md:text-lg font-black text-red-700 tracking-tight leading-tight">{collegeName}</span>
+                                <span className="text-[7px] sm:text-[9px] text-gray-400 font-semibold tracking-wide uppercase leading-tight">Gifted Rural Youth</span>
                             </div>
                         </Link>
 
                         {/* Desktop Menu */}
                         <div className="hidden lg:flex items-center gap-2">
                             {navLinks.map((link) => (
-                                <div 
-                                    key={link.name} 
+                                <div
+                                    key={link.name}
                                     className="relative group"
                                     onMouseEnter={() => setHoveredMenu(link.name.toLowerCase())}
                                     onMouseLeave={() => setHoveredMenu(null)}
@@ -140,8 +140,8 @@ const Navbar = () => {
                                                 >
                                                     <div className="bg-white rounded-[24px] shadow-2xl border border-slate-100 p-4 grid grid-cols-2 gap-2 min-w-[300px]">
                                                         {(link.name === 'Sports' ? sports : clubs).slice(0, 8).map(item => (
-                                                            <Link 
-                                                                key={item._id || item} 
+                                                            <Link
+                                                                key={item._id || item}
                                                                 to={`/${link.name.toLowerCase()}/${(item.name || item).toLowerCase().replace(/\s+/g, '-')}`}
                                                                 onClick={() => setHoveredMenu(null)}
                                                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group/item"
@@ -153,7 +153,7 @@ const Navbar = () => {
                                                             </Link>
                                                         ))}
                                                         <div className="col-span-2 pt-2 mt-2 border-t border-slate-100">
-                                                            <Link 
+                                                            <Link
                                                                 to={`/${link.name.toLowerCase()}`}
                                                                 onClick={() => setHoveredMenu(null)}
                                                                 className="flex items-center justify-center gap-2 w-full p-2 text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/5 rounded-lg transition-colors"
@@ -307,10 +307,10 @@ const Navbar = () => {
                                         >
                                             {link.name}
                                         </Link>
-                                        
+
                                         {/* Mobile Accordion Toggle for Sports and Clubs */}
                                         {(link.name === 'Sports' || link.name === 'Clubs') && (
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     setMobileExpanded(mobileExpanded === link.name.toLowerCase() ? null : link.name.toLowerCase());
@@ -321,7 +321,7 @@ const Navbar = () => {
                                             </button>
                                         )}
                                     </div>
-                                    
+
                                     {/* Mobile Accordion Content */}
                                     <AnimatePresence>
                                         {mobileExpanded === link.name.toLowerCase() && (
@@ -333,7 +333,7 @@ const Navbar = () => {
                                             >
                                                 <div className="flex flex-col gap-2 pl-4 py-2 border-l-2 border-primary/20 ml-2 mb-2">
                                                     {(link.name === 'Sports' ? sports : clubs).slice(0, 5).map(item => (
-                                                        <Link 
+                                                        <Link
                                                             key={item._id || item}
                                                             to={`/${link.name.toLowerCase()}/${(item.name || item).toLowerCase().replace(/\s+/g, '-')}`}
                                                             onClick={() => setIsOpen(false)}
@@ -342,7 +342,7 @@ const Navbar = () => {
                                                             {item.name || item}
                                                         </Link>
                                                     ))}
-                                                    <Link 
+                                                    <Link
                                                         to={`/${link.name.toLowerCase()}`}
                                                         onClick={() => setIsOpen(false)}
                                                         className="text-xs font-bold text-primary uppercase tracking-widest mt-2"
