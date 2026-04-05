@@ -63,6 +63,8 @@ const ManageHomeCarousel = lazy(() => import('../pages/Admin/ManageHomeCarousel'
 const ManageFooter = lazy(() => import('../pages/Admin/ManageFooter'));
 const ManageSocialLinks = lazy(() => import('../pages/Admin/ManageSocialLinks'));
 const ManageBranding = lazy(() => import('../pages/Admin/ManageBranding'));
+const AddAdmin = lazy(() => import('../components/Admin/AddAdmin'));
+const ChangePassword = lazy(() => import('../pages/Admin/ChangePassword'));
 
 // Placements Detail (NEW)
 const PlacementDetail = lazy(() => import('../pages/Placements/PlacementDetail'));
@@ -143,6 +145,8 @@ const AppRoutes = () => {
                     <Route path="admin/manage-footer" element={<AdminRoute><ManageFooter /></AdminRoute>} />
                     <Route path="admin/manage-social" element={<AdminRoute><ManageSocialLinks /></AdminRoute>} />
                     <Route path="admin/manage-branding" element={<AdminRoute><ManageBranding /></AdminRoute>} />
+                    <Route path="admin/add-admin" element={<AdminRoute><AddAdmin /></AdminRoute>} />
+                    <Route path="admin/change-password" element={<AdminRoute><ChangePassword /></AdminRoute>} />
 
 
                     {/* Fallback */}

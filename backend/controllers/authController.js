@@ -1,5 +1,6 @@
 import { validationResult } from 'express-validator';
 import User from '../models/User.js';
+import Admin from '../models/Admin.js';
 import generateToken from '../utils/generateToken.js';
 
 import sendEmail from '../utils/emailService.js';
@@ -117,7 +118,7 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-// @desc    Auth user & get token
+// @desc    Auth admin & get token
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = async (req, res) => {
@@ -128,37 +129,27 @@ const loginUser = async (req, res) => {
     }
 
     const { email, password } = req.body;
-    console.log(`Login attempt for email: ${email}`);
+    console.log(`Admin login attempt for email: ${email}`);
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const admin = await Admin.findOne({ email: email.toLowerCase() });
 
-    if (user) {
-      console.log(`User found: ${user.email}`);
-      const isMatch = await user.matchPassword(password);
-      console.log(`Password match: ${isMatch}`);
+    if (admin) {
+      const isMatch = await admin.matchPassword(password);
 
       if (isMatch) {
-        // Backwards compatibility for old users who have not been verified and don't have OTPs
-        if (!user.isVerified && user.otp === undefined && user.role !== 'admin') {
-          user.isVerified = true;
-          await user.save();
-        } else if (!user.isVerified && user.role !== 'admin') {
-          return res.status(401).json({ message: 'Please verify your email first', notVerified: true });
-        }
-
         res.json({
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          role: user.role,
-          token: generateToken(user._id, user.role),
+          token: generateToken(admin._id, admin.role),
+          admin: {
+            id: admin._id,
+            name: admin.name,
+            email: admin.email,
+            role: admin.role,
+          },
         });
       } else {
         res.status(401).json({ message: 'Invalid email or password' });
       }
     } else {
-      console.log(`User not found for email: ${email}`);
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
@@ -167,50 +158,8 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Auth admin & get token
-// @route   POST /api/auth/admin-login
-// @access  Public
-const adminLogin = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { email, password } = req.body;
-    console.log(`Admin login attempt for email: ${email}`);
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-
-    if (user) {
-      console.log(`User found: ${user.email}, role: ${user.role}`);
-      const isMatch = await user.matchPassword(password);
-      console.log(`Password match: ${isMatch}`);
-
-      if (user.role === 'admin' && isMatch) {
-        res.json({
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          role: user.role,
-          token: generateToken(user._id, user.role),
-        });
-      } else if (user.role !== 'admin') {
-        console.log(`User is not an admin: ${user.email}`);
-        res.status(403).json({ message: 'Not authorized as an admin' });
-      } else {
-        res.status(401).json({ message: 'Invalid email or password' });
-      }
-    } else {
-      console.log(`User not found for admin email: ${email}`);
-      res.status(401).json({ message: 'Invalid email or password' });
-    }
-  } catch (error) {
-    console.error(`Admin login error: ${error.message}`);
-    res.status(500).json({ message: 'Server error during admin login' });
-  }
-};
+// @desc    Auth admin & get token (legacy/helper)
+const adminLogin = loginUser;
 
 // @desc    Request Password Reset
 // @route   POST /api/auth/forgot-password
