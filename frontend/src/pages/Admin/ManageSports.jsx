@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     getSportEvents, createSportEvent, updateSportEvent, deleteSportEvent,
     getSportTypes, createSportType, updateSportType, deleteSportType,
-    createAchievement, getAchievements, deleteAchievement
+    createAchievement, getAchievements, deleteAchievement, updateAchievement
 } from '../../services/api';
 import { getImageUrl } from '../../utils/imageUrl';
 import { 
@@ -249,6 +249,11 @@ const ManageSports = () => {
 
     const handleAchievementSubmit = async (e) => {
         e.preventDefault();
+
+        if (!selectedSportForAchievement) {
+            return alert('Please select a sport category first!');
+        }
+
         const data = new FormData();
         data.append('title', achievementForm.title);
         data.append('description', achievementForm.description);
@@ -262,7 +267,6 @@ const ManageSports = () => {
 
         try {
             if (editingAchievementId) {
-                const { updateAchievement } = await import('../../services/api');
                 await updateAchievement(editingAchievementId, data);
                 alert('Achievement updated successfully!');
             } else {
@@ -273,8 +277,10 @@ const ManageSports = () => {
             setEditingAchievementId(null);
             fetchData();
         } catch (err) {
-            console.error(err);
-            alert('Error saving achievement');
+            console.error('Achievement Save Error:', err);
+            // Prioritize the error message from the backend's JSON body if it exists
+            const errorMessage = err.response?.data?.message || err.message || 'Error saving achievement';
+            alert('Failed to save achievement: ' + errorMessage);
         }
     };
 

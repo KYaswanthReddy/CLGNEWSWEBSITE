@@ -9,6 +9,17 @@ import path from 'path';
 // Configure dotenv before importing other modules
 dotenv.config();
 
+// Ensure critical variables have fallbacks or warnings
+if (!process.env.MONGO_URI && process.env.NODE_ENV === 'production') {
+  console.error('❌ CRITICAL ERROR: MONGO_URI is missing in production environment!');
+  process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'dev_secret_key_123';
+  console.warn('⚠️ WARNING: JWT_SECRET is missing. Using insecure development fallback.');
+}
+
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';

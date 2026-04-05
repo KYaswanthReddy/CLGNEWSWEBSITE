@@ -6,6 +6,18 @@ const notFound = (req, res, next) => {
 
 const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  
+  if (statusCode === 500) {
+    console.error('------- SERVER ERROR (500) -------');
+    console.error(`Path: ${req.originalUrl}`);
+    console.error(`Method: ${req.method}`);
+    console.error(`Error: ${err.message}`);
+    console.error('Stack:', err.stack);
+    if (req.body) console.error('Body:', req.body);
+    if (req.files) console.error('Files:', Object.keys(req.files));
+    console.error('---------------------------------');
+  }
+
   res.status(statusCode);
   res.json({
     message: err.message,
