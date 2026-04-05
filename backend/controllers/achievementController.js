@@ -41,10 +41,6 @@ export const getAchievementById = asyncHandler(async (req, res) => {
 export const createAchievement = asyncHandler(async (req, res) => {
     const { title, description, type, subcategory, year, socialLinks } = req.body;
 
-    console.log('--- Creating Achievement ---');
-    console.log('Body:', { title, type, subcategory, year });
-    console.log('Files Received:', req.files ? Object.keys(req.files) : 'None');
-
     const achievementData = {
         title,
         description,
@@ -57,33 +53,20 @@ export const createAchievement = asyncHandler(async (req, res) => {
     }
 
     if (socialLinks) {
-        try {
-            achievementData.socialLinks = typeof socialLinks === 'string' ? JSON.parse(socialLinks) : socialLinks;
-        } catch (error) {
-            console.error('Error parsing socialLinks:', error);
-        }
+        achievementData.socialLinks = typeof socialLinks === 'string' ? JSON.parse(socialLinks) : socialLinks;
     }
 
     // Handle uploaded files
     if (req.files) {
-        try {
-            if (req.files.cardImage && req.files.cardImage.length > 0) {
-                console.log('Processing cardImage:', req.files.cardImage[0].path);
-                achievementData.cardImage = await fileToBase64(req.files.cardImage[0].path);
-            }
-            if (req.files.detailImage && req.files.detailImage.length > 0) {
-                console.log('Processing detailImage:', req.files.detailImage[0].path);
-                achievementData.detailImage = await fileToBase64(req.files.detailImage[0].path);
-            }
-        } catch (fileError) {
-            console.error('Error processing achievement images:', fileError);
-            res.status(500);
-            throw new Error(`Failed to process images: ${fileError.message}`);
+        if (req.files.cardImage && req.files.cardImage.length > 0) {
+            achievementData.cardImage = await fileToBase64(req.files.cardImage[0].path);
+        }
+        if (req.files.detailImage && req.files.detailImage.length > 0) {
+            achievementData.detailImage = await fileToBase64(req.files.detailImage[0].path);
         }
     }
 
     if (!achievementData.cardImage) {
-        console.error('Validation Error: Card image is missing');
         res.status(400);
         throw new Error('Card image is required');
     }
@@ -91,7 +74,6 @@ export const createAchievement = asyncHandler(async (req, res) => {
     const achievement = new Achievement(achievementData);
     const createdAchievement = await achievement.save();
     
-    console.log('Achievement created successfully:', createdAchievement._id);
     res.status(201).json(createdAchievement);
 });
 
