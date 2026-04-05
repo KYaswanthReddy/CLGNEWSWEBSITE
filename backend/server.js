@@ -11,7 +11,6 @@ dotenv.config();
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import placementRoutes from './routes/placementRoutes.js';
 import examRoutes from './routes/examRoutes.js';
@@ -53,7 +52,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.use('/api/auth', authRoutes);
-app.use('/api/admins', adminRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/placements', placementRoutes);
 app.use('/api/exams', examRoutes);

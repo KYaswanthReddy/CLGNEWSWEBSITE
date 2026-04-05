@@ -15,9 +15,7 @@ import {
     Image as ImageIcon,
     Link as LinkIcon,
     Share2,
-    Palette,
-    UserCircle,
-    Fingerprint
+    Palette
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -74,8 +72,6 @@ const AdminDashboard = () => {
         { title: 'Manage Footer', description: 'Update footer sections and links dynamically', link: '/admin/manage-footer', icon: LinkIcon },
         { title: 'Social Links', description: 'Update campus social media presence', link: '/admin/manage-social', icon: Share2 },
         { title: 'Manage Branding', description: 'Upload logos for navbar, hero and footer', link: '/admin/manage-branding', icon: Palette },
-        { title: 'System Admins', description: 'Manage administrative access', link: '/admin/add-admin', icon: UserCircle },
-        { title: 'Change Password', description: 'Update your secure credentials', link: '/admin/change-password', icon: Fingerprint },
     ];
 
     return (
