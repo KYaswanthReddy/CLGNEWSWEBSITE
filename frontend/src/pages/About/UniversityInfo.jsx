@@ -30,7 +30,7 @@ const UniversityInfo = () => {
                             A LEGACY OF <span className="text-blue-300">EXCELLENCE</span>
                         </h1>
                         <p className="text-blue-100 text-lg md:text-xl font-medium max-w-3xl mx-auto leading-relaxed opacity-80">
-                            Founded in 1995, our university has been a beacon of innovation, research, and holistic development for over three decades.
+                            Founded in , our university has been a beacon of innovation, research, and holistic development for over three decades.
                         </p>
                     </motion.div>
                 </div>
